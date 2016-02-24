@@ -1,5 +1,5 @@
 
-categories = ['science'] # optional
+categories = ['general'] # optional
 
 def request(query, params):
     '''pre-request callback
@@ -12,7 +12,7 @@ def request(query, params):
       pageno  : 1 # number of the requested page
     '''
 
-    params['url'] = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi?func=PerformSearch&target=%s' % query
+    params['url'] = 'https://host/%s' % query
 
     return params
 
@@ -22,4 +22,3 @@ def response(resp):
     resp: requests response object
     '''
     return [{'url': '', 'title': '', 'content': ''}]
-
