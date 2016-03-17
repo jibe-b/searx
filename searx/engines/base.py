@@ -63,7 +63,6 @@ def request(query, params):
 
     #regular search
     offset = (params['pageno'] - 1  ) * number_of_results
-    print (params['pageno'] -1)* number_of_results 
 
     string_args = dict(query=urlencode({'query': query}),
                        offset=offset,
@@ -106,29 +105,28 @@ def response(resp):
 
         #tmp: dates returned by the BASE API are not in iso format
         #so the three main date formats are tried one after the other
-        try: 
-            publishedDate = datetime.strptime(date, '%Y-%m-%dT%H:%M:%SZ' )
-        except:
+        for date_format in ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d', '%Y-%m', '%Y']:
             try:
-                publishedDate = datetime.strptime(date, '%Y-%m-%d' ) 
-            except:
+        	publishedDate = datetime.strptime(date, date_format)
+        	break
+    	    except:
                 try:
-                    publishedDate = datetime.strptime(date, '%Y-%m' )
+                    publishedDate = datetime.strptime(harvestDate,  date_format )
+                    content = "Publisehd: " + str(date) + " - " + content
                 except:
-                    try:
-                        publishedDate = datetime.strptime(date, '%Y' )
-                    except:
-                        try:
-                            publishedDate = datetime.strptime(harvestDate,  '%Y-%m-%dT%H:%M:%SZ' )
-                        except:
-                            publishedDate = datetime.now()
-                        finally:
-                            content = "Published: " + str(date) + " - " + content
+                    pass
 
 
-        results.append({'url': url,
+	if publishedDate != None:
+	    res_dict = {'url': url,
                         'title': title,
-                        'publishedDate': publishedDate,
-                        'content': content})
+			'publishedDate': publishedDate,
+			'content': content}
+        else:
+            res_dict = {'url': url,
+                        'title': title,
+                        'content': content}
+
+        results.append(res_dict)
 
     return results
