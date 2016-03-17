@@ -15,25 +15,37 @@
 
 from lxml import etree
 from urllib import urlencode
-from json import loads
 from searx.utils import searx_useragent
 from cgi import escape
 
 from datetime import datetime
+from string import Formatter
 
 categories = ['science']
 
-url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi?func=PerformSearch&{query}'
+base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi?func=PerformSearch&{query}&hits={hits}&offset={offset}'
 
-def validate_date(d):
-    try:
-        datetime.strptime(str(d), '%Y-%m-%d %H:%M:%S%z')
-        return True
-    except ValueError:
-        return False
+
+# engine dependent config
+paging = True
+number_of_results = 10
+
 
 def request(query, params):
-    params['url'] = url.format(query=urlencode({'query': query}))
+
+    offset = (params['pageno'] - 1  ) * number_of_results
+    print (params['pageno'] -1)* number_of_results 
+
+    string_args = dict(query=urlencode({'query': query}),
+                       offset=offset,
+                       hits=number_of_results)
+
+    format_strings = list(Formatter().parse(base_url))
+
+    search_url = base_url
+
+    params['url'] = search_url.format(**string_args)
+
     params['headers']['User-Agent'] = searx_useragent()
     return params
 
@@ -45,14 +57,13 @@ def response(resp):
 
     for entry in search_results.xpath('./result/doc'):
         content = "No description available"
-        publishedDate = datetime.now()
 
         for item in entry:
             if item.attrib["name"] == "dchdate":
-                date = item.text 
+                harvestDate = item.text
 
             if item.attrib["name"] == "dcdate":
-                harvestDate = item.text
+                date = item.text
 
             if item.attrib["name"] == "dctitle":
                 title = item.text        
@@ -61,18 +72,26 @@ def response(resp):
                 url = item.text
 
             elif item.attrib["name"] == "dcdescription":
-                content = escape(item.text[:500])
+                content = escape(item.text[:300]) + "..."
 
         #tmp: dates returned by the BASE API are not in iso format
-        if validate_date(date) == False:
-            content = str(date) + " - " + content
-            publishedDate = harvestDate
+        #so the three main date formats are tried one after the other
+        try: 
+            publishedDate = datetime.strptime(date, '%Y-%m-%dT%H:%M:%SZ' )
+        except:
+            try:
+                publishedDate = datetime.strptime(date, '%Y' ) 
+            except:
+                try:
+                    publishedDate = datetime.strptime(date, '%Y-%m-%d' )
+                except:
+                    try:
+                        publishedDate = datetime.strptime(harvestDate,  '%Y-%m-%dT%H:%M:%SZ' )
+                    except:
+                        publishedDate = datetime.now()
+                    finally:
+                        content = "Published: " + str(date) + " - " + content
 
-        if validate_date(harvestDate) == False:
-            publishedDate = datetime.now()  
-
-	#tmp
-	publishedDate = datetime.now()
 
         results.append({'url': url,
                         'title': title,
