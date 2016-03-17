@@ -23,7 +23,7 @@ from string import Formatter
 
 categories = ['science']
 
-base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi?func=PerformSearch&{query}&hits={hits}&offset={offset}'
+base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi?func=PerformSearch&{query}&boost=oa&hits={hits}&offset={offset}'
 
 
 # engine dependent config
