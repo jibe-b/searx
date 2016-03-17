@@ -10,7 +10,7 @@
  @results     XML
  @stable      ?
  @parse       url, title, publishedDate, content
- More info on api: http://base-search.net/about/download/base_interface.pdf 
+ More info on api: http://base-search.net/about/download/base_interface.pdf
 """
 
 from lxml import etree
@@ -22,7 +22,8 @@ import re
 
 categories = ['science']
 
-base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi?func=PerformSearch&{query}&boost=oa&hits={hits}&offset={offset}'
+base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi'\
+           + '?func=PerformSearch&{query}&boost=oa&hits={hits}&offset={offset}'
 
 # engine dependent config
 paging = True
@@ -31,32 +32,32 @@ number_of_results = 10
 
 def request(query, params):
 
-    #shortcuts for advanced search
-    shorcut_dict={
-            'format' : 'dcformat',
-            'author' : 'dccreator',
-            'collection' : 'dccollection',
+#shortcuts for advanced search
+    shorcut_dict = {
+            'format':'dcformat',
+            'author'  dccreator',
+            'collection':'dccollection',
             'hdate' : 'dchdate',
-            'contributor' : 'dccontributor',
-            'coverage' : 'dccoverage',
+            'contributor':'dccontributor',
+            'coverage':'dccoverage',
             'date' : 'dcdate',
-            'abstract' : 'dcdescription',
-            'urls' : 'dcidentifier',
-            'language' : 'dclanguage',
-            'publisher' : 'dcpublisher',
-            'relation' : 'dcrelation',
-            'rights' : 'dcrights',
-            'source' : 'dcsource',
-            'subject' : 'dcsubject',
-            'title' : 'dctitle',
-            'type' : 'dcdctype'  
+            'abstract':'dcdescription',
+            'urls':'dcidentifier',
+            'language':'dclanguage',
+            'publisher':'dcpublisher',
+            'relation':'dcrelation',
+            'rights':'dcrights',
+            'source':'dcsource',
+            'subject':'dcsubject',
+            'title':'dctitle',
+            'type':'dcdctype'  
     }
-    #replace shortcuts with API advanced search keywords
+#replace shortcuts with API advanced search keywords
     for key in shorcut_dict.keys():
-        query = re.sub(str(key),  str(shorcut_dict[key]), query)
+        query = re.sub(str(key), str(shorcut_dict[key]), query)
 
-    #basic search
-    offset = (params['pageno'] - 1  ) * number_of_results
+#basic search
+    offset = (params['pageno'] - 1 ) * number_of_results
 
     string_args = dict(query=urlencode({'query': query}),
                        offset=offset,
@@ -77,17 +78,16 @@ def response(resp):
 
     for entry in search_results.xpath('./result/doc'):
         content = "No description available"
-	
-	date = datetime.now() #needed in case no dcdate is available for an item
-        for item in entry:
-            if item.attrib["name"] == "dchdate":
+
+        date = datetime.now() #needed in case no dcdate is available for an item
+        if item.attrib["name"] == "dchdate":
                 harvestDate = item.text
 
             if item.attrib["name"] == "dcdate":
                 date = item.text
 
             if item.attrib["name"] == "dctitle":
-                title = item.text        
+                title = item.text
 
             elif item.attrib["name"] == "dclink":
                 url = item.text
@@ -95,29 +95,28 @@ def response(resp):
             elif item.attrib["name"] == "dcdescription":
                 content = escape(item.text[:300])
                 if len(item.text) > 300:
-                    content += "..." 
+                    content += "..."
 
-        #tmp: dates returned by the BASE API are not in iso format
-        #so the three main date formats are tried one after the other
+#tmp: dates returned by the BASE API are not in iso format
+#so the three main date formats are tried one after the other
         publishedDate = None
         for date_format in ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d', '%Y-%m', '%Y']:
             try:
-        	publishedDate = datetime.strptime(date, date_format)
-        	break
-    	    except:
+                publishedDate = datetime.strptime(date, date_format)
+                break
+            except:
                 pass
 
-	if publishedDate is not None:
-	    res_dict = {'url': url,
-                        'title': title,
-			'publishedDate': publishedDate,
-			'content': content}
+        if publishedDate is not None:
+            res_dict = {'url': url,
+                       'title': title,
+	               'publishedDate': publishedDate,
+                       'content': content}
         else:
             res_dict = {'url': url,
-                        'title': title,
-                        'content': content}
+                       'title': title,
+                       'content': content}
 
         results.append(res_dict)
 
     return results
-
