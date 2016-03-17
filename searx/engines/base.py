@@ -79,22 +79,23 @@ def response(resp):
         content = "No description available"
 
         date = datetime.now()  # needed in case no dcdate is available for an item
-        if item.attrib["name"] == "dchdate":
-            harvestDate = item.text
+        for item in entry:
+            if item.attrib["name"] == "dchdate":
+                harvestDate = item.text
 
-        if item.attrib["name"] == "dcdate":
-            date = item.text
+            if item.attrib["name"] == "dcdate":
+                date = item.text
 
-        if item.attrib["name"] == "dctitle":
-            title = item.text
+            if item.attrib["name"] == "dctitle":
+                title = item.text
 
-        elif item.attrib["name"] == "dclink":
-            url = item.text
+            elif item.attrib["name"] == "dclink":
+                url = item.text
 
-        elif item.attrib["name"] == "dcdescription":
-            content = escape(item.text[:300])
-            if len(item.text) > 300:
-                content += "..."
+            elif item.attrib["name"] == "dcdescription":
+                content = escape(item.text[:300])
+                if len(item.text) > 300:
+                    content += "..."
 
 # dates returned by the BASE API are not several formats
         publishedDate = None
