@@ -10,16 +10,14 @@
  @results     XML
  @stable      ?
  @parse       url, title, publishedDate, content
- More info on api advanced search : http://base-search.net/about/download/base_interface.pdf 
+ More info on api: http://base-search.net/about/download/base_interface.pdf 
 """
 
 from lxml import etree
 from urllib import urlencode
 from searx.utils import searx_useragent
 from cgi import escape
-
 from datetime import datetime
-from string import Formatter
 
 import re
 
@@ -36,7 +34,7 @@ number_of_results = 10
 def request(query, params):
 
     #enable shortcut for advanced search
-    dico={
+    shorcut_dict={
             'format' : 'dcformat',
             'author' : 'dccreator',
             'collection' : 'dccollection',
@@ -56,8 +54,8 @@ def request(query, params):
             'type' : 'dcdctype'  
     }
 
-    for key in dico.keys():
-        query = re.sub(str(key),  str(dico[key]), query)
+    for key in shortcut_dict.keys():
+        query = re.sub(str(key),  str(shortcut_dict[key]), query)
 
 
 
