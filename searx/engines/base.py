@@ -106,7 +106,7 @@ def response(resp):
     	    except:
                 pass
 
-	if publishedDate != None:
+	if publishedDate is not None:
 	    res_dict = {'url': url,
                         'title': title,
 			'publishedDate': publishedDate,
@@ -119,3 +119,4 @@ def response(resp):
         results.append(res_dict)
 
     return results
+
