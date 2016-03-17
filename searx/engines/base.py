@@ -18,13 +18,11 @@ from urllib import urlencode
 from searx.utils import searx_useragent
 from cgi import escape
 from datetime import datetime
-
 import re
 
 categories = ['science']
 
 base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi?func=PerformSearch&{query}&boost=oa&hits={hits}&offset={offset}'
-
 
 # engine dependent config
 paging = True
@@ -33,7 +31,7 @@ number_of_results = 10
 
 def request(query, params):
 
-    #enable shortcut for advanced search
+    #shortcuts for advanced search
     shorcut_dict={
             'format' : 'dcformat',
             'author' : 'dccreator',
@@ -53,13 +51,11 @@ def request(query, params):
             'title' : 'dctitle',
             'type' : 'dcdctype'  
     }
-
+    #replace shortcuts with API advanced search keywords
     for key in shorcut_dict.keys():
         query = re.sub(str(key),  str(shorcut_dict[key]), query)
 
-
-
-    #regular search
+    #basic search
     offset = (params['pageno'] - 1  ) * number_of_results
 
     string_args = dict(query=urlencode({'query': query}),
