@@ -99,6 +99,7 @@ def response(resp):
 
         #tmp: dates returned by the BASE API are not in iso format
         #so the three main date formats are tried one after the other
+        publishedDate = None
         for date_format in ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d', '%Y-%m', '%Y']:
             try:
         	publishedDate = datetime.strptime(date, date_format)
