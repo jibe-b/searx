@@ -8,7 +8,7 @@ search:
 server:
     port : 8889
     bind_address : "127.0.0.1" # address to listen on
-    secret_key : "labDevInstance" # change this!
+    secret_key : "ultrasecretkey" # change this!
     base_url : False # Set custom base_url. Possible values: False or "https://your.custom.host/location/"
     image_proxy : False # Proxying image results through searx
 
