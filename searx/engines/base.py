@@ -9,7 +9,7 @@
  @using-api   yes
  @results     XML
  @stable      ?
- @parse       ?
+ @parse       url, title, publishedDate, content
  More info on api advanced search : http://base-search.net/about/download/base_interface.pdf 
 """
 
@@ -68,8 +68,6 @@ def request(query, params):
                        offset=offset,
                        hits=number_of_results)
 
-    format_strings = list(Formatter().parse(base_url))
-
     search_url = base_url
 
     params['url'] = search_url.format(**string_args)
@@ -101,7 +99,9 @@ def response(resp):
                 url = item.text
 
             elif item.attrib["name"] == "dcdescription":
-                content = escape(item.text[:300]) + "..."
+                content = escape(item.text[:300])
+                if len(item.text) > 300:
+                    content += "..." 
 
         #tmp: dates returned by the BASE API are not in iso format
         #so the three main date formats are tried one after the other
@@ -112,7 +112,7 @@ def response(resp):
     	    except:
                 try:
                     publishedDate = datetime.strptime(harvestDate,  date_format )
-                    content = "Publisehd: " + str(date) + " - " + content
+                    content = "Published: " + str(date) + " - " + content
                 except:
                     pass
 
