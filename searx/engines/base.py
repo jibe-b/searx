@@ -54,8 +54,8 @@ def request(query, params):
             'type' : 'dcdctype'  
     }
 
-    for key in shortcut_dict.keys():
-        query = re.sub(str(key),  str(shortcut_dict[key]), query)
+    for key in shorcut_dict.keys():
+        query = re.sub(str(key),  str(shorcut_dict[key]), query)
 
 
 
@@ -108,12 +108,7 @@ def response(resp):
         	publishedDate = datetime.strptime(date, date_format)
         	break
     	    except:
-                try:
-                    publishedDate = datetime.strptime(harvestDate,  date_format )
-                    content = "Published: " + str(date) + " - " + content
-                except:
-                    pass
-
+                pass
 
 	if publishedDate != None:
 	    res_dict = {'url': url,
