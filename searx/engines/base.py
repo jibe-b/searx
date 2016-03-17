@@ -33,23 +33,23 @@ number_of_results = 10
 def request(query, params):
     # shortcuts for advanced search
     shorcut_dict = {
-            'format': 'dcformat',
-            'author': 'dccreator',
-            'collection': 'dccollection',
-            'hdate': 'dchdate',
-            'contributor': 'dccontributor',
-            'coverage': 'dccoverage',
-            'date': 'dcdate',
-            'abstract': 'dcdescription',
-            'urls': 'dcidentifier',
-            'language': 'dclanguage',
-            'publisher': 'dcpublisher',
-            'relation': 'dcrelation',
-            'rights': 'dcrights',
-            'source': 'dcsource',
-            'subject': 'dcsubject',
-            'title': 'dctitle',
-            'type': 'dcdctype'
+        'format': 'dcformat',
+        'author': 'dccreator',
+        'collection': 'dccollection',
+        'hdate': 'dchdate',
+        'contributor': 'dccontributor',
+        'coverage': 'dccoverage',
+        'date': 'dcdate',
+        'abstract': 'dcdescription',
+        'urls': 'dcidentifier',
+        'language': 'dclanguage',
+        'publisher': 'dcpublisher',
+        'relation': 'dcrelation',
+        'rights': 'dcrights',
+        'source': 'dcsource',
+        'subject': 'dcsubject',
+        'title': 'dctitle',
+        'type': 'dcdctype'
     }
 # replace shortcuts with API advanced search keywords
     for key in shorcut_dict.keys():
@@ -107,9 +107,9 @@ def response(resp):
 
         if publishedDate is not None:
             res_dict = {'url': url,
-                            'title': title,
-                            'publishedDate': publishedDate,
-                            'content': content}
+                        'title': title,
+                        'publishedDate': publishedDate,
+                        'content': content}
         else:
             res_dict = {'url': url,
                             'title': title,
