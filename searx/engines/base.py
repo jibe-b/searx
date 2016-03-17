@@ -80,17 +80,20 @@ def response(resp):
             publishedDate = datetime.strptime(date, '%Y-%m-%dT%H:%M:%SZ' )
         except:
             try:
-                publishedDate = datetime.strptime(date, '%Y' ) 
+                publishedDate = datetime.strptime(date, '%Y-%m-%d' ) 
             except:
                 try:
-                    publishedDate = datetime.strptime(date, '%Y-%m-%d' )
+                    publishedDate = datetime.strptime(date, '%Y-%m' )
                 except:
                     try:
-                        publishedDate = datetime.strptime(harvestDate,  '%Y-%m-%dT%H:%M:%SZ' )
+                        publishedDate = datetime.strptime(date, '%Y' )
                     except:
-                        publishedDate = datetime.now()
-                    finally:
-                        content = "Published: " + str(date) + " - " + content
+                        try:
+                            publishedDate = datetime.strptime(harvestDate,  '%Y-%m-%dT%H:%M:%SZ' )
+                        except:
+                            publishedDate = datetime.now()
+                        finally:
+                            content = "Published: " + str(date) + " - " + content
 
 
         results.append({'url': url,
