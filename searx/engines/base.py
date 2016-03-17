@@ -31,8 +31,7 @@ number_of_results = 10
 
 
 def request(query, params):
-
-# shortcuts for advanced search
+    # shortcuts for advanced search
     shorcut_dict = {
             'format': 'dcformat',
             'author': 'dccreator',
@@ -79,7 +78,7 @@ def response(resp):
     for entry in search_results.xpath('./result/doc'):
         content = "No description available"
 
-        date = datetime.now()  #needed in case no dcdate is available for an item
+        date = datetime.now()  # needed in case no dcdate is available for an item
         if item.attrib["name"] == "dchdate":
             harvestDate = item.text
 
@@ -108,13 +107,13 @@ def response(resp):
 
         if publishedDate is not None:
             res_dict = {'url': url,
-                       'title': title,
-	               'publishedDate': publishedDate,
-                       'content': content}
+                            'title': title,
+                            'publishedDate': publishedDate,
+                            'content': content}
         else:
             res_dict = {'url': url,
-                       'title': title,
-                       'content': content}
+                            'title': title,
+                            'content': content}
 
         results.append(res_dict)
 
