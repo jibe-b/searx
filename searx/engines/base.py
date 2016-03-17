@@ -21,6 +21,8 @@ from cgi import escape
 from datetime import datetime
 from string import Formatter
 
+import re
+
 categories = ['science']
 
 base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi?func=PerformSearch&{query}&boost=oa&hits={hits}&offset={offset}'
@@ -33,6 +35,33 @@ number_of_results = 10
 
 def request(query, params):
 
+    #enable shortcut for advanced search
+    dico={
+            'format' : 'dcformat',
+            'author' : 'dccreator',
+            'collection' : 'dccollection',
+            'hdate' : 'dchdate',
+            'contributor' : 'dccontributor',
+            'coverage' : 'dccoverage',
+            'date' : 'dcdate',
+            'abstract' : 'dcdescription',
+            'urls' : 'dcidentifier',
+            'language' : 'dclanguage',
+            'publisher' : 'dcpublisher',
+            'relation' : 'dcrelation',
+            'rights' : 'dcrights',
+            'source' : 'dcsource',
+            'subject' : 'dcsubject',
+            'title' : 'dctitle',
+            'type' : 'dcdctype'  
+    }
+
+    for key in dico.keys():
+        query = re.sub(str(key),  str(dico[key]), query)
+
+
+
+    #regular search
     offset = (params['pageno'] - 1  ) * number_of_results
     print (params['pageno'] -1)* number_of_results 
 
@@ -57,7 +86,8 @@ def response(resp):
 
     for entry in search_results.xpath('./result/doc'):
         content = "No description available"
-
+	
+	date = datetime.now() #needed in case no dcdate is available for an item
         for item in entry:
             if item.attrib["name"] == "dchdate":
                 harvestDate = item.text
