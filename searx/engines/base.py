@@ -113,8 +113,8 @@ def response(resp):
                         'content': content}
         else:
             res_dict = {'url': url,
-                            'title': title,
-                            'content': content}
+                        'title': title,
+                        'content': content}
 
         results.append(res_dict)
 
