@@ -32,23 +32,23 @@ number_of_results = 10
 
 # shortcuts for advanced search
 shorcut_dict = {
-    'format': 'dcformat',
-    'author': 'dccreator',
-    'collection': 'dccollection',
-    'hdate': 'dchdate',
-    'contributor': 'dccontributor',
-    'coverage': 'dccoverage',
-    'date': 'dcdate',
-    'abstract': 'dcdescription',
-    'urls': 'dcidentifier',
-    'language': 'dclanguage',
-    'publisher': 'dcpublisher',
-    'relation': 'dcrelation',
-    'rights': 'dcrights',
-    'source': 'dcsource',
-    'subject': 'dcsubject',
-    'title': 'dctitle',
-    'type': 'dcdctype'
+    'format:': 'dcformat:',
+    'author:': 'dccreator:',
+    'collection:': 'dccollection:',
+    'hdate:': 'dchdate:',
+    'contributor:': 'dccontributor:',
+    'coverage:': 'dccoverage:',
+    'date:': 'dcdate:',
+    'abstract:': 'dcdescription:',
+    'urls:': 'dcidentifier:',
+    'language:': 'dclanguage:',
+    'publisher:': 'dcpublisher:',
+    'relation:': 'dcrelation:',
+    'rights:': 'dcrights:',
+    'source:': 'dcsource:',
+    'subject:': 'dcsubject:',
+    'title:': 'dctitle:',
+    'type:': 'dcdctype:'
 }
 
 
