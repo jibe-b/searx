@@ -32,6 +32,7 @@ number_of_results = 10
 
 # shortcuts for advanced search
 shorcut_dict = {
+    # user-friendly keywords
     'format:': 'dcformat:',
     'author:': 'dccreator:',
     'collection:': 'dccollection:',
@@ -49,6 +50,11 @@ shorcut_dict = {
     'subject:': 'dcsubject:',
     'title:': 'dctitle:',
     'type:': 'dcdctype:'
+    
+    # BASE web interface keywords
+    'aut:': 'dccreator:',
+    'tit:':'dctitle',
+    'subj:': 'dcsubject:'
 }
 
 
