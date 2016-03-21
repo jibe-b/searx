@@ -50,6 +50,7 @@ shorcut_dict = {
     'type': 'dcdctype'
 }
 
+
 def request(query, params):
     # replace shortcuts with API advanced search keywords
     for key in shorcut_dict.keys():
@@ -82,19 +83,19 @@ def response(resp):
         for item in entry:
             if item.attrib["name"] == "dchdate":
                 harvestDate = item.text
-<<<<<<< HEAD
+
 
             elif item.attrib["name"] == "dcdate":
                 date = item.text
 
             elif item.attrib["name"] == "dctitle":
-=======
 
-            if item.attrib["name"] == "dcdate":
+
+            elif item.attrib["name"] == "dcdate":
                 date = item.text
 
-            if item.attrib["name"] == "dctitle":
->>>>>>> 9584b9105a98dbb4ecb8e9d2af783f4cc1c084dd
+            elif item.attrib["name"] == "dctitle":
+
                 title = item.text
 
             elif item.attrib["name"] == "dclink":
