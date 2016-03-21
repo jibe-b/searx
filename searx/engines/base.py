@@ -56,7 +56,7 @@ def request(query, params):
     for key in shorcut_dict.keys():
         query = re.sub(str(key), str(shorcut_dict[key]), query)
 
-# basic search
+    # basic search
     offset = (params['pageno'] - 1) * number_of_results
 
     string_args = dict(query=urlencode({'query': query}),
@@ -84,18 +84,16 @@ def response(resp):
             if item.attrib["name"] == "dchdate":
                 harvestDate = item.text
 
+            elif item.attrib["name"] == "dcdate":
+                date = item.text
+
+            elif item.attrib["name"] == "dctitle":
+                title = item.text
 
             elif item.attrib["name"] == "dcdate":
                 date = item.text
 
             elif item.attrib["name"] == "dctitle":
-
-
-            elif item.attrib["name"] == "dcdate":
-                date = item.text
-
-            elif item.attrib["name"] == "dctitle":
-
                 title = item.text
 
             elif item.attrib["name"] == "dclink":
