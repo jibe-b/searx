@@ -29,29 +29,29 @@ base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi'\
 paging = True
 number_of_results = 10
 
+# shortcuts for advanced search
+shorcut_dict = {
+    'format': 'dcformat',
+    'author': 'dccreator',
+    'collection': 'dccollection',
+    'hdate': 'dchdate',
+    'contributor': 'dccontributor',
+    'coverage': 'dccoverage',
+    'date': 'dcdate',
+    'abstract': 'dcdescription',
+    'urls': 'dcidentifier',
+    'language': 'dclanguage',
+    'publisher': 'dcpublisher',
+    'relation': 'dcrelation',
+    'rights': 'dcrights',
+    'source': 'dcsource',
+    'subject': 'dcsubject',
+    'title': 'dctitle',
+    'type': 'dcdctype'
+}
 
 def request(query, params):
-    # shortcuts for advanced search
-    shorcut_dict = {
-        'format': 'dcformat',
-        'author': 'dccreator',
-        'collection': 'dccollection',
-        'hdate': 'dchdate',
-        'contributor': 'dccontributor',
-        'coverage': 'dccoverage',
-        'date': 'dcdate',
-        'abstract': 'dcdescription',
-        'urls': 'dcidentifier',
-        'language': 'dclanguage',
-        'publisher': 'dcpublisher',
-        'relation': 'dcrelation',
-        'rights': 'dcrights',
-        'source': 'dcsource',
-        'subject': 'dcsubject',
-        'title': 'dctitle',
-        'type': 'dcdctype'
-    }
-# replace shortcuts with API advanced search keywords
+    # replace shortcuts with API advanced search keywords
     for key in shorcut_dict.keys():
         query = re.sub(str(key), str(shorcut_dict[key]), query)
 
@@ -82,11 +82,19 @@ def response(resp):
         for item in entry:
             if item.attrib["name"] == "dchdate":
                 harvestDate = item.text
+<<<<<<< HEAD
+
+            elif item.attrib["name"] == "dcdate":
+                date = item.text
+
+            elif item.attrib["name"] == "dctitle":
+=======
 
             if item.attrib["name"] == "dcdate":
                 date = item.text
 
             if item.attrib["name"] == "dctitle":
+>>>>>>> 9584b9105a98dbb4ecb8e9d2af783f4cc1c084dd
                 title = item.text
 
             elif item.attrib["name"] == "dclink":
