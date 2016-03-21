@@ -49,13 +49,13 @@ shorcut_dict = {
     'source:': 'dcsource:',
     'subject:': 'dcsubject:',
     'title:': 'dctitle:',
-    'type:': 'dcdctype:'
+    'type:': 'dcdctype:',
 
     # BASE web interface keywords
     'aut:': 'dccreator:',
     'tit:': 'dctitle:',
-    'subj:': 'dcsubject:'
-    'url:': 'dcidentifier:',
+    'subj:': 'dcsubject:',
+    'url:': 'dcidentifier:'
 }
 
 
