@@ -53,7 +53,7 @@ shorcut_dict = {
     
     # BASE web interface keywords
     'aut:': 'dccreator:',
-    'tit:':'dctitle',
+    'tit:':'dctitle:',
     'subj:': 'dcsubject:'
 }
 
