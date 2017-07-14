@@ -89,7 +89,7 @@ if sys.version_info[0] == 3:
 
 # serve pages with HTTP/1.1
 from werkzeug.serving import WSGIRequestHandler
-WSGIRequestHandler.protocol_version = "HTTP/{}".format(settings['server'].get('http_protocol_version', '1.0'))
+WSGIHandler.protocol_version = "HTTP/{}".format(settings['server'].get('http_protocol_version', '1.0'))
 
 # about static
 static_path = get_resources_directory(searx_dir, 'static', settings['ui']['static_path'])
@@ -380,6 +380,8 @@ def render(template_name, override_theme=None, **kwargs):
     for plugin in request.user_plugins:
         for css in plugin.css_dependencies:
             kwargs['styles'].add(css)
+    
+    kwargs['doi_resolver'] = settings['doi_resolver']
 
     return render_template(
         '{}/{}'.format(kwargs['theme'], template_name), **kwargs)
