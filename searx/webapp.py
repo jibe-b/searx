@@ -380,6 +380,8 @@ def render(template_name, override_theme=None, **kwargs):
     for plugin in request.user_plugins:
         for css in plugin.css_dependencies:
             kwargs['styles'].add(css)
+    
+    kwargs['doi_resolver'] = settings['doi_resolver']
 
     return render_template(
         '{}/{}'.format(kwargs['theme'], template_name), **kwargs)
