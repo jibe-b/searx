@@ -15,6 +15,9 @@ server:
     image_proxy : False # Proxying image results through searx
     http_protocol_version : "1.0"  # 1.0 and 1.1 are supported
 
+api_keys:
+    core_api : "COREAPIKEYTHATLOOKSLIKEAHASH"
+
 ui:
     static_path : "" # Custom static path - leave it blank if you didn't change
     templates_path : "" # Custom templates path - leave it blank if you didn't change
@@ -107,6 +110,11 @@ engines:
     categories : videos
     disabled : True
     shortcut : c3tv
+
+  - name : core
+    engine : core
+    shortcut : cor
+    disabled : true
 
   - name : crossref
     engine : json_engine
