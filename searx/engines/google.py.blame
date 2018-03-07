@@ -1,0 +1,394 @@
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100   1) #  Google (Web)
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100   2) #
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200   3) # @website     https://www.google.com
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200   4) # @provide-api yes (https://developers.google.com/custom-search/)
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100   5) #
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200   6) # @using-api   no
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200   7) # @results     HTML
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200   8) # @stable      no (HTML can change)
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200   9) # @parse       url, title, content, suggestion
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100  10) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200  11) import re
+1613c631 (Adam Tauber       2017-12-05 20:38:34 +0100  12) from flask_babel import gettext
+5d49c15f (Adam Tauber       2015-10-29 12:47:12 +0100  13) from lxml import html, etree
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200  14) from searx.engines.xpath import extract_text, extract_url
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  15) from searx import logger
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  16) from searx.url_utils import urlencode, urlparse, parse_qsl
+5d49c15f (Adam Tauber       2015-10-29 12:47:12 +0100  17) 
+5d49c15f (Adam Tauber       2015-10-29 12:47:12 +0100  18) logger = logger.getChild('google engine')
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100  19) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  20) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200  21) # engine dependent config
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100  22) categories = ['general']
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200  23) paging = True
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200  24) language_support = True
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  25) use_locale_domain = True
+2e583950 (Noemi Vanyi       2016-07-18 16:09:18 +0200  26) time_range_support = True
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  27) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  28) # based on https://en.wikipedia.org/wiki/List_of_Google_domains and tests
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  29) default_hostname = 'www.google.com'
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  30) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  31) country_to_hostname = {
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  32)     'BG': 'www.google.bg',  # Bulgaria
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  33)     'CZ': 'www.google.cz',  # Czech Republic
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  34)     'DE': 'www.google.de',  # Germany
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  35)     'DK': 'www.google.dk',  # Denmark
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  36)     'AT': 'www.google.at',  # Austria
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  37)     'CH': 'www.google.ch',  # Switzerland
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  38)     'GR': 'www.google.gr',  # Greece
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  39)     'AU': 'www.google.com.au',  # Australia
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  40)     'CA': 'www.google.ca',  # Canada
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  41)     'GB': 'www.google.co.uk',  # United Kingdom
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  42)     'ID': 'www.google.co.id',  # Indonesia
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  43)     'IE': 'www.google.ie',  # Ireland
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  44)     'IN': 'www.google.co.in',  # India
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  45)     'MY': 'www.google.com.my',  # Malaysia
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  46)     'NZ': 'www.google.co.nz',  # New Zealand
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  47)     'PH': 'www.google.com.ph',  # Philippines
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  48)     'SG': 'www.google.com.sg',  # Singapore
+90c51cb4 (Kirill Isakov     2016-04-13 23:04:53 +0600  49)     # 'US': 'www.google.us',  # United States, redirect to .com
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  50)     'ZA': 'www.google.co.za',  # South Africa
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  51)     'AR': 'www.google.com.ar',  # Argentina
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  52)     'CL': 'www.google.cl',  # Chile
+90c51cb4 (Kirill Isakov     2016-04-13 23:04:53 +0600  53)     'ES': 'www.google.es',  # Spain
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  54)     'MX': 'www.google.com.mx',  # Mexico
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  55)     'EE': 'www.google.ee',  # Estonia
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  56)     'FI': 'www.google.fi',  # Finland
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  57)     'BE': 'www.google.be',  # Belgium
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  58)     'FR': 'www.google.fr',  # France
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  59)     'IL': 'www.google.co.il',  # Israel
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  60)     'HR': 'www.google.hr',  # Croatia
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  61)     'HU': 'www.google.hu',  # Hungary
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  62)     'IT': 'www.google.it',  # Italy
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  63)     'JP': 'www.google.co.jp',  # Japan
+90c51cb4 (Kirill Isakov     2016-04-13 23:04:53 +0600  64)     'KR': 'www.google.co.kr',  # South Korea
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  65)     'LT': 'www.google.lt',  # Lithuania
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  66)     'LV': 'www.google.lv',  # Latvia
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  67)     'NO': 'www.google.no',  # Norway
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  68)     'NL': 'www.google.nl',  # Netherlands
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  69)     'PL': 'www.google.pl',  # Poland
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  70)     'BR': 'www.google.com.br',  # Brazil
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  71)     'PT': 'www.google.pt',  # Portugal
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  72)     'RO': 'www.google.ro',  # Romania
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  73)     'RU': 'www.google.ru',  # Russia
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  74)     'SK': 'www.google.sk',  # Slovakia
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  75)     'SL': 'www.google.si',  # Slovenia (SL -> si)
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  76)     'SE': 'www.google.se',  # Sweden
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  77)     'TH': 'www.google.co.th',  # Thailand
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  78)     'TR': 'www.google.com.tr',  # Turkey
+90c51cb4 (Kirill Isakov     2016-04-13 23:04:53 +0600  79)     'UA': 'www.google.com.ua',  # Ukraine
+90c51cb4 (Kirill Isakov     2016-04-13 23:04:53 +0600  80)     # 'CN': 'www.google.cn',  # China, only from China ?
+90c51cb4 (Kirill Isakov     2016-04-13 23:04:53 +0600  81)     'HK': 'www.google.com.hk',  # Hong Kong
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  82)     'TW': 'www.google.com.tw'  # Taiwan
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  83) }
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100  84) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200  85) # osm
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200  86) url_map = 'https://www.openstreetmap.org/'\
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200  87)     + '?lat={latitude}&lon={longitude}&zoom={zoom}&layers=M'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200  88) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200  89) # search-url
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200  90) search_path = '/search'
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200  91) search_url = ('https://{hostname}' +
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100  92)               search_path +
+6fdb6640 (Adam Tauber       2017-11-22 22:50:48 +0100  93)               '?{query}&start={offset}&gws_rd=cr&gbv=1&lr={lang}&ei=x')
+2a788c8f (asciimoo          2014-01-31 04:35:23 +0100  94) 
+2e583950 (Noemi Vanyi       2016-07-18 16:09:18 +0200  95) time_range_search = "&tbs=qdr:{range}"
+2e583950 (Noemi Vanyi       2016-07-18 16:09:18 +0200  96) time_range_dict = {'day': 'd',
+2e583950 (Noemi Vanyi       2016-07-18 16:09:18 +0200  97)                    'week': 'w',
+c59c76e6 (Noémi Ványi       2016-12-11 16:39:12 +0100  98)                    'month': 'm',
+c59c76e6 (Noémi Ványi       2016-12-11 16:39:12 +0100  99)                    'year': 'y'}
+2e583950 (Noemi Vanyi       2016-07-18 16:09:18 +0200 100) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 101) # other URLs
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 102) map_hostname_start = 'maps.google.'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 103) maps_path = '/maps'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 104) redirect_path = '/url'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 105) images_path = '/images'
+f62ce21f (marc              2016-11-05 20:51:38 -0600 106) supported_languages_url = 'https://www.google.com/preferences?#languages'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 107) 
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 108) # specific xpath variables
+66f48c2b (Adam Tauber       2016-01-10 18:49:50 +0100 109) results_xpath = '//div[@class="g"]'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 110) url_xpath = './/h3/a/@href'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 111) title_xpath = './/h3'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 112) content_xpath = './/span[@class="st"]'
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 113) content_misc_xpath = './/div[@class="f slp"]'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 114) suggestion_xpath = '//p[@class="_Bmc"]'
+1d30141c (David A Roberts   2017-01-14 18:40:37 +1000 115) spelling_suggestion_xpath = '//a[@class="spell"]'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 116) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 117) # map : detail location
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 118) map_address_xpath = './/div[@class="s"]//table//td[2]/span/text()'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 119) map_phone_xpath = './/div[@class="s"]//table//td[2]/span/span'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 120) map_website_url_xpath = 'h3[2]/a/@href'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 121) map_website_title_xpath = 'h3[2]'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 122) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 123) # map : near the location
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 124) map_near = 'table[@class="ts"]//tr'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 125) map_near_title = './/h4'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 126) map_near_url = './/h4/a/@href'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 127) map_near_phone = './/span[@class="nobr"]'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 128) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 129) # images
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 130) images_xpath = './/div/a'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 131) image_url_xpath = './@href'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 132) image_img_src_xpath = './img/@src'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 133) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 134) # property names
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 135) # FIXME : no translation
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 136) property_address = "Address"
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 137) property_phone = "Phone number"
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 138) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 139) 
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 140) # remove google-specific tracking-url
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 141) def parse_url(url_string, google_hostname):
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 142)     # sanity check
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 143)     if url_string is None:
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 144)         return url_string
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 145) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 146)     # normal case
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 147)     parsed_url = urlparse(url_string)
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100 148)     if (parsed_url.netloc in [google_hostname, '']
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100 149)             and parsed_url.path == redirect_path):
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 150)         query = dict(parse_qsl(parsed_url.query))
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 151)         return query['q']
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 152)     else:
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 153)         return url_string
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 154) 
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100 155) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 156) # returns extract_text on the first result selected by the xpath or None
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 157) def extract_text_from_dom(result, xpath):
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 158)     r = result.xpath(xpath)
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 159)     if len(r) > 0:
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 160)         return extract_text(r[0])
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 161)     return None
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 162) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 163) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 164) # do search-request
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 165) def request(query, params):
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 166)     offset = (params['pageno'] - 1) * 10
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 167) 
+4d177039 (marc              2017-07-20 15:47:20 -0500 168)     # temporary fix until a way of supporting en-US is found
+4d177039 (marc              2017-07-20 15:47:20 -0500 169)     if params['language'] == 'en-US':
+6eb95038 (Adam Tauber       2017-11-22 22:56:47 +0100 170)         params['language'] = 'en-GB'
+6eb95038 (Adam Tauber       2017-11-22 22:56:47 +0100 171) 
+6eb95038 (Adam Tauber       2017-11-22 22:56:47 +0100 172)     if params['language'][:2] == 'jv':
+c677aee5 (marc              2016-08-06 22:19:21 -0500 173)         language = 'jw'
+c677aee5 (marc              2016-08-06 22:19:21 -0500 174)         country = 'ID'
+6fdb6640 (Adam Tauber       2017-11-22 22:50:48 +0100 175)         url_lang = 'lang_jw'
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 176)     else:
+c677aee5 (marc              2016-08-06 22:19:21 -0500 177)         language_array = params['language'].lower().split('-')
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 178)         if len(language_array) == 2:
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 179)             country = language_array[1]
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 180)         else:
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 181)             country = 'US'
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 182)         language = language_array[0] + ',' + language_array[0] + '-' + country
+6fdb6640 (Adam Tauber       2017-11-22 22:50:48 +0100 183)         url_lang = 'lang_' + language_array[0]
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 184) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 185)     if use_locale_domain:
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 186)         google_hostname = country_to_hostname.get(country.upper(), default_hostname)
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 187)     else:
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 188)         google_hostname = default_hostname
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 189) 
+2d5eed9b (Noémi Ványi       2017-12-18 21:38:52 +0100 190)     # original format: ID=3e2b6616cee08557:TM=5556667580:C=r:IP=4.1.12.5-:S=23ASdf0soFgF2d34dfgf-_22JJOmHdfgg
+2d5eed9b (Noémi Ványi       2017-12-18 21:38:52 +0100 191)     params['cookies']['GOOGLE_ABUSE_EXEMPTION'] = 'x'
+ca271fd8 (asciimoo          2014-01-29 21:14:38 +0100 192)     params['url'] = search_url.format(offset=offset,
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 193)                                       query=urlencode({'q': query}),
+6d55642a (Adam Tauber       2016-03-25 18:38:02 +0100 194)                                       hostname=google_hostname,
+6d55642a (Adam Tauber       2016-03-25 18:38:02 +0100 195)                                       lang=url_lang)
+350a8452 (Adam Tauber       2016-07-26 00:22:05 +0200 196)     if params['time_range'] in time_range_dict:
+2e583950 (Noemi Vanyi       2016-07-18 16:09:18 +0200 197)         params['url'] += time_range_search.format(range=time_range_dict[params['time_range']])
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 198) 
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 199)     params['headers']['Accept-Language'] = language
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 200)     params['headers']['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 201) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 202)     params['google_hostname'] = google_hostname
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 203) 
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 204)     return params
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 205) 
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 206) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 207) # get response from search-request
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 208) def response(resp):
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 209)     results = []
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 210) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 211)     # detect google sorry
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 212)     resp_url = urlparse(resp.url)
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 213)     if resp_url.netloc == 'sorry.google.com' or resp_url.path == '/sorry/IndexRedirect':
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 214)         raise RuntimeWarning('sorry.google.com')
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 215) 
+1613c631 (Adam Tauber       2017-12-05 20:38:34 +0100 216)     if resp_url.path.startswith('/sorry'):
+1613c631 (Adam Tauber       2017-12-05 20:38:34 +0100 217)         raise RuntimeWarning(gettext('CAPTCHA required'))
+1613c631 (Adam Tauber       2017-12-05 20:38:34 +0100 218) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 219)     # which hostname ?
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 220)     google_hostname = resp.search_params.get('google_hostname')
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 221)     google_url = "https://" + google_hostname
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 222) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 223)     # convert the text to dom
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 224)     dom = html.fromstring(resp.text)
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 225) 
+0d4da30c (Adam Tauber       2017-01-05 17:20:12 +0100 226)     instant_answer = dom.xpath('//div[@id="_vBb"]//text()')
+0d4da30c (Adam Tauber       2017-01-05 17:20:12 +0100 227)     if instant_answer:
+0d4da30c (Adam Tauber       2017-01-05 17:20:12 +0100 228)         results.append({'answer': u' '.join(instant_answer)})
+52d10872 (Adam Tauber       2017-01-27 00:18:46 +0100 229)     try:
+52d10872 (Adam Tauber       2017-01-27 00:18:46 +0100 230)         results_num = int(dom.xpath('//div[@id="resultStats"]//text()')[0]
+52d10872 (Adam Tauber       2017-01-27 00:18:46 +0100 231)                           .split()[1].replace(',', ''))
+52d10872 (Adam Tauber       2017-01-27 00:18:46 +0100 232)         results.append({'number_of_results': results_num})
+52d10872 (Adam Tauber       2017-01-27 00:18:46 +0100 233)     except:
+52d10872 (Adam Tauber       2017-01-27 00:18:46 +0100 234)         pass
+0d4da30c (Adam Tauber       2017-01-05 17:20:12 +0100 235) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 236)     # parse results
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 237)     for result in dom.xpath(results_xpath):
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 238)         try:
+5d49c15f (Adam Tauber       2015-10-29 12:47:12 +0100 239)             title = extract_text(result.xpath(title_xpath)[0])
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 240)             url = parse_url(extract_url(result.xpath(url_xpath), google_url), google_hostname)
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 241)             parsed_url = urlparse(url, google_hostname)
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 242) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 243)             # map result
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 244)             if parsed_url.netloc == google_hostname:
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 245)                 # TODO fix inside links
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 246)                 continue
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 247)                 # if parsed_url.path.startswith(maps_path) or parsed_url.netloc.startswith(map_hostname_start):
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 248)                 #     print "yooooo"*30
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 249)                 #     x = result.xpath(map_near)
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 250)                 #     if len(x) > 0:
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 251)                 #         # map : near the location
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 252)                 #         results = results + parse_map_near(parsed_url, x, google_hostname)
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 253)                 #     else:
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 254)                 #         # map : detail about a location
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 255)                 #         results = results + parse_map_detail(parsed_url, result, google_hostname)
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 256)                 # # google news
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 257)                 # elif parsed_url.path == search_path:
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 258)                 #     # skipping news results
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 259)                 #     pass
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 260) 
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 261)                 # # images result
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 262)                 # elif parsed_url.path == images_path:
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 263)                 #     # only thumbnail image provided,
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 264)                 #     # so skipping image results
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 265)                 #     # results = results + parse_images(result, google_hostname)
+09b7673f (Adam Tauber       2016-01-18 13:08:46 +0100 266)                 #     pass
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 267) 
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 268)             else:
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 269)                 # normal result
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 270)                 content = extract_text_from_dom(result, content_xpath)
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 271)                 if content is None:
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 272)                     continue
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 273)                 content_misc = extract_text_from_dom(result, content_misc_xpath)
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 274)                 if content_misc is not None:
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 275)                     content = content_misc + "<br />" + content
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 276)                 # append result
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100 277)                 results.append({'url': url,
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100 278)                                 'title': title,
+fc0ae0f9 (Dalf              2015-06-06 00:18:00 +0200 279)                                 'content': content
+fc0ae0f9 (Dalf              2015-06-06 00:18:00 +0200 280)                                 })
+fc0ae0f9 (Dalf              2015-06-06 00:18:00 +0200 281)         except:
+5d49c15f (Adam Tauber       2015-10-29 12:47:12 +0100 282)             logger.debug('result parse error in:\n%s', etree.tostring(result, pretty_print=True))
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 283)             continue
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 284) 
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 285)     # parse suggestion
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 286)     for suggestion in dom.xpath(suggestion_xpath):
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 287)         # append suggestion
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 288)         results.append({'suggestion': extract_text(suggestion)})
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 289) 
+1d30141c (David A Roberts   2017-01-14 18:40:37 +1000 290)     for correction in dom.xpath(spelling_suggestion_xpath):
+1d30141c (David A Roberts   2017-01-14 18:40:37 +1000 291)         results.append({'correction': extract_text(correction)})
+1d30141c (David A Roberts   2017-01-14 18:40:37 +1000 292) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 293)     # return results
+3207a396 (asciimoo          2014-01-29 19:28:38 +0100 294)     return results
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 295) 
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100 296) 
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 297) def parse_images(result, google_hostname):
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 298)     results = []
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 299)     for image in result.xpath(images_xpath):
+39ff2123 (Alexandre Flament 2015-05-30 17:41:40 +0200 300)         url = parse_url(extract_text(image.xpath(image_url_xpath)[0]), google_hostname)
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 301)         img_src = extract_text(image.xpath(image_img_src_xpath)[0])
+611f4e2a (Adam Tauber       2014-12-05 20:03:16 +0100 302) 
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 303)         # append result
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 304)         results.append({'url': url,
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 305)                         'title': '',
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 306)                         'content': '',
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 307)                         'img_src': img_src,
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 308)                         'template': 'images.html'
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 309)                         })
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 310) 
+5dc3eb33 (Dalf              2014-09-14 14:40:55 +0200 311)     return results
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 312) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 313) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 314) def parse_map_near(parsed_url, x, google_hostname):
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 315)     results = []
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 316) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 317)     for result in x:
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 318)         title = extract_text_from_dom(result, map_near_title)
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 319)         url = parse_url(extract_text_from_dom(result, map_near_url), google_hostname)
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 320)         attributes = []
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 321)         phone = extract_text_from_dom(result, map_near_phone)
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 322)         add_attributes(attributes, property_phone, phone, 'tel:' + phone)
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 323)         results.append({'title': title,
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 324)                         'url': url,
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 325)                         'content': attributes_to_html(attributes)
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 326)                         })
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 327) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 328)     return results
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 329) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 330) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 331) def parse_map_detail(parsed_url, result, google_hostname):
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 332)     results = []
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 333) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 334)     # try to parse the geoloc
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700 335)     m = re.search(r'@([0-9\.]+),([0-9\.]+),([0-9]+)', parsed_url.path)
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 336)     if m is None:
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700 337)         m = re.search(r'll\=([0-9\.]+),([0-9\.]+)\&z\=([0-9]+)', parsed_url.query)
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 338) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 339)     if m is not None:
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 340)         # geoloc found (ignored)
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 341)         lon = float(m.group(2))  # noqa
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 342)         lat = float(m.group(1))  # noqa
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 343)         zoom = int(m.group(3))  # noqa
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 344) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 345)         # attributes
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 346)         attributes = []
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 347)         address = extract_text_from_dom(result, map_address_xpath)
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 348)         phone = extract_text_from_dom(result, map_phone_xpath)
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 349)         add_attributes(attributes, property_address, address, 'geo:' + str(lat) + ',' + str(lon))
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 350)         add_attributes(attributes, property_phone, phone, 'tel:' + phone)
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 351) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 352)         # title / content / url
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 353)         website_title = extract_text_from_dom(result, map_website_title_xpath)
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 354)         content = extract_text_from_dom(result, content_xpath)
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 355)         website_url = parse_url(extract_text_from_dom(result, map_website_url_xpath), google_hostname)
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 356) 
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 357)         # add a result if there is a website
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 358)         if website_url is not None:
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 359)             results.append({'title': website_title,
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 360)                             'content': (content + '<br />' if content is not None else '')
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 361)                             + attributes_to_html(attributes),
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 362)                             'url': website_url
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 363)                             })
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 364) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 365)     return results
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 366) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 367) 
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 368) def add_attributes(attributes, name, value, url):
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 369)     if value is not None and len(value) > 0:
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 370)         attributes.append({'label': name, 'value': value, 'url': url})
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 371) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 372) 
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 373) def attributes_to_html(attributes):
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 374)     retval = '<table class="table table-striped">'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 375)     for a in attributes:
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 376)         value = a.get('value')
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 377)         if 'url' in a:
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 378)             value = '<a href="' + a.get('url') + '">' + value + '</a>'
+72c8de35 (Dalf              2015-06-05 23:56:23 +0200 379)         retval = retval + '<tr><th>' + a.get('label') + '</th><td>' + value + '</td></tr>'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 380)     retval = retval + '</table>'
+b8fc531b (Alexandre Flament 2015-06-05 11:23:24 +0200 381)     return retval
+f62ce21f (marc              2016-11-05 20:51:38 -0600 382) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 383) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 384) # get supported languages from their site
+af35eee1 (marc              2016-12-15 00:34:43 -0600 385) def _fetch_supported_languages(resp):
+f62ce21f (marc              2016-11-05 20:51:38 -0600 386)     supported_languages = {}
+af35eee1 (marc              2016-12-15 00:34:43 -0600 387)     dom = html.fromstring(resp.text)
+af35eee1 (marc              2016-12-15 00:34:43 -0600 388)     options = dom.xpath('//table//td/font/label/span')
+f62ce21f (marc              2016-11-05 20:51:38 -0600 389)     for option in options:
+af35eee1 (marc              2016-12-15 00:34:43 -0600 390)         code = option.xpath('./@id')[0][1:]
+af35eee1 (marc              2016-12-15 00:34:43 -0600 391)         name = option.text.title()
+f62ce21f (marc              2016-11-05 20:51:38 -0600 392)         supported_languages[code] = {"name": name}
+f62ce21f (marc              2016-11-05 20:51:38 -0600 393) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 394)     return supported_languages

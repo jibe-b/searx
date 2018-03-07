@@ -1,0 +1,117 @@
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   1) from fabric.api import cd, run, sudo, put
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   2) from cStringIO import StringIO
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   3) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   4) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   5) base_dir = '/usr/local'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   6) hostname = 'searx.me'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   7) searx_dir = base_dir + '/searx'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   8) searx_ve_dir = searx_dir + '/searx-ve'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100   9) current_user = run('whoami').stdout.strip()
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  10) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  11) uwsgi_file = '''
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  12) [uwsgi]
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  13) # Who will run the code
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  14) uid = {user}
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  15) gid = {user}
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  16) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  17) # Number of workers
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  18) workers = 8
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  19) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  20) # The right granted on the created socket
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  21) chmod-socket = 666
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  22) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  23) # Plugin to use and interpretor config
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  24) single-interpreter = true
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  25) master = true
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  26) plugin = python
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  27) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  28) # Module to import
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  29) module = searx.webapp
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  30) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  31) # Virtualenv and python path
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  32) virtualenv = {searx_ve_dir}
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  33) pythonpath = {searx_dir}
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  34) chdir = {searx_dir}/searx
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  35) '''.format(user=current_user,
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  36)            searx_dir=searx_dir,
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  37)            searx_ve_dir=searx_ve_dir)
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  38) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  39) nginx_config = '''
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  40) server {{
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  41)     listen 80;
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  42)     server_name {hostname};
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  43)     server_name www.{hostname};
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  44)     root /usr/local/searx;
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  45) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  46)     location / {{
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  47)         include uwsgi_params;
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  48)         uwsgi_pass unix:/run/uwsgi/app/searx/socket;
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  49)     }}
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  50) }}
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  51) '''.format(hostname=hostname)
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  52) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  53) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  54) def stop():
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  55)     sudo('/etc/init.d/uwsgi stop')
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  56) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  57) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  58) def start():
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  59)     sudo('/etc/init.d/uwsgi start')
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  60) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  61) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  62) def restart():
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  63)     sudo('/etc/init.d/uwsgi restart')
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  64) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  65) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  66) def init():
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  67)     if not run('test -d ' + searx_dir, warn_only=True).failed:
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  68)         return
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  69) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  70)     sudo('apt-get update')
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  71) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  72)     sudo('apt-get install git'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  73)          ' build-essential'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  74)          ' libxslt-dev'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  75)          ' python-dev'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  76)          ' python-virtualenv'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  77)          ' python-pybabel'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  78)          ' zlib1g-dev'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  79)          ' uwsgi'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  80)          ' uwsgi-plugin-python'
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  81)          ' nginx')
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  82) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  83)     sudo('mkdir -p ' + base_dir)
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  84) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  85)     put(StringIO(nginx_config), '/etc/nginx/sites-enabled/searx', use_sudo=True)
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  86)     sudo('/etc/init.d/nginx restart')
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  87) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  88)     with cd(base_dir):
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  89)         sudo('git clone https://github.com/asciimoo/searx')
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  90) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  91)     sudo('chown -R {user}:{user} {searx_dir}'.format(user=current_user, searx_dir=searx_dir))
+d9231d17 (stepshal    2016-07-11 18:52:37 +0700  92)     put(StringIO(uwsgi_file), searx_dir + '/uwsgi.ini')
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  93)     sudo('ln -s {0}/uwsgi.ini /etc/uwsgi/apps-enabled/searx.ini'.format(searx_dir))
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  94) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  95)     run('virtualenv {0}'.format(searx_ve_dir))
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  96) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  97)     with cd(searx_dir):
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  98)         run('source {0}/bin/activate && pip install -r requirements.txt'.format(searx_ve_dir))
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100  99) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 100)     start()
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 101) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 102) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 103) def deploy():
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 104)     init()
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 105) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 106)     with cd(searx_dir):
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 107)         run("git stash", warn_only=True)
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 108)         run("git pull origin master")
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 109)         run("git stash pop", warn_only=True)
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 110) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 111)     restart()
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 112) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 113) 
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 114) def clean():
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 115)     sudo('rm -rf {searx_dir}'.format(searx_dir=searx_dir), warn_only=True)
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 116)     sudo('rm /etc/uwsgi/apps-enabled/searx.ini', warn_only=True)
+9492b500 (Adam Tauber 2015-02-08 10:42:30 +0100 117)     sudo('rm /etc/nginx/sites-enabled/searx', warn_only=True)

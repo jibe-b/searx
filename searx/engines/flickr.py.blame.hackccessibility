@@ -1,0 +1,91 @@
+812d3070 (stef              2013-10-18 02:15:26 +0200  1) #!/usr/bin/env python
+812d3070 (stef              2013-10-18 02:15:26 +0200  2) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  Flickr (Images)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6)  @website     https://www.flickr.com
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @provide-api yes (https://secure.flickr.com/services/api/flickr.photos.search.html)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 12)  @parse       url, title, thumbnail, img_src
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 13)  More info on api-key : https://www.flickr.com/services/apps/create/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 14) """
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 15) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 16) from json import loads
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 17) from searx.url_utils import urlencode
+812d3070 (stef              2013-10-18 02:15:26 +0200 18) 
+b1a996ef (asciimoo          2013-10-18 09:35:29 +0200 19) categories = ['images']
+812d3070 (stef              2013-10-18 02:15:26 +0200 20) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 21) nb_per_page = 15
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 22) paging = True
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 23) api_key = None
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 24) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 25) 
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 26) url = 'https://api.flickr.com/services/rest/?method=flickr.photos.search' +\
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 27)       '&api_key={api_key}&{text}&sort=relevance' +\
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 28)       '&extras=description%2C+owner_name%2C+url_o%2C+url_n%2C+url_z' +\
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 29)       '&per_page={nb_per_page}&format=json&nojsoncallback=1&page={page}'
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 30) photo_url = 'https://www.flickr.com/photos/{userid}/{photoid}'
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 31) 
+89b676ea (asciimoo          2014-01-30 01:19:51 +0100 32) paging = True
+89b676ea (asciimoo          2014-01-30 01:19:51 +0100 33) 
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 34) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 35) @little_documented
+def build_flickr_url(user_id, photo_id):
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 36)     return photo_url.format(userid=user_id, photoid=photo_id)
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 37) 
+812d3070 (stef              2013-10-18 02:15:26 +0200 38) 
+812d3070 (stef              2013-10-18 02:15:26 +0200 39) def request(query, params):
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 40)     params['url'] = url.format(text=urlencode({'text': query}),
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 41)                                api_key=api_key,
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 42)                                nb_per_page=nb_per_page,
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 43)                                page=params['pageno'])
+812d3070 (stef              2013-10-18 02:15:26 +0200 44)     return params
+812d3070 (stef              2013-10-18 02:15:26 +0200 45) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 46) 
+812d3070 (stef              2013-10-18 02:15:26 +0200 47) def response(resp):
+812d3070 (stef              2013-10-18 02:15:26 +0200 48)     results = []
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 49) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 50)     search_results = loads(resp.text)
+3386e21c (Adam Tauber       2014-05-20 16:57:03 +0200 51) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 52)     # return empty array if there are no results
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 53)     if 'photos' not in search_results:
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 54)         return []
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 55) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 56)     if 'photo' not in search_results['photos']:
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 57)         return []
+3386e21c (Adam Tauber       2014-05-20 16:57:03 +0200 58) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 59)     photos = search_results['photos']['photo']
+3386e21c (Adam Tauber       2014-05-20 16:57:03 +0200 60) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 61)     # parse results
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 62)     for photo in photos:
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 63)         if 'url_o' in photo:
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 64)             img_src = photo['url_o']
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 65)         elif 'url_z' in photo:
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 66)             img_src = photo['url_z']
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 67)         else:
+3386e21c (Adam Tauber       2014-05-20 16:57:03 +0200 68)             continue
+3386e21c (Adam Tauber       2014-05-20 16:57:03 +0200 69) 
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 70) # For a bigger thumbnail, keep only the url_z, not the url_n
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 71)         if 'url_n' in photo:
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 72)             thumbnail_src = photo['url_n']
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 73)         elif 'url_z' in photo:
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 74)             thumbnail_src = photo['url_z']
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 75)         else:
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 76)             thumbnail_src = img_src
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 77) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 78)         url = build_flickr_url(photo['owner'], photo['id'])
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 79) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 80)         # append result
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 81)         results.append({'url': url,
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 82)                         'title': photo['title'],
+3386e21c (Adam Tauber       2014-05-20 16:57:03 +0200 83)                         'img_src': img_src,
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 84)                         'thumbnail_src': thumbnail_src,
+fdf63940 (Adam Tauber       2016-12-09 19:10:57 +0100 85)                         'content': photo['description']['_content'],
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 86)                         'author': photo['ownername'],
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 87)                         'template': 'images.html'})
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 88) 
+0059d08f (Cqoicebordel      2014-12-15 03:21:25 +0100 89)     # return results
+812d3070 (stef              2013-10-18 02:15:26 +0200 90)     return results

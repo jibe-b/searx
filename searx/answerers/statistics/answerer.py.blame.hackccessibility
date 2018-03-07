@@ -1,0 +1,56 @@
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  1) from sys import version_info
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100  2) from functools import reduce
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100  3) from operator import mul
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100  4) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100  5) from flask_babel import gettext
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100  6) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  7) if version_info[0] == 3:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  8)     unicode = str
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  9) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 10) keywords = ('min',
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 11)             'max',
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 12)             'avg',
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 13)             'sum',
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 14)             'prod')
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 15) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 16) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 17) # required answerer function
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 18) # can return a list of results (any result type) for a given query
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 19) @little_documented
+def answer(query):
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 20)     parts = query.query.split()
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 21) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 22)     if len(parts) < 2:
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 23)         return []
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 24) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 25)     try:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 26)         args = list(map(float, parts[1:]))
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 27)     except:
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 28)         return []
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 29) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 30)     func = parts[0]
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 31)     answer = None
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 32) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 33)     if func == b'min':
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 34)         answer = min(args)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 35)     elif func == b'max':
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 36)         answer = max(args)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 37)     elif func == b'avg':
+0724bd81 (Adam Tauber 2016-11-19 21:18:12 +0100 38)         answer = sum(args) / len(args)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 39)     elif func == b'sum':
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 40)         answer = sum(args)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 41)     elif func == b'prod':
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 42)         answer = reduce(mul, args, 1)
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 43) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 44)     if answer is None:
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 45)         return []
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 46) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 47)     return [{'answer': unicode(answer)}]
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 48) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 49) 
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 50) # required answerer function
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 51) # returns information about the answerer
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 52) def self_info():
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 53)     return {'name': gettext('Statistics functions'),
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 54)             'description': gettext('Compute {functions} of the arguments').format(functions='/'.join(keywords)),
+7eed8a5d (Adam Tauber 2016-11-19 21:03:27 +0100 55)             'examples': ['avg 123 548 2.04 24.2']}

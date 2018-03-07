@@ -1,0 +1,83 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Google (News)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100  4)  @website     https://news.google.com
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100  5)  @provide-api no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100  7)  @using-api   no
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100  8)  @results     HTML
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100  9)  @stable      no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content, publishedDate
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 12) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 13) from lxml import html
+af35eee1 (marc              2016-12-15 00:34:43 -0600 14) from searx.engines.google import _fetch_supported_languages, supported_languages_url
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 15) from searx.url_utils import urlencode
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 16) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 17) # search-url
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 18) categories = ['news']
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 19) paging = True
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 20) language_support = True
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 21) safesearch = True
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 22) time_range_support = True
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 23) number_of_results = 10
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 24) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 25) search_url = 'https://www.google.com/search'\
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 26)     '?{query}'\
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 27)     '&tbm=nws'\
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 28)     '&gws_rd=cr'\
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 29)     '&{search_options}'
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 30) time_range_attr = "qdr:{range}"
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 31) time_range_dict = {'day': 'd',
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 32)                    'week': 'w',
+c59c76e6 (Noémi Ványi       2016-12-11 16:39:12 +0100 33)                    'month': 'm',
+c59c76e6 (Noémi Ványi       2016-12-11 16:39:12 +0100 34)                    'year': 'y'}
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 35) 
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 36) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 37) # do search-request
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 38) def request(query, params):
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 39) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 40)     search_options = {
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 41)         'start': (params['pageno'] - 1) * number_of_results
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 42)     }
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 43) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 44)     if params['time_range'] in time_range_dict:
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 45)         search_options['tbs'] = time_range_attr.format(range=time_range_dict[params['time_range']])
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 46) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 47)     if safesearch and params['safesearch']:
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 48)         search_options['safe'] = 'on'
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 49) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 50)     params['url'] = search_url.format(query=urlencode({'q': query}),
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 51)                                       search_options=urlencode(search_options))
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 52) 
+4d177039 (marc              2017-07-20 15:47:20 -0500 53)     language_array = params['language'].lower().split('-')
+4d177039 (marc              2017-07-20 15:47:20 -0500 54)     params['url'] += '&lr=lang_' + language_array[0]
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 55) 
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 56)     return params
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 57) 
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 58) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 59) # get response from search-request
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 60) def response(resp):
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 61)     results = []
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 62) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 63)     dom = html.fromstring(resp.text)
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 64) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 65)     # parse results
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 66)     for result in dom.xpath('//div[@class="g"]|//div[@class="g _cy"]'):
+108392f8 (Adam Tauber       2017-01-10 11:03:05 +0100 67)         try:
+108392f8 (Adam Tauber       2017-01-10 11:03:05 +0100 68)             r = {
+3182ba70 (misnyo            2017-08-31 17:48:07 +0200 69)                 'url': result.xpath('.//a[@class="l _PMs"]')[0].attrib.get("href"),
+3182ba70 (misnyo            2017-08-31 17:48:07 +0200 70)                 'title': ''.join(result.xpath('.//a[@class="l _PMs"]//text()')),
+108392f8 (Adam Tauber       2017-01-10 11:03:05 +0100 71)                 'content': ''.join(result.xpath('.//div[@class="st"]//text()')),
+108392f8 (Adam Tauber       2017-01-10 11:03:05 +0100 72)             }
+108392f8 (Adam Tauber       2017-01-10 11:03:05 +0100 73)         except:
+108392f8 (Adam Tauber       2017-01-10 11:03:05 +0100 74)             continue
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 75) 
+0171db5c (Adam Tauber       2016-12-23 12:59:03 +0100 76)         imgs = result.xpath('.//img/@src')
+0171db5c (Adam Tauber       2016-12-23 12:59:03 +0100 77)         if len(imgs) and not imgs[0].startswith('data'):
+0171db5c (Adam Tauber       2016-12-23 12:59:03 +0100 78)             r['img_src'] = imgs[0]
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 79) 
+a2c94895 (Adam Tauber       2016-12-11 01:03:03 +0100 80)         results.append(r)
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 81) 
+144f89bf (Thomas Pointhuber 2014-09-01 15:10:05 +0200 82)     # return results
+0549f8c7 (Thomas Pointhuber 2014-03-04 13:11:04 +0100 83)     return results

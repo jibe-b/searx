@@ -1,0 +1,82 @@
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  1) # Youtube (Videos)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  2) #
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  3) # @website     https://www.youtube.com/
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  4) # @provide-api yes (https://developers.google.com/apis-explorer/#p/youtube/v3/youtube.search.list)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  5) #
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  6) # @using-api   yes
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  7) # @results     JSON
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  8) # @stable      yes
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  9) # @parse       url, title, content, publishedDate, thumbnail, embedded
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 10) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 11) from json import loads
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 12) from dateutil import parser
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 13) from searx.url_utils import urlencode
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 14) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 15) # engine dependent config
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 16) categories = ['videos', 'music']
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 17) paging = False
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 18) language_support = True
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 19) api_key = None
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 20) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 21) # search-url
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 22) base_url = 'https://www.googleapis.com/youtube/v3/search'
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 23) search_url = base_url + '?part=snippet&{query}&maxResults=20&key={api_key}'
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 24) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 25) embedded_url = '<iframe width="540" height="304" ' +\
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 26)     'data-src="//www.youtube-nocookie.com/embed/{videoid}" ' +\
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 27)     'frameborder="0" allowfullscreen></iframe>'
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 28) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 29) base_youtube_url = 'https://www.youtube.com/watch?v='
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 30) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 31) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 32) # do search-request
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 33) @little_documented
+def request(query, params):
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 34)     params['url'] = search_url.format(query=urlencode({'q': query}),
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 35)                                       api_key=api_key)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 36) 
+4d177039 (marc         2017-07-20 15:47:20 -0500 37)     params['url'] += '&relevanceLanguage=' + params['language'].split('-')[0]
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 38) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 39)     return params
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 40) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 41) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 42) # get response from search-request
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 43) def response(resp):
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 44)     results = []
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 45) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 46)     search_results = loads(resp.text)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 47) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 48)     # return empty array if there are no results
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 49)     if 'items' not in search_results:
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 50)         return []
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 51) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 52)     # parse results
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 53)     for result in search_results['items']:
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 54)         videoid = result['id']['videoId']
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 55) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 56)         title = result['snippet']['title']
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 57)         content = ''
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 58)         thumbnail = ''
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 59) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 60)         pubdate = result['snippet']['publishedAt']
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 61)         publishedDate = parser.parse(pubdate)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 62) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 63)         thumbnail = result['snippet']['thumbnails']['high']['url']
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 64) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 65)         content = result['snippet']['description']
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 66) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 67)         url = base_youtube_url + videoid
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 68) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 69)         embedded = embedded_url.format(videoid=videoid)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 70) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 71)         # append result
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 72)         results.append({'url': url,
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 73)                         'title': title,
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 74)                         'content': content,
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 75)                         'template': 'videos.html',
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 76)                         'publishedDate': publishedDate,
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 77)                         'embedded': embedded,
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 78)                         'thumbnail': thumbnail})
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 79) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 80)     # return results
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 81)     return results

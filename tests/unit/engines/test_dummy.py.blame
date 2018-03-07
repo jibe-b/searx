@@ -1,0 +1,26 @@
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  1) from searx.engines import dummy
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  2) from searx.testing import SearxTestCase
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  3) 
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  4) 
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  5) class TestDummyEngine(SearxTestCase):
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  6) 
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  7)     def test_request(self):
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  8)         test_params = [
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200  9)             [1, 2, 3],
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 10)             ['a'],
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 11)             [],
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 12)             1
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 13)         ]
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 14)         for params in test_params:
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 15)             self.assertEqual(dummy.request(None, params), params)
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 16) 
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 17)     def test_response(self):
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 18)         responses = [
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 19)             None,
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 20)             [],
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 21)             True,
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 22)             dict(),
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 23)             tuple()
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 24)         ]
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 25)         for response in responses:
+f7058006 searx/tests/engines/test_dummy.py (Gabor Nagy 2014-07-14 15:33:56 +0200 26)             self.assertEqual(dummy.response(response), [])

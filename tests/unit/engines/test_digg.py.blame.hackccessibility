@@ -1,0 +1,102 @@
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   1) from collections import defaultdict
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   2) import mock
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   3) from searx.engines import digg
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   4) from searx.testing import SearxTestCase
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   5) 
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   6) 
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   7) class TestDiggEngine(SearxTestCase):
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   8) 
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100   9)     @little_documented
+def test_request(self):
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  10)         query = 'test_query'
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  11)         dicto = defaultdict(dict)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  12)         dicto['pageno'] = 1
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  13)         params = digg.request(query, dicto)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  14)         self.assertIn('url', params)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  15)         self.assertIn(query, params['url'])
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  16)         self.assertIn('digg.com', params['url'])
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  17) 
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  18)     def test_response(self):
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  19)         self.assertRaises(AttributeError, digg.response, None)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  20)         self.assertRaises(AttributeError, digg.response, [])
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  21)         self.assertRaises(AttributeError, digg.response, '')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  22)         self.assertRaises(AttributeError, digg.response, '[]')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  23) 
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  24)         response = mock.Mock(text='{}')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  25)         self.assertEqual(digg.response(response), [])
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  26) 
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  27)         response = mock.Mock(text='{"data": []}')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  28)         self.assertEqual(digg.response(response), [])
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  29) 
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  30)         json = """
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  31)         {
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  32)         "status": "ok",
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  33)         "num": 10,
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  34)         "next_position": 20,
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  35)         "html": "<article itemscope itemtype=\\"http://schema.org/Article\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  36)         class=\\"story-container digg-story-el hentry entry story-1sRANah col-1\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  37)         data-content-id=\\"1sRANah\\" data-contenturl=\\"http://url.of.link\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  38)         data-position=\\"0\\" data-diggs=\\"24\\" data-tweets=\\"69\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  39)         data-digg-score=\\"1190\\"> <div class=\\"story-image story-image-thumb\\">
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  40)         <a data-position=\\"0\\" data-content-id=\\"1sRANah\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  41)         class=\\"story-link\\" href=\\"http://www.thedailybeast.com/\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  42)         target=\\"_blank\\"><img class=\\"story-image-img\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  43)         src=\\"http://url.of.image.jpeg\\" width=\\"312\\" height=\\"170\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  44)         alt=\\"\\" /> </a> </div> <div class=\\"story-content\\"><header
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  45)         class=\\"story-header\\"> <div itemprop=\\"alternativeHeadline\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  46)         class=\\"story-kicker\\" >Kicker</div> <h2 itemprop=\\"headline\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  47)         class=\\"story-title entry-title\\"><a class=\\"story-title-link story-link\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  48)         rel=\\"bookmark\\" itemprop=\\"url\\" href=\\"http://www.thedailybeast.com/\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  49)         target=\\"_blank\\">Title of article</h2> <div class=\\"story-meta\\">
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  50)         <div class=\\"story-score \\">
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  51)         <div class=\\"story-score-diggscore diggscore-1sRANah\\">1190</div>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  52)         <div class=\\"story-score-details\\"> <div class=\\"arrow\\"></div>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  53)         <ul class=\\"story-score-details-list\\"> <li
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  54)         class=\\"story-score-detail story-score-diggs\\"><span
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  55)         class=\\"label\\">Diggs:</span> <span class=\\"count diggs-1sRANah\\">24</span>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  56)         </li> <li class=\\"story-score-detail story-score-twitter\\"><span
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  57)         class=\\"label\\">Tweets:</span> <span class=\\"count tweets-1sRANah\\">69</span>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  58)         </li> <li class=\\"story-score-detail story-score-facebook\\"><span
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  59)         class=\\"label\\">Facebook Shares:</span> <span
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  60)         class=\\"count fb_shares-1sRANah\\">1097</span></li> </ul> </div> </div>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  61)         <span class=\\"story-meta-item story-source\\"> <a
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  62)         itemprop=\\"publisher copyrightHolder sourceOrganization provider\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  63)         class=\\"story-meta-item-link story-source-link\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  64)         href=\\"/source/thedailybeast.com\\">The Daily Beast </a> </span>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  65)         <span class=\\"story-meta-item story-tag first-tag\\"> <a
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  66)         itemprop=\\"keywords\\" rel=\\"tag\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  67)         class=\\"story-meta-item-link story-tag-link\\" href=\\"/tag/news\\">News</a>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  68)         </span> <abbr class=\\"published story-meta-item story-timestamp\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  69)         title=\\"2014-10-18 14:53:45\\"> <time datetime=\\"2014-10-18 14:53:45\\">18 Oct 2014</time>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  70)         </abbr> </div> </header> </div> <ul class=\\"story-actions\\"> <li
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  71)         class=\\"story-action story-action-digg btn-story-action-container\\">
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  72)         <a class=\\"target digg-1sRANah\\" href=\\"#\\">Digg</a></li> <li
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  73)         class=\\"story-action story-action-save btn-story-action-container\\">
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  74)         <a class=\\"target save-1sRANah\\" href=\\"#\\">Save</a></li> <li
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  75)         class=\\"story-action story-action-share\\"><a
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  76)         class=\\"target share-facebook\\" href=\\"https://www.facebook.com/\\">Facebook</a></li>
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  77)         <li class=\\"story-action story-action-share\\"><a class=\\"target share-twitter\\"
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  78)         href=\\"https://twitter.com/\\">Twitter</a></li> </ul> </article>"
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  79)         }
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  80)         """
+d4957045 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 01:13:33 +0100  81)         json = json.replace('\r\n', '').replace('\n', '').replace('\r', '')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  82)         response = mock.Mock(text=json)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  83)         results = digg.response(response)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  84)         self.assertEqual(type(results), list)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  85)         self.assertEqual(len(results), 1)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  86)         self.assertEqual(results[0]['title'], 'Title of article')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  87)         self.assertEqual(results[0]['url'], 'http://url.of.link')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  88)         self.assertEqual(results[0]['thumbnail'], 'http://url.of.image.jpeg')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  89)         self.assertEqual(results[0]['content'], '')
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  90) 
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  91)         json = """
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  92)         {
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  93)         "status": "error",
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  94)         "num": 10,
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  95)         "next_position": 20
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  96)         }
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  97)         """
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  98)         response = mock.Mock(text=json)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100  99)         results = digg.response(response)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100 100)         self.assertEqual(type(results), list)
+1d255061 searx/tests/engines/test_digg.py (Cqoicebordel 2015-01-29 00:26:12 +0100 101)         self.assertEqual(len(results), 0)

@@ -1,0 +1,106 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   1) # Yacy (Web, Images, Videos, Music, Files)
+7c13d630 (dalf              2014-12-07 16:37:56 +0100   2) #
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200   3) # @website     http://yacy.net
+7c13d630 (dalf              2014-12-07 16:37:56 +0100   4) # @provide-api yes
+7c13d630 (dalf              2014-12-07 16:37:56 +0100   5) #              (http://www.yacy-websuche.de/wiki/index.php/Dev:APIyacysearch)
+7c13d630 (dalf              2014-12-07 16:37:56 +0100   6) #
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200   7) # @using-api   yes
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200   8) # @results     JSON
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200   9) # @stable      yes
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  10) # @parse       (general)    url, title, content, publishedDate
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  11) # @parse       (images)     url, title, img_src
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  12) #
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  13) # @todo        parse video, audio and file results
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  14) 
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  15) from json import loads
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  16) from dateutil import parser
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  17) from searx.url_utils import urlencode
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  18) 
+16c40ffe (Thomas Renard     2016-12-11 14:05:07 +0100  19) from searx.utils import html_to_text
+16c40ffe (Thomas Renard     2016-12-11 14:05:07 +0100  20) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  21) # engine dependent config
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  22) categories = ['general', 'images']  # TODO , 'music', 'videos', 'files'
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  23) paging = True
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  24) language_support = True
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  25) number_of_results = 5
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  26) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  27) # search-url
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  28) base_url = 'http://localhost:8090'
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100  29) search_url = '/yacysearch.json?{query}'\
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  30)              '&startRecord={offset}'\
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  31)              '&maximumRecords={limit}'\
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  32)              '&contentdom={search_type}'\
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  33)              '&resource=global'
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  34) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  35) # yacy specific type-definitions
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  36) search_types = {'general': 'text',
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  37)                 'images': 'image',
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  38)                 'files': 'app',
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  39)                 'music': 'audio',
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  40)                 'videos': 'video'}
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  41) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  42) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  43) # do search-request
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  44) def request(query, params):
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  45)     offset = (params['pageno'] - 1) * number_of_results
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  46)     search_type = search_types.get(params.get('category'), '0')
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  47) 
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100  48)     params['url'] = base_url +\
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100  49)         search_url.format(query=urlencode({'query': query}),
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100  50)                           offset=offset,
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100  51)                           limit=number_of_results,
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100  52)                           search_type=search_type)
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  53) 
+4d177039 (marc              2017-07-20 15:47:20 -0500  54)     params['url'] += '&lr=lang_' + params['language'].split('-')[0]
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  55) 
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  56)     return params
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  57) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  58) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  59) # get response from search-request
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  60) def response(resp):
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  61)     results = []
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  62) 
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  63)     raw_search_results = loads(resp.text)
+d13c5aa3 (asciimoo          2014-01-05 00:46:42 +0100  64) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  65)     # return empty array if there are no results
+c1d7d30b (asciimoo          2014-02-11 13:13:51 +0100  66)     if not raw_search_results:
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  67)         return []
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  68) 
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  69)     search_results = raw_search_results.get('channels', [])
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  70) 
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  71)     if len(search_results) == 0:
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  72)         return []
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  73) 
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100  74)     for result in search_results[0].get('items', []):
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  75)         # parse image results
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  76)         if result.get('image'):
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  77) 
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  78)             result_url = ''
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  79)             if 'url' in result:
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  80)                 result_url = result['url']
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  81)             elif 'link' in result:
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  82)                 result_url = result['link']
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  83)             else:
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  84)                 continue
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  85) 
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  86)             # append result
+f3aa5ea4 (Noémi Ványi       2018-01-06 14:52:14 +0100  87)             results.append({'url': result_url,
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  88)                             'title': result['title'],
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  89)                             'content': '',
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  90)                             'img_src': result['image'],
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  91)                             'template': 'images.html'})
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  92) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  93)         # parse general results
+7e30633e (Thomas Pointhuber 2015-02-01 11:48:15 +0100  94)         else:
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  95)             publishedDate = parser.parse(result['pubDate'])
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100  96) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  97)             # append result
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200  98)             results.append({'url': result['link'],
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100  99)                             'title': result['title'],
+16c40ffe (Thomas Renard     2016-12-11 14:05:07 +0100 100)                             'content': html_to_text(result['description']),
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100 101)                             'publishedDate': publishedDate})
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100 102) 
+0a537d3b (Cqoicebordel      2015-02-09 16:55:01 +0100 103)         # TODO parse video, audio and file results
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100 104) 
+2cd98013 (Thomas Pointhuber 2014-09-03 13:47:12 +0200 105)     # return results
+a492ca6d (pw3t              2013-12-29 21:39:23 +0100 106)     return results

@@ -1,0 +1,55 @@
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  1) import random
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  2) import string
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  3) import sys
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  4) from flask_babel import gettext
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  5) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  6) # required answerer attribute
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  7) # specifies which search query keywords triggers this answerer
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  8) keywords = ('random',)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  9) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 10) random_int_max = 2**31
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 11) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 12) if sys.version_info[0] == 2:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 13)     random_string_letters = string.lowercase + string.digits + string.uppercase
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 14) else:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 15)     unicode = str
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 16)     random_string_letters = string.ascii_lowercase + string.digits + string.ascii_uppercase
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 17) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 18) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 19) def random_string():
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 20)     return u''.join(random.choice(random_string_letters)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 21)                     for _ in range(random.randint(8, 32)))
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 22) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 23) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 24) def random_float():
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 25)     return unicode(random.random())
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 26) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 27) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 28) def random_int():
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 29)     return unicode(random.randint(-random_int_max, random_int_max))
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 30) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 31) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 32) random_types = {b'string': random_string,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 33)                 b'int': random_int,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 34)                 b'float': random_float}
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 35) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 36) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 37) # required answerer function
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 38) # can return a list of results (any result type) for a given query
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 39) def answer(query):
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 40)     parts = query.query.split()
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 41)     if len(parts) != 2:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 42)         return []
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 43) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 44)     if parts[1] not in random_types:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 45)         return []
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 46) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 47)     return [{'answer': random_types[parts[1]]()}]
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 48) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 49) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 50) # required answerer function
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 51) # returns information about the answerer
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 52) def self_info():
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 53)     return {'name': gettext('Random value generator'),
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 54)             'description': gettext('Generate different random values'),
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 55)             'examples': [u'random {}'.format(x) for x in random_types]}

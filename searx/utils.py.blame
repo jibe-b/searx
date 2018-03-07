@@ -1,0 +1,350 @@
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100   1) import csv
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200   2) import hashlib
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200   3) import hmac
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100   4) import os
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100   5) import re
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100   6) 
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200   7) from babel.dates import format_date
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100   8) from codecs import getincrementalencoder
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100   9) from imp import load_source
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100  10) from numbers import Number
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100  11) from os.path import splitext, join
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000  12) from random import choice
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100  13) import sys
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000  14) 
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  15) from searx.version import VERSION_STRING
+983415bc (potato            2016-09-06 16:43:48 +0200  16) from searx.languages import language_codes
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  17) from searx import settings
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100  18) from searx import logger
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  19) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  20) try:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  21)     from cStringIO import StringIO
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  22) except:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  23)     from io import StringIO
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  24) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  25) try:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  26)     from HTMLParser import HTMLParser
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  27) except:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  28)     from html.parser import HTMLParser
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  29) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  30) if sys.version_info[0] == 3:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  31)     unichr = chr
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  32)     unicode = str
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100  33)     IS_PY2 = False
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100  34) else:
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100  35)     IS_PY2 = True
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100  36) 
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100  37) logger = logger.getChild('utils')
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  38) 
+9f64fd67 (Adam Tauber       2016-07-04 23:11:39 +0200  39) ua_versions = ('40.0',
+9f64fd67 (Adam Tauber       2016-07-04 23:11:39 +0200  40)                '41.0',
+9f64fd67 (Adam Tauber       2016-07-04 23:11:39 +0200  41)                '42.0',
+9f64fd67 (Adam Tauber       2016-07-04 23:11:39 +0200  42)                '43.0',
+9f64fd67 (Adam Tauber       2016-07-04 23:11:39 +0200  43)                '44.0',
+9f64fd67 (Adam Tauber       2016-07-04 23:11:39 +0200  44)                '45.0',
+9f64fd67 (Adam Tauber       2016-07-04 23:11:39 +0200  45)                '46.0',
+9f64fd67 (Adam Tauber       2016-07-04 23:11:39 +0200  46)                '47.0')
+3dfeb739 (Adam Tauber       2014-11-22 18:37:42 +0100  47) 
+8d40445a (Adam Tauber       2014-05-20 16:55:49 +0200  48) ua_os = ('Windows NT 6.3; WOW64',
+8d40445a (Adam Tauber       2014-05-20 16:55:49 +0200  49)          'X11; Linux x86_64',
+8d40445a (Adam Tauber       2014-05-20 16:55:49 +0200  50)          'X11; Linux x86')
+1fcf066a (Adam Tauber       2015-08-02 19:38:27 +0200  51) 
+f5d3b215 (Alexandre Flament 2015-05-02 12:35:57 +0200  52) ua = "Mozilla/5.0 ({os}; rv:{version}) Gecko/20100101 Firefox/{version}"
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100  53) 
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100  54) blocked_tags = ('script',
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100  55)                 'style')
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100  56) 
+693415c7 (Adam Tauber       2014-03-04 19:26:09 +0100  57) 
+046e1907 (asciimoo          2014-01-18 21:53:59 +0100  58) def gen_useragent():
+a65070a7 (asciimoo          2014-01-12 20:13:14 +0100  59)     # TODO
+71c2e822 (Adam Tauber       2014-03-04 14:20:37 +0100  60)     return ua.format(os=choice(ua_os), version=choice(ua_versions))
+a65070a7 (asciimoo          2014-01-12 20:13:14 +0100  61) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100  62) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200  63) def searx_useragent():
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100  64)     return 'searx/{searx_version} {suffix}'.format(
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100  65)            searx_version=VERSION_STRING,
+1fcf066a (Adam Tauber       2015-08-02 19:38:27 +0200  66)            suffix=settings['outgoing'].get('useragent_suffix', ''))
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  67) 
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  68) 
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  69) def highlight_content(content, query):
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  70) 
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  71)     if not content:
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  72)         return None
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  73)     # ignoring html contents
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  74)     # TODO better html content detection
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  75)     if content.find('<') != -1:
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  76)         return content
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  77) 
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  78)     query = query.decode('utf-8')
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  79)     if content.lower().find(query.lower()) > -1:
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  80)         query_regex = u'({0})'.format(re.escape(query))
+73948f30 (Adam Tauber       2014-05-16 16:51:23 +0200  81)         content = re.sub(query_regex, '<span class="highlight">\\1</span>',
+73948f30 (Adam Tauber       2014-05-16 16:51:23 +0200  82)                          content, flags=re.I | re.U)
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  83)     else:
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  84)         regex_parts = []
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  85)         for chunk in query.split():
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  86)             if len(chunk) == 1:
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700  87)                 regex_parts.append(u'\\W+{0}\\W+'.format(re.escape(chunk)))
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  88)             else:
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  89)                 regex_parts.append(u'{0}'.format(re.escape(chunk)))
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  90)         query_regex = u'({0})'.format('|'.join(regex_parts))
+73948f30 (Adam Tauber       2014-05-16 16:51:23 +0200  91)         content = re.sub(query_regex, '<span class="highlight">\\1</span>',
+73948f30 (Adam Tauber       2014-05-16 16:51:23 +0200  92)                          content, flags=re.I | re.U)
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  93) 
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100  94)     return content
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100  95) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100  96) 
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100  97) class HTMLTextExtractor(HTMLParser):
+cd9b494c (stepshal          2016-07-10 21:44:27 +0700  98) 
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100  99)     def __init__(self):
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 100)         HTMLParser.__init__(self)
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 101)         self.result = []
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 102)         self.tags = []
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 103) 
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 104)     def handle_starttag(self, tag, attrs):
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 105)         self.tags.append(tag)
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 106) 
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 107)     def handle_endtag(self, tag):
+699fe60e (Adam Tauber       2015-01-22 17:43:45 +0100 108)         if not self.tags:
+699fe60e (Adam Tauber       2015-01-22 17:43:45 +0100 109)             return
+699fe60e (Adam Tauber       2015-01-22 17:43:45 +0100 110) 
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 111)         if tag != self.tags[-1]:
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 112)             raise Exception("invalid html")
+699fe60e (Adam Tauber       2015-01-22 17:43:45 +0100 113) 
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 114)         self.tags.pop()
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 115) 
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 116)     def is_valid_tag(self):
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 117)         return not self.tags or self.tags[-1] not in blocked_tags
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 118) 
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 119)     def handle_data(self, d):
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 120)         if not self.is_valid_tag():
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 121)             return
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 122)         self.result.append(d)
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 123) 
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 124)     def handle_charref(self, number):
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 125)         if not self.is_valid_tag():
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 126)             return
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 127)         if number[0] in (u'x', u'X'):
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 128)             codepoint = int(number[1:], 16)
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 129)         else:
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 130)             codepoint = int(number)
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 131)         self.result.append(unichr(codepoint))
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 132) 
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 133)     def handle_entityref(self, name):
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 134)         if not self.is_valid_tag():
+1408859b (Adam Tauber       2015-01-01 14:13:56 +0100 135)             return
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 136)         # codepoint = htmlentitydefs.name2codepoint[name]
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 137)         # self.result.append(unichr(codepoint))
+d0427d9b (asciimoo          2013-11-18 16:47:20 +0100 138)         self.result.append(name)
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 139) 
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 140)     def get_text(self):
+cfe81d74 (Cqoicebordel      2015-01-27 20:03:33 +0100 141)         return u''.join(self.result).strip()
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 142) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 143) 
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 144) def html_to_text(html):
+52a57ee0 (Cqoicebordel      2015-01-30 21:00:49 +0100 145)     html = html.replace('\n', ' ')
+52a57ee0 (Cqoicebordel      2015-01-30 21:00:49 +0100 146)     html = ' '.join(html.split())
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 147)     s = HTMLTextExtractor()
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 148)     s.feed(html)
+e9467524 (asciimoo          2013-11-08 23:44:26 +0100 149)     return s.get_text()
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 150) 
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 151) 
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 152) class UnicodeWriter:
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 153)     """
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 154)     A CSV writer which will write rows to CSV file "f",
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 155)     which is encoded in the given encoding.
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 156)     """
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 157) 
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 158)     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 159)         # Redirect output to a queue
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 160)         self.queue = StringIO()
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 161)         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 162)         self.stream = f
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 163)         self.encoder = getincrementalencoder(encoding)()
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 164) 
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 165)     def writerow(self, row):
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 166)         if IS_PY2:
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 167)             row = [s.encode("utf-8") if hasattr(s, 'encode') else s for s in row]
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 168)         self.writer.writerow(row)
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 169)         # Fetch UTF-8 output from the queue ...
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 170)         data = self.queue.getvalue()
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 171)         if IS_PY2:
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 172)             data = data.decode("utf-8")
+b5071fea (Adam Tauber       2017-11-21 16:58:51 +0100 173)         else:
+b5071fea (Adam Tauber       2017-11-21 16:58:51 +0100 174)             data = data.strip('\x00')
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 175)         # ... and reencode it into the target encoding
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 176)         data = self.encoder.encode(data)
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 177)         # write to the target stream
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 178)         if IS_PY2:
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 179)             self.stream.write(data)
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 180)         else:
+3d6c6795 (Adam Tauber       2017-11-21 16:49:28 +0100 181)             self.stream.write(data.decode("utf-8"))
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 182)         # empty queue
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 183)         self.queue.truncate(0)
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 184) 
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 185)     def writerows(self, rows):
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 186)         for row in rows:
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 187)             self.writerow(row)
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 188) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 189) 
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 190) def get_resources_directory(searx_directory, subdirectory, resources_directory):
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 191)     if not resources_directory:
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 192)         resources_directory = os.path.join(searx_directory, subdirectory)
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 193)     if not os.path.isdir(resources_directory):
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 194)         raise Exception(directory + " is not a directory")
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 195)     return resources_directory
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 196) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 197) 
+9c91ab33 (Alexandre Flament 2017-01-06 13:52:59 +0100 198) def get_themes(templates_path):
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 199)     """Returns available themes list."""
+9c91ab33 (Alexandre Flament 2017-01-06 13:52:59 +0100 200)     themes = os.listdir(templates_path)
+7fdfeca3 (Alexandre Flament 2017-01-13 22:15:11 +0100 201)     if '__common__' in themes:
+7fdfeca3 (Alexandre Flament 2017-01-13 22:15:11 +0100 202)         themes.remove('__common__')
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 203)     return themes
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 204) 
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 205) 
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 206) def get_static_files(static_path):
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 207)     static_files = set()
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 208)     static_path_length = len(static_path) + 1
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 209)     for directory, _, files in os.walk(static_path):
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 210)         for filename in files:
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 211)             f = os.path.join(directory[static_path_length:], filename)
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 212)             static_files.add(f)
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 213)     return static_files
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 214) 
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 215) 
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 216) def get_result_templates(templates_path):
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 217)     result_templates = set()
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 218)     templates_path_length = len(templates_path) + 1
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 219)     for directory, _, files in os.walk(templates_path):
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 220)         if directory.endswith('result_templates'):
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 221)             for filename in files:
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 222)                 f = os.path.join(directory[templates_path_length:], filename)
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 223)                 result_templates.add(f)
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 224)     return result_templates
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100 225) 
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100 226) 
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200 227) def format_date_by_locale(date, locale_string):
+23fa74b5 (Adam Tauber       2015-01-11 13:26:40 +0100 228)     # strftime works only on dates after 1900
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200 229) 
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200 230)     if date.year <= 1900:
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200 231)         return date.isoformat().split('T')[0]
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200 232) 
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200 233)     if locale_string == 'all':
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200 234)         locale_string = settings['ui']['default_locale'] or 'en_US'
+362c8497 (Adam Tauber       2015-09-07 22:39:33 +0200 235) 
+a4c77f88 (marc              2016-06-03 23:02:53 -0500 236)     # to avoid crashing if locale is not supported by babel
+a4c77f88 (marc              2016-06-03 23:02:53 -0500 237)     try:
+a4c77f88 (marc              2016-06-03 23:02:53 -0500 238)         formatted_date = format_date(date, locale=locale_string)
+a4c77f88 (marc              2016-06-03 23:02:53 -0500 239)     except:
+a4c77f88 (marc              2016-06-03 23:02:53 -0500 240)         formatted_date = format_date(date, "YYYY-MM-dd")
+a4c77f88 (marc              2016-06-03 23:02:53 -0500 241) 
+a4c77f88 (marc              2016-06-03 23:02:53 -0500 242)     return formatted_date
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 243) 
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 244) 
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 245) def dict_subset(d, properties):
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 246)     result = {}
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 247)     for k in properties:
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 248)         if k in d:
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 249)             result[k] = d[k]
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 250)     return result
+8de97dac (Adam Tauber       2015-01-29 19:44:52 +0100 251) 
+8de97dac (Adam Tauber       2015-01-29 19:44:52 +0100 252) 
+7580852b (Adam Tauber       2015-09-07 19:22:01 +0200 253) def prettify_url(url, max_length=74):
+7580852b (Adam Tauber       2015-09-07 19:22:01 +0200 254)     if len(url) > max_length:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 255)         chunk_len = int(max_length / 2 + 1)
+7580852b (Adam Tauber       2015-09-07 19:22:01 +0200 256)         return u'{0}[...]{1}'.format(url[:chunk_len], url[-chunk_len:])
+8de97dac (Adam Tauber       2015-01-29 19:44:52 +0100 257)     else:
+8de97dac (Adam Tauber       2015-01-29 19:44:52 +0100 258)         return url
+b19e681c (Adam Tauber       2015-01-31 23:11:45 +0100 259) 
+b19e681c (Adam Tauber       2015-01-31 23:11:45 +0100 260) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 261) # get element in list or default value
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 262) def list_get(a_list, index, default=None):
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 263)     if len(a_list) > index:
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 264)         return a_list[index]
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 265)     else:
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 266)         return default
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 267) 
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 268) 
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 269) def get_torrent_size(filesize, filesize_multiplier):
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 270)     try:
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 271)         filesize = float(filesize)
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 272) 
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 273)         if filesize_multiplier == 'TB':
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 274)             filesize = int(filesize * 1024 * 1024 * 1024 * 1024)
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 275)         elif filesize_multiplier == 'GB':
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 276)             filesize = int(filesize * 1024 * 1024 * 1024)
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 277)         elif filesize_multiplier == 'MB':
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 278)             filesize = int(filesize * 1024 * 1024)
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 279)         elif filesize_multiplier == 'KB':
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 280)             filesize = int(filesize * 1024)
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 281)         elif filesize_multiplier == 'TiB':
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 282)             filesize = int(filesize * 1000 * 1000 * 1000 * 1000)
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 283)         elif filesize_multiplier == 'GiB':
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 284)             filesize = int(filesize * 1000 * 1000 * 1000)
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 285)         elif filesize_multiplier == 'MiB':
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 286)             filesize = int(filesize * 1000 * 1000)
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 287)         elif filesize_multiplier == 'KiB':
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 288)             filesize = int(filesize * 1000)
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 289)     except:
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 290)         filesize = None
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 291) 
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 292)     return filesize
+983415bc (potato            2016-09-06 16:43:48 +0200 293) 
+983415bc (potato            2016-09-06 16:43:48 +0200 294) 
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 295) def convert_str_to_int(number_str):
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 296)     if number_str.isdigit():
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 297)         return int(number_str)
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 298)     else:
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 299)         return 0
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 300) 
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 301) 
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 302) # convert a variable to integer or return 0 if it's not a number
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 303) def int_or_zero(num):
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 304)     if isinstance(num, list):
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 305)         if len(num) < 1:
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 306)             return 0
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 307)         num = num[0]
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 308)     return convert_str_to_int(num)
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 309) 
+33fd9380 (misnyo            2017-09-04 20:05:04 +0200 310) 
+983415bc (potato            2016-09-06 16:43:48 +0200 311) def is_valid_lang(lang):
+983415bc (potato            2016-09-06 16:43:48 +0200 312)     is_abbr = (len(lang) == 2)
+983415bc (potato            2016-09-06 16:43:48 +0200 313)     if is_abbr:
+983415bc (potato            2016-09-06 16:43:48 +0200 314)         for l in language_codes:
+983415bc (potato            2016-09-06 16:43:48 +0200 315)             if l[0][:2] == lang.lower():
+9b82cb19 (potato            2017-06-15 10:51:09 +0200 316)                 return (True, l[0][:2], l[3].lower())
+983415bc (potato            2016-09-06 16:43:48 +0200 317)         return False
+983415bc (potato            2016-09-06 16:43:48 +0200 318)     else:
+983415bc (potato            2016-09-06 16:43:48 +0200 319)         for l in language_codes:
+983415bc (potato            2016-09-06 16:43:48 +0200 320)             if l[1].lower() == lang.lower():
+9b82cb19 (potato            2017-06-15 10:51:09 +0200 321)                 return (True, l[0][:2], l[3].lower())
+983415bc (potato            2016-09-06 16:43:48 +0200 322)         return False
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 323) 
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 324) 
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 325) def load_module(filename, module_dir):
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 326)     modname = splitext(filename)[0]
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 327)     if modname in sys.modules:
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 328)         del sys.modules[modname]
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 329)     filepath = join(module_dir, filename)
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 330)     module = load_source(modname, filepath)
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 331)     module.name = modname
+55dc5383 (Adam Tauber       2016-11-19 17:51:19 +0100 332)     return module
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 333) 
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 334) 
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 335) def new_hmac(secret_key, url):
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 336)     if sys.version_info[0] == 2:
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 337)         return hmac.new(bytes(secret_key), url, hashlib.sha256).hexdigest()
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 338)     else:
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 339)         return hmac.new(bytes(secret_key, 'utf-8'), url, hashlib.sha256).hexdigest()
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 340) 
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 341) 
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 342) def to_string(obj):
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 343)     if isinstance(obj, basestring):
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 344)         return obj
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 345)     if isinstance(obj, Number):
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 346)         return unicode(obj)
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 347)     if hasattr(obj, '__str__'):
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 348)         return obj.__str__()
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 349)     if hasattr(obj, '__repr__'):
+0969e50c (Adam Tauber       2017-12-01 20:45:24 +0100 350)         return obj.__repr__()

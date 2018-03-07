@@ -1,0 +1,45 @@
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  1) '''
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  2) searx is free software: you can redistribute it and/or modify
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  3) it under the terms of the GNU Affero General Public License as published by
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  4) the Free Software Foundation, either version 3 of the License, or
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  5) (at your option) any later version.
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  6) 
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  7) searx is distributed in the hope that it will be useful,
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  8) but WITHOUT ANY WARRANTY; without even the implied warranty of
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200  9) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 10) GNU Affero General Public License for more details.
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 11) 
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 12) You should have received a copy of the GNU Affero General Public License
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 13) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 14) 
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 15) (C) 2015 by Adam Tauber, <asciimoo@gmail.com>
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 16) '''
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 17) 
+257e5295 (Adam Tauber       2016-07-04 22:46:43 +0200 18) from flask_babel import gettext
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 19) import re
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 20) from searx.url_utils import urlunparse
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 21) 
+e93f5314 (Cqoicebordel      2015-06-15 20:34:02 +0200 22) regexes = {re.compile(r'utm_[^&]+&?'),
+e93f5314 (Cqoicebordel      2015-06-15 20:34:02 +0200 23)            re.compile(r'(wkey|wemail)[^&]+&?'),
+e93f5314 (Cqoicebordel      2015-06-15 20:34:02 +0200 24)            re.compile(r'&$')}
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 25) 
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 26) name = gettext('Tracker URL remover')
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 27) description = gettext('Remove trackers arguments from the returned URL')
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 28) default_on = True
+10a24bdc (Alexandre Flament 2017-02-12 15:06:01 +0100 29) preference_section = 'privacy'
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 30) 
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 31) 
+fbb080f3 (dalf              2016-10-22 14:01:53 +0200 32) def on_result(request, search, result):
+fbb080f3 (dalf              2016-10-22 14:01:53 +0200 33)     query = result['parsed_url'].query
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 34) 
+8911233e (Cqoicebordel      2015-06-18 14:27:15 +0200 35)     if query == "":
+e93f5314 (Cqoicebordel      2015-06-15 20:34:02 +0200 36)         return True
+e93f5314 (Cqoicebordel      2015-06-15 20:34:02 +0200 37) 
+e93f5314 (Cqoicebordel      2015-06-15 20:34:02 +0200 38)     for reg in regexes:
+8911233e (Cqoicebordel      2015-06-18 14:27:15 +0200 39)         query = reg.sub('', query)
+e93f5314 (Cqoicebordel      2015-06-15 20:34:02 +0200 40) 
+fbb080f3 (dalf              2016-10-22 14:01:53 +0200 41)     if query != result['parsed_url'].query:
+fbb080f3 (dalf              2016-10-22 14:01:53 +0200 42)         result['parsed_url'] = result['parsed_url']._replace(query=query)
+fbb080f3 (dalf              2016-10-22 14:01:53 +0200 43)         result['url'] = urlunparse(result['parsed_url'])
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 44) 
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 45)     return True

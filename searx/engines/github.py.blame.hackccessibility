@@ -1,0 +1,61 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Github (It)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://github.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (https://developer.github.com/v3/)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes (using api)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 12) 
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 13) from json import loads
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 14) from searx.url_utils import urlencode
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 15) 
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 16) # engine dependent config
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 17) categories = ['it']
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 18) 
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 19) # search-url
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 20) search_url = 'https://api.github.com/search/repositories?sort=stars&order=desc&{query}'  # noqa
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 21) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 22) accept_header = 'application/vnd.github.preview.text-match+json'
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 23) 
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 24) 
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 25) # do search-request
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 26) @little_documented
+def request(query, params):
+74b6be39 (asciimoo          2013-10-23 23:55:37 +0200 27)     params['url'] = search_url.format(query=urlencode({'q': query}))
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 28) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 29)     params['headers']['Accept'] = accept_header
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 30) 
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 31)     return params
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 32) 
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 33) 
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 34) # get response from search-request
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 35) def response(resp):
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 36)     results = []
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 37) 
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 38)     search_res = loads(resp.text)
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 39) 
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 40)     # check if items are recieved
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 41)     if 'items' not in search_res:
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 42)         return []
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 43) 
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 44)     # parse results
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 45)     for res in search_res['items']:
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 46)         title = res['name']
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 47)         url = res['html_url']
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 48) 
+708fa6f8 (asciimoo          2013-10-23 12:24:09 +0200 49)         if res['description']:
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 50)             content = res['description'][:500]
+708fa6f8 (asciimoo          2013-10-23 12:24:09 +0200 51)         else:
+708fa6f8 (asciimoo          2013-10-23 12:24:09 +0200 52)             content = ''
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 53) 
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 54)         # append result
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 55)         results.append({'url': url,
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 56)                         'title': title,
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 57)                         'content': content})
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 58) 
+334a286c (Thomas Pointhuber 2014-09-02 17:37:47 +0200 59)     # return results
+42d2cc20 (asciimoo          2013-10-20 21:53:49 +0200 60)     return results

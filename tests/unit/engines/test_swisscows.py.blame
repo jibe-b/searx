@@ -1,0 +1,150 @@
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   1) from collections import defaultdict
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   2) import mock
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   3) from searx.engines import swisscows
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   4) from searx.testing import SearxTestCase
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   5) 
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   6) 
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   7) class TestSwisscowsEngine(SearxTestCase):
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   8) 
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200   9)     def test_request(self):
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  10)         query = 'test_query'
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  11)         dicto = defaultdict(dict)
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  12)         dicto['pageno'] = 1
+a11948c7 tests/unit/engines/test_swisscows.py  (marc              2016-10-29 21:04:01 -0500  13)         dicto['language'] = 'de-DE'
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  14)         params = swisscows.request(query, dicto)
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  15)         self.assertTrue('url' in params)
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  16)         self.assertTrue(query in params['url'])
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  17)         self.assertTrue('swisscows.ch' in params['url'])
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  18)         self.assertTrue('uiLanguage=de' in params['url'])
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  19)         self.assertTrue('region=de-DE' in params['url'])
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  20) 
+0a1a3e73 searx/tests/engines/test_swisscows.py (Cqoicebordel      2015-06-12 19:54:03 +0200  21)         dicto['category'] = 'images'
+0a1a3e73 searx/tests/engines/test_swisscows.py (Cqoicebordel      2015-06-12 19:54:03 +0200  22)         params = swisscows.request(query, dicto)
+0a1a3e73 searx/tests/engines/test_swisscows.py (Cqoicebordel      2015-06-12 19:54:03 +0200  23)         self.assertIn('image', params['url'])
+0a1a3e73 searx/tests/engines/test_swisscows.py (Cqoicebordel      2015-06-12 19:54:03 +0200  24) 
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  25)     def test_response(self):
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  26)         self.assertRaises(AttributeError, swisscows.response, None)
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  27)         self.assertRaises(AttributeError, swisscows.response, [])
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  28)         self.assertRaises(AttributeError, swisscows.response, '')
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  29)         self.assertRaises(AttributeError, swisscows.response, '[]')
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  30) 
+52e615de tests/unit/engines/test_swisscows.py  (Adam Tauber       2016-11-30 18:43:03 +0100  31)         response = mock.Mock(text=b'<html></html>')
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  32)         self.assertEqual(swisscows.response(response), [])
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  33) 
+52e615de tests/unit/engines/test_swisscows.py  (Adam Tauber       2016-11-30 18:43:03 +0100  34)         response = mock.Mock(text=b'<html></html>')
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  35)         self.assertEqual(swisscows.response(response), [])
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  36) 
+52e615de tests/unit/engines/test_swisscows.py  (Adam Tauber       2016-11-30 18:43:03 +0100  37)         html = b"""
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  38)         <script>
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  39)             App.Dispatcher.dispatch("initialize", {
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  40)                 html5history: true,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  41)                 initialData: {"Request":
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  42)                     {"Page":1,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  43)                     "ItemsCount":1,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  44)                     "Query":"This should ",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  45)                     "NormalizedQuery":"This should ",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  46)                     "Region":"de-AT",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  47)                     "UILanguage":"de"},
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  48)                     "Results":{"items":[
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  49)                             {"Title":"\uE000This should\uE001 be the title",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  50)                             "Description":"\uE000This should\uE001 be the content.",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  51)                             "Url":"http://this.should.be.the.link/",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  52)                             "DisplayUrl":"www.\uE000this.should.be.the\uE001.link",
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  53)                             "Id":"782ef287-e439-451c-b380-6ebc14ba033d"},
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  54)                             {"Title":"Datei:This should1.svg",
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  55)                             "Url":"https://i.swisscows.ch/?link=http%3a%2f%2fts2.mm.This/should1.png",
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  56)                             "SourceUrl":"http://de.wikipedia.org/wiki/Datei:This should1.svg",
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  57)                             "DisplayUrl":"de.wikipedia.org/wiki/Datei:This should1.svg",
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  58)                             "Width":950,
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  59)                             "Height":534,
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  60)                             "FileSize":92100,
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  61)                             "ContentType":"image/jpeg",
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  62)                             "Thumbnail":{
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  63)                                 "Url":"https://i.swisscows.ch/?link=http%3a%2f%2fts2.mm.This/should1.png",
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  64)                                 "ContentType":"image/jpeg",
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  65)                                 "Width":300,
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  66)                                 "Height":168,
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  67)                                 "FileSize":9134},
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  68)                                 "Id":"6a97a542-8f65-425f-b7f6-1178c3aba7be"
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200  69)                             }
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  70)                         ],"TotalCount":55300,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  71)                         "Query":"This should "
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  72)                     },
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  73)                     "Images":[{"Title":"Datei:This should.svg",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  74)                         "Url":"https://i.swisscows.ch/?link=http%3a%2f%2fts2.mm.This/should.png",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  75)                         "SourceUrl":"http://de.wikipedia.org/wiki/Datei:This should.svg",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  76)                         "DisplayUrl":"de.wikipedia.org/wiki/Datei:This should.svg",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  77)                         "Width":1280,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  78)                         "Height":677,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  79)                         "FileSize":50053,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  80)                         "ContentType":"image/png",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  81)                         "Thumbnail":{"Url":"https://i.swisscows.ch/?link=http%3a%2f%2fts2.mm.This/should.png",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  82)                             "ContentType":"image/png",
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  83)                             "Width":300,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  84)                             "Height":158,
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  85)                             "FileSize":8023},
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  86)                         "Id":"ae230fd8-a06a-47d6-99d5-e74766d8143a"}]},
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  87)                 environment: "production"
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  88)             }).then(function (options) {
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  89)                 $('#Search_Form').on('submit', function (e) {
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  90)                     if (!Modernizr.history) return;
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  91)                     e.preventDefault();
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  92) 
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  93)                     var $form = $(this),
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  94)                         $query = $('#Query'),
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  95)                         query = $.trim($query.val()),
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  96)                         path = App.Router.makePath($form.attr('action'), null, $form.serializeObject())
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  97) 
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  98)                     if (query.length) {
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200  99)                         options.html5history ?
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 100)                             ReactRouter.HistoryLocation.push(path) :
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 101)                             ReactRouter.RefreshLocation.push(path);
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 102)                     }
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 103)                     else $('#Query').trigger('blur');
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 104)                 });
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 105) 
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 106)             });
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 107)         </script>
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 108)         """
+52e615de tests/unit/engines/test_swisscows.py  (Adam Tauber       2016-11-30 18:43:03 +0100 109)         response = mock.Mock(text=html)
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 110)         results = swisscows.response(response)
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 111)         self.assertEqual(type(results), list)
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200 112)         self.assertEqual(len(results), 3)
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 113)         self.assertEqual(results[0]['title'], 'This should be the title')
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 114)         self.assertEqual(results[0]['url'], 'http://this.should.be.the.link/')
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 115)         self.assertEqual(results[0]['content'], 'This should be the content.')
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200 116)         self.assertEqual(results[1]['title'], 'Datei:This should1.svg')
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200 117)         self.assertEqual(results[1]['url'], 'http://de.wikipedia.org/wiki/Datei:This should1.svg')
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200 118)         self.assertEqual(results[1]['img_src'], 'http://ts2.mm.This/should1.png')
+d923b2a4 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 09:15:50 +0200 119)         self.assertEqual(results[1]['template'], 'images.html')
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200 120)         self.assertEqual(results[2]['title'], 'Datei:This should.svg')
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200 121)         self.assertEqual(results[2]['url'], 'http://de.wikipedia.org/wiki/Datei:This should.svg')
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200 122)         self.assertEqual(results[2]['img_src'], 'http://ts2.mm.This/should.png')
+2d810793 searx/tests/engines/test_swisscows.py (Thomas Pointhuber 2015-06-01 12:30:07 +0200 123)         self.assertEqual(results[2]['template'], 'images.html')
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 124) 
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 125)     def test_fetch_supported_languages(self):
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 126)         html = """<html></html>"""
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 127)         response = mock.Mock(text=html)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 128)         languages = swisscows._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 129)         self.assertEqual(type(languages), list)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 130)         self.assertEqual(len(languages), 0)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 131) 
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 132)         html = """
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 133)         <html>
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 134)             <div id="regions-popup">
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 135)                 <div>
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 136)                     <ul>
+44085e31 tests/unit/engines/test_swisscows.py  (marc              2017-10-10 16:52:41 -0500 137)                         <li><a data-search-language="browser"></a></li>
+44085e31 tests/unit/engines/test_swisscows.py  (marc              2017-10-10 16:52:41 -0500 138)                         <li><a data-search-language="de-CH"></a></li>
+44085e31 tests/unit/engines/test_swisscows.py  (marc              2017-10-10 16:52:41 -0500 139)                         <li><a data-search-language="fr-CH"></a></li>
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 140)                     </ul>
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 141)                 </div>
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 142)             </div>
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 143)         </html>
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 144)         """
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 145)         response = mock.Mock(text=html)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 146)         languages = swisscows._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 147)         self.assertEqual(type(languages), list)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 148)         self.assertEqual(len(languages), 3)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 149)         self.assertIn('de-CH', languages)
+af35eee1 tests/unit/engines/test_swisscows.py  (marc              2016-12-15 00:34:43 -0600 150)         self.assertIn('fr-CH', languages)

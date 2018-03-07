@@ -1,0 +1,65 @@
+4d177039 (marc 2017-07-20 15:47:20 -0500  1) from searx.query import RawTextQuery
+4d177039 (marc 2017-07-20 15:47:20 -0500  2) from searx.testing import SearxTestCase
+4d177039 (marc 2017-07-20 15:47:20 -0500  3) 
+4d177039 (marc 2017-07-20 15:47:20 -0500  4) 
+4d177039 (marc 2017-07-20 15:47:20 -0500  5) class TestQuery(SearxTestCase):
+4d177039 (marc 2017-07-20 15:47:20 -0500  6) 
+4d177039 (marc 2017-07-20 15:47:20 -0500  7)     @little_documented
+def test_simple_query(self):
+4d177039 (marc 2017-07-20 15:47:20 -0500  8)         query_text = 'the query'
+4d177039 (marc 2017-07-20 15:47:20 -0500  9)         query = RawTextQuery(query_text, [])
+4d177039 (marc 2017-07-20 15:47:20 -0500 10)         query.parse_query()
+4d177039 (marc 2017-07-20 15:47:20 -0500 11) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 12)         self.assertEquals(query.getFullQuery(), query_text)
+4d177039 (marc 2017-07-20 15:47:20 -0500 13)         self.assertEquals(len(query.query_parts), 1)
+4d177039 (marc 2017-07-20 15:47:20 -0500 14)         self.assertEquals(len(query.languages), 0)
+4d177039 (marc 2017-07-20 15:47:20 -0500 15)         self.assertFalse(query.specific)
+4d177039 (marc 2017-07-20 15:47:20 -0500 16) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 17)     def test_language_code(self):
+4d177039 (marc 2017-07-20 15:47:20 -0500 18)         language = 'es-ES'
+4d177039 (marc 2017-07-20 15:47:20 -0500 19)         query_text = 'the query'
+4d177039 (marc 2017-07-20 15:47:20 -0500 20)         full_query = ':' + language + ' ' + query_text
+4d177039 (marc 2017-07-20 15:47:20 -0500 21)         query = RawTextQuery(full_query, [])
+4d177039 (marc 2017-07-20 15:47:20 -0500 22)         query.parse_query()
+4d177039 (marc 2017-07-20 15:47:20 -0500 23) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 24)         self.assertEquals(query.getFullQuery(), full_query)
+4d177039 (marc 2017-07-20 15:47:20 -0500 25)         self.assertEquals(len(query.query_parts), 3)
+4d177039 (marc 2017-07-20 15:47:20 -0500 26)         self.assertEquals(len(query.languages), 1)
+4d177039 (marc 2017-07-20 15:47:20 -0500 27)         self.assertIn(language, query.languages)
+4d177039 (marc 2017-07-20 15:47:20 -0500 28)         self.assertFalse(query.specific)
+4d177039 (marc 2017-07-20 15:47:20 -0500 29) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 30)     def test_language_name(self):
+4d177039 (marc 2017-07-20 15:47:20 -0500 31)         language = 'english'
+4d177039 (marc 2017-07-20 15:47:20 -0500 32)         query_text = 'the query'
+4d177039 (marc 2017-07-20 15:47:20 -0500 33)         full_query = ':' + language + ' ' + query_text
+4d177039 (marc 2017-07-20 15:47:20 -0500 34)         query = RawTextQuery(full_query, [])
+4d177039 (marc 2017-07-20 15:47:20 -0500 35)         query.parse_query()
+4d177039 (marc 2017-07-20 15:47:20 -0500 36) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 37)         self.assertEquals(query.getFullQuery(), full_query)
+4d177039 (marc 2017-07-20 15:47:20 -0500 38)         self.assertEquals(len(query.query_parts), 3)
+4d177039 (marc 2017-07-20 15:47:20 -0500 39)         self.assertIn('en', query.languages)
+4d177039 (marc 2017-07-20 15:47:20 -0500 40)         self.assertFalse(query.specific)
+4d177039 (marc 2017-07-20 15:47:20 -0500 41) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 42)     def test_unlisted_language_code(self):
+4d177039 (marc 2017-07-20 15:47:20 -0500 43)         language = 'all'
+4d177039 (marc 2017-07-20 15:47:20 -0500 44)         query_text = 'the query'
+4d177039 (marc 2017-07-20 15:47:20 -0500 45)         full_query = ':' + language + ' ' + query_text
+4d177039 (marc 2017-07-20 15:47:20 -0500 46)         query = RawTextQuery(full_query, [])
+4d177039 (marc 2017-07-20 15:47:20 -0500 47)         query.parse_query()
+4d177039 (marc 2017-07-20 15:47:20 -0500 48) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 49)         self.assertEquals(query.getFullQuery(), full_query)
+4d177039 (marc 2017-07-20 15:47:20 -0500 50)         self.assertEquals(len(query.query_parts), 3)
+4d177039 (marc 2017-07-20 15:47:20 -0500 51)         self.assertIn('all', query.languages)
+4d177039 (marc 2017-07-20 15:47:20 -0500 52)         self.assertFalse(query.specific)
+4d177039 (marc 2017-07-20 15:47:20 -0500 53) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 54)     def test_invalid_language_code(self):
+4d177039 (marc 2017-07-20 15:47:20 -0500 55)         language = 'not_a_language'
+4d177039 (marc 2017-07-20 15:47:20 -0500 56)         query_text = 'the query'
+4d177039 (marc 2017-07-20 15:47:20 -0500 57)         full_query = ':' + language + ' ' + query_text
+4d177039 (marc 2017-07-20 15:47:20 -0500 58)         query = RawTextQuery(full_query, [])
+4d177039 (marc 2017-07-20 15:47:20 -0500 59)         query.parse_query()
+4d177039 (marc 2017-07-20 15:47:20 -0500 60) 
+4d177039 (marc 2017-07-20 15:47:20 -0500 61)         self.assertEquals(query.getFullQuery(), full_query)
+4d177039 (marc 2017-07-20 15:47:20 -0500 62)         self.assertEquals(len(query.query_parts), 1)
+4d177039 (marc 2017-07-20 15:47:20 -0500 63)         self.assertEquals(len(query.languages), 0)
+4d177039 (marc 2017-07-20 15:47:20 -0500 64)         self.assertFalse(query.specific)

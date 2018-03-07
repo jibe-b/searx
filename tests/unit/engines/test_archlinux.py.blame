@@ -1,0 +1,106 @@
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600   1) from collections import defaultdict
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600   2) import mock
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600   3) from searx.engines import archlinux
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600   4) from searx.testing import SearxTestCase
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600   5) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600   6) domains = {
+4d177039 (marc          2017-07-20 15:47:20 -0500   7)     'en': 'https://wiki.archlinux.org',
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600   8)     'de': 'https://wiki.archlinux.de',
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600   9)     'fr': 'https://wiki.archlinux.fr',
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  10)     'ja': 'https://wiki.archlinuxjp.org',
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  11)     'ro': 'http://wiki.archlinux.ro',
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  12)     'tr': 'http://archtr.org/wiki'
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  13) }
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  14) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  15) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  16) class TestArchLinuxEngine(SearxTestCase):
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  17) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  18)     def test_request(self):
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  19)         query = 'test_query'
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  20)         dic = defaultdict(dict)
+8b7dc2ac (Kirill Isakov 2016-03-25 00:38:48 +0600  21)         dic['pageno'] = 1
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  22)         dic['language'] = 'en_US'
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  23)         params = archlinux.request(query, dic)
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  24)         self.assertTrue('url' in params)
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  25)         self.assertTrue(query in params['url'])
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  26)         self.assertTrue('wiki.archlinux.org' in params['url'])
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  27) 
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100  28)         for lang, domain in domains.items():
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  29)             dic['language'] = lang
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  30)             params = archlinux.request(query, dic)
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  31)             self.assertTrue(domain in params['url'])
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  32) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  33)     def test_response(self):
+8b7dc2ac (Kirill Isakov 2016-03-25 00:38:48 +0600  34)         response = mock.Mock(text='<html></html>',
+8b7dc2ac (Kirill Isakov 2016-03-25 00:38:48 +0600  35)                              search_params={'language': 'en_US'})
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  36)         self.assertEqual(archlinux.response(response), [])
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  37) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  38)         html = """
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  39)         <ul class="mw-search-results">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  40)           <li>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  41)           <div class="mw-search-result-heading">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  42)             <a href="/index.php/ATI" title="ATI">ATI</a>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  43)           </div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  44)           <div class="searchresult">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  45)             Lorem ipsum dolor sit amet
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  46)           </div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  47)           <div class="mw-search-result-data">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  48)             30 KB (4,630 words) - 19:04, 17 March 2016</div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  49)           </li>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  50)           <li>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  51)           <div class="mw-search-result-heading">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  52)             <a href="/index.php/Frequently_asked_questions" title="Frequently asked questions">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  53)               Frequently asked questions
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  54)             </a>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  55)           </div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  56)           <div class="searchresult">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  57)             CPUs with AMDs instruction set "AMD64"
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  58)           </div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  59)           <div class="mw-search-result-data">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  60)             17 KB (2,722 words) - 20:13, 21 March 2016
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  61)           </div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  62)           </li>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  63)           <li>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  64)           <div class="mw-search-result-heading">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  65)             <a href="/index.php/CPU_frequency_scaling" title="CPU frequency scaling">CPU frequency scaling</a>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  66)           </div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  67)           <div class="searchresult">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  68)             ondemand for AMD and older Intel CPU
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  69)           </div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  70)           <div class="mw-search-result-data">
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  71)             15 KB (2,319 words) - 23:46, 16 March 2016
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  72)           </div>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  73)           </li>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  74)         </ul>
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  75)         """
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  76) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  77)         expected = [
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  78)             {
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  79)                 'title': 'ATI',
+8b7dc2ac (Kirill Isakov 2016-03-25 00:38:48 +0600  80)                 'url': 'https://wiki.archlinux.org/index.php/ATI'
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  81)             },
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  82)             {
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  83)                 'title': 'Frequently asked questions',
+8b7dc2ac (Kirill Isakov 2016-03-25 00:38:48 +0600  84)                 'url': 'https://wiki.archlinux.org/index.php/Frequently_asked_questions'
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  85)             },
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  86)             {
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  87)                 'title': 'CPU frequency scaling',
+8b7dc2ac (Kirill Isakov 2016-03-25 00:38:48 +0600  88)                 'url': 'https://wiki.archlinux.org/index.php/CPU_frequency_scaling'
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  89)             }
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  90)         ]
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  91) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  92)         response = mock.Mock(text=html)
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  93)         response.search_params = {
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  94)             'language': 'en_US'
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  95)         }
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  96)         results = archlinux.response(response)
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  97) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  98)         self.assertEqual(type(results), list)
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600  99)         self.assertEqual(len(results), len(expected))
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600 100) 
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600 101)         i = 0
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600 102)         for exp in expected:
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600 103)             res = results[i]
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600 104)             i += 1
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 105)             for key, value in exp.items():
+d748b841 (Kirill Isakov 2016-03-24 01:57:27 +0600 106)                 self.assertEqual(res[key], value)

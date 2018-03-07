@@ -1,0 +1,109 @@
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   1) import mock
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   2) from collections import defaultdict
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   3) from searx.engines import pdbe
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   4) from searx.testing import SearxTestCase
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   5) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   6) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   7) class TestPdbeEngine(SearxTestCase):
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   8)     def test_request(self):
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   9)         query = 'test_query'
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  10)         dicto = defaultdict(dict)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  11)         params = pdbe.request(query, dicto)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  12)         self.assertTrue('url' in params)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  13)         self.assertTrue('ebi.ac.uk' in params['url'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  14)         self.assertTrue('data' in params)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  15)         self.assertTrue('q' in params['data'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  16)         self.assertTrue(query in params['data']['q'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  17)         self.assertTrue('wt' in params['data'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  18)         self.assertTrue('json' in params['data']['wt'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  19)         self.assertTrue('method' in params)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  20)         self.assertTrue(params['method'] == 'POST')
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  21) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  22)     def test_response(self):
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  23)         self.assertRaises(AttributeError, pdbe.response, None)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  24)         self.assertRaises(AttributeError, pdbe.response, [])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  25)         self.assertRaises(AttributeError, pdbe.response, '')
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  26)         self.assertRaises(AttributeError, pdbe.response, '[]')
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  27) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  28)         json = """
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  29) {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  30)   "response": {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  31)     "docs": [
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  32)       {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  33)         "citation_title": "X-ray crystal structure of ferric Aplysia limacina myoglobin in different liganded states.",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  34)         "citation_year": 1993,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  35)         "entry_author_list": [
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  36)           "Conti E, Moser C, Rizzi M, Mattevi A, Lionetti C, Coda A, Ascenzi P, Brunori M, Bolognesi M"
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  37)         ],
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  38)         "journal": "J. Mol. Biol.",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  39)         "journal_page": "498-508",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  40)         "journal_volume": "233",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  41)         "pdb_id": "2fal",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  42)         "status": "REL",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  43)         "title": "X-RAY CRYSTAL STRUCTURE OF FERRIC APLYSIA LIMACINA MYOGLOBIN IN DIFFERENT LIGANDED STATES"
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  44)       }
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  45)     ],
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  46)     "numFound": 1,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  47)     "start": 0
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  48)   },
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  49)   "responseHeader": {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  50)     "QTime": 0,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  51)     "params": {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  52)       "q": "2fal",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  53)       "wt": "json"
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  54)     },
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  55)     "status": 0
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  56)   }
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  57) }
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  58) """
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  59) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  60)         response = mock.Mock(text=json)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  61)         results = pdbe.response(response)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  62)         self.assertEqual(type(results), list)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  63)         self.assertEqual(len(results), 1)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  64)         self.assertEqual(results[0]['title'],
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  65)                          'X-RAY CRYSTAL STRUCTURE OF FERRIC APLYSIA LIMACINA MYOGLOBIN IN DIFFERENT LIGANDED STATES')
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  66)         self.assertEqual(results[0]['url'], pdbe.pdbe_entry_url.format(pdb_id='2fal'))
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  67)         self.assertEqual(results[0]['img_src'], pdbe.pdbe_preview_url.format(pdb_id='2fal'))
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  68)         self.assertTrue('Conti E' in results[0]['content'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  69)         self.assertTrue('X-ray crystal structure of ferric Aplysia limacina myoglobin in different liganded states.' in
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  70)                         results[0]['content'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  71)         self.assertTrue('1993' in results[0]['content'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  72) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  73)         # Testing proper handling of PDB entries marked as obsolete
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  74)         json = """
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  75) {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  76)   "response": {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  77)     "docs": [
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  78)       {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  79)         "citation_title": "Obsolete entry test",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  80)         "citation_year": 2016,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  81)         "entry_author_list": ["Doe J"],
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  82)         "journal": "J. Obs.",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  83)         "journal_page": "1-2",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  84)         "journal_volume": "1",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  85)         "pdb_id": "xxxx",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  86)         "status": "OBS",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  87)         "title": "OBSOLETE ENTRY TEST",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  88)         "superseded_by": "yyyy"
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  89)       }
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  90)     ],
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  91)     "numFound": 1,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  92)     "start": 0
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  93)   },
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  94)   "responseHeader": {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  95)     "QTime": 0,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  96)     "params": {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  97)       "q": "xxxx",
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  98)       "wt": "json"
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  99)     },
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 100)     "status": 0
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 101)   }
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 102) }
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 103) """
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 104)         response = mock.Mock(text=json)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 105)         results = pdbe.response(response)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 106)         self.assertEqual(type(results), list)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 107)         self.assertEqual(len(results), 1)
+9e79ad4b (Adam Tauber      2017-12-01 20:58:40 +0100 108)         self.assertEqual(results[0]['title'], 'OBSOLETE ENTRY TEST (OBSOLETE)')
+9e79ad4b (Adam Tauber      2017-12-01 20:58:40 +0100 109)         self.assertTrue(results[0]['content'].startswith('This entry has been superseded by'))

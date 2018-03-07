@@ -1,0 +1,140 @@
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200   1) """
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200   2)  Qwant (Web, Images, News, Social)
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200   3) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200   4)  @website     https://qwant.com/
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200   5)  @provide-api not officially (https://api.qwant.com/api/search/)
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200   6) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200   7)  @using-api   yes
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200   8)  @results     JSON
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200   9)  @stable      yes
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  10)  @parse       url, title, content
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  11) """
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  12) 
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  13) from datetime import datetime
+c3dcebb7 (Adam Tauber       2016-12-10 21:27:47 +0100  14) from json import loads
+c3dcebb7 (Adam Tauber       2016-12-10 21:27:47 +0100  15) from searx.utils import html_to_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  16) from searx.url_utils import urlencode
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  17) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  18) # engine dependent config
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  19) categories = None
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  20) paging = True
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  21) language_support = True
+805fb02e (marc              2017-02-24 20:21:48 -0600  22) supported_languages_url = 'https://qwant.com/region'
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  23) 
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  24) category_to_keyword = {'general': 'web',
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  25)                        'images': 'images',
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  26)                        'news': 'news',
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  27)                        'social media': 'social'}
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  28) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  29) # search-url
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  30) url = 'https://api.qwant.com/api/search/{keyword}?count=10&offset={offset}&f=&{query}'
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  31) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  32) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  33) # do search-request
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  34) @little_documented
+def request(query, params):
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  35)     offset = (params['pageno'] - 1) * 10
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  36) 
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  37)     if categories[0] and categories[0] in category_to_keyword:
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  38) 
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  39)         params['url'] = url.format(keyword=category_to_keyword[categories[0]],
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  40)                                    query=urlencode({'q': query}),
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  41)                                    offset=offset)
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  42)     else:
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  43)         params['url'] = url.format(keyword='web',
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  44)                                    query=urlencode({'q': query}),
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  45)                                    offset=offset)
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  46) 
+4d177039 (marc              2017-07-20 15:47:20 -0500  47)     # add language tag
+4d177039 (marc              2017-07-20 15:47:20 -0500  48)     if params['language'] == 'no' or params['language'].startswith('no-'):
+4d177039 (marc              2017-07-20 15:47:20 -0500  49)         params['language'] = params['language'].replace('no', 'nb', 1)
+4d177039 (marc              2017-07-20 15:47:20 -0500  50)     if params['language'].find('-') < 0:
+4d177039 (marc              2017-07-20 15:47:20 -0500  51)         # tries to get a country code from language
+4d177039 (marc              2017-07-20 15:47:20 -0500  52)         for lang in supported_languages:
+4d177039 (marc              2017-07-20 15:47:20 -0500  53)             lc = lang.split('-')
+4d177039 (marc              2017-07-20 15:47:20 -0500  54)             if params['language'] == lc[0]:
+4d177039 (marc              2017-07-20 15:47:20 -0500  55)                 params['language'] = lang
+4d177039 (marc              2017-07-20 15:47:20 -0500  56)                 break
+4d177039 (marc              2017-07-20 15:47:20 -0500  57)     params['url'] += '&locale=' + params['language'].replace('-', '_').lower()
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  58) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  59)     return params
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  60) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  61) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  62) # get response from search-request
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  63) def response(resp):
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  64)     results = []
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  65) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  66)     search_results = loads(resp.text)
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  67) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  68)     # return empty array if there are no results
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  69)     if 'data' not in search_results:
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  70)         return []
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  71) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  72)     data = search_results.get('data', {})
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  73) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  74)     res = data.get('result', {})
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  75) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  76)     # parse results
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  77)     for result in res.get('items', {}):
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  78) 
+c3dcebb7 (Adam Tauber       2016-12-10 21:27:47 +0100  79)         title = html_to_text(result['title'])
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  80)         res_url = result['url']
+c3dcebb7 (Adam Tauber       2016-12-10 21:27:47 +0100  81)         content = html_to_text(result['desc'])
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200  82) 
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  83)         if category_to_keyword.get(categories[0], '') == 'web':
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  84)             results.append({'title': title,
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  85)                             'content': content,
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  86)                             'url': res_url})
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  87) 
+e0774c84 (Cqoicebordel      2015-06-02 22:11:47 +0200  88)         elif category_to_keyword.get(categories[0], '') == 'images':
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  89)             thumbnail_src = result['thumbnail']
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  90)             img_src = result['media']
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  91)             results.append({'template': 'images.html',
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  92)                             'url': res_url,
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  93)                             'title': title,
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  94)                             'content': '',
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  95)                             'thumbnail_src': thumbnail_src,
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  96)                             'img_src': img_src})
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  97) 
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100  98)         elif category_to_keyword.get(categories[0], '') == 'social':
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200  99)             published_date = datetime.fromtimestamp(result['date'], None)
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 100)             img_src = result.get('img', None)
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 101)             results.append({'url': res_url,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 102)                             'title': title,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 103)                             'publishedDate': published_date,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 104)                             'content': content,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 105)                             'img_src': img_src})
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200 106) 
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 107)         elif category_to_keyword.get(categories[0], '') == 'news':
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 108)             published_date = datetime.fromtimestamp(result['date'], None)
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 109)             media = result.get('media', [])
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 110)             if len(media) > 0:
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 111)                 img_src = media[0].get('pict', {}).get('url', None)
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 112)             else:
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 113)                 img_src = None
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200 114)             results.append({'url': res_url,
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200 115)                             'title': title,
+f05087b9 (Cqoicebordel      2015-06-02 20:36:58 +0200 116)                             'publishedDate': published_date,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 117)                             'content': content,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 118)                             'img_src': img_src})
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200 119) 
+884eeb85 (Cqoicebordel      2015-06-01 00:00:32 +0200 120)     return results
+805fb02e (marc              2017-02-24 20:21:48 -0600 121) 
+805fb02e (marc              2017-02-24 20:21:48 -0600 122) 
+805fb02e (marc              2017-02-24 20:21:48 -0600 123) # get supported languages from their site
+805fb02e (marc              2017-02-24 20:21:48 -0600 124) def _fetch_supported_languages(resp):
+805fb02e (marc              2017-02-24 20:21:48 -0600 125)     # list of regions is embedded in page as a js object
+805fb02e (marc              2017-02-24 20:21:48 -0600 126)     response_text = resp.text
+805fb02e (marc              2017-02-24 20:21:48 -0600 127)     response_text = response_text[response_text.find('regionalisation'):]
+805fb02e (marc              2017-02-24 20:21:48 -0600 128)     response_text = response_text[response_text.find('{'):response_text.find(');')]
+805fb02e (marc              2017-02-24 20:21:48 -0600 129) 
+805fb02e (marc              2017-02-24 20:21:48 -0600 130)     regions_json = loads(response_text)
+805fb02e (marc              2017-02-24 20:21:48 -0600 131) 
+805fb02e (marc              2017-02-24 20:21:48 -0600 132)     supported_languages = []
+805fb02e (marc              2017-02-24 20:21:48 -0600 133)     for lang in regions_json['languages'].values():
+fd65c129 (marc              2017-03-01 17:11:51 -0600 134)         if lang['code'] == 'nb':
+fd65c129 (marc              2017-03-01 17:11:51 -0600 135)             lang['code'] = 'no'
+805fb02e (marc              2017-02-24 20:21:48 -0600 136)         for country in lang['countries']:
+805fb02e (marc              2017-02-24 20:21:48 -0600 137)             supported_languages.append(lang['code'] + '-' + country)
+805fb02e (marc              2017-02-24 20:21:48 -0600 138) 
+805fb02e (marc              2017-02-24 20:21:48 -0600 139)     return supported_languages

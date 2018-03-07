@@ -1,0 +1,165 @@
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100   1) # -*- coding: utf-8 -*-
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100   2) 
+22fd0746 searx/tests/test_webapp.py (Gabor Nagy        2014-02-05 20:24:31 +0100   3) import json
+b6c3cb0b searx/tests/test_webapp.py (Adam Tauber       2015-10-03 17:26:07 +0200   4) from mock import Mock
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100   5) from searx import webapp
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100   6) from searx.testing import SearxTestCase
+044809e2 tests/unit/test_webapp.py  (Adam Tauber       2016-11-14 22:21:19 +0100   7) from searx.search import Search
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100   8) from searx.url_utils import ParseResult
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100   9) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  10) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  11) class ViewsTestCase(SearxTestCase):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  12) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  13)     @little_documented
+def setUp(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  14)         webapp.app.config['TESTING'] = True  # to get better error messages
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  15)         self.app = webapp.app.test_client()
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  16) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  17)         # set some defaults
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  18)         self.test_results = [
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  19)             {
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  20)                 'content': 'first test content',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  21)                 'title': 'First Test',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  22)                 'url': 'http://first.test.xyz',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  23)                 'engines': ['youtube', 'startpage'],
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  24)                 'engine': 'startpage',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  25)                 'parsed_url': ParseResult(scheme='http', netloc='first.test.xyz', path='/', params='', query='', fragment=''),  # noqa
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  26)             }, {
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  27)                 'content': 'second test content',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  28)                 'title': 'Second Test',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  29)                 'url': 'http://second.test.xyz',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  30)                 'engines': ['youtube', 'startpage'],
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  31)                 'engine': 'youtube',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  32)                 'parsed_url': ParseResult(scheme='http', netloc='second.test.xyz', path='/', params='', query='', fragment=''),  # noqa
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  33)             },
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  34)         ]
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  35) 
+80ba6f22 searx/tests/test_webapp.py (Adam Tauber       2015-03-11 21:23:28 +0100  36)         def search_mock(search_self, *args):
+b6c3cb0b searx/tests/test_webapp.py (Adam Tauber       2015-10-03 17:26:07 +0200  37)             search_self.result_container = Mock(get_ordered_results=lambda: self.test_results,
+b6c3cb0b searx/tests/test_webapp.py (Adam Tauber       2015-10-03 17:26:07 +0200  38)                                                 answers=set(),
+1d30141c tests/unit/test_webapp.py  (David A Roberts   2017-01-14 18:40:37 +1000  39)                                                 corrections=set(),
+b6c3cb0b searx/tests/test_webapp.py (Adam Tauber       2015-10-03 17:26:07 +0200  40)                                                 suggestions=set(),
+b6c3cb0b searx/tests/test_webapp.py (Adam Tauber       2015-10-03 17:26:07 +0200  41)                                                 infoboxes=[],
+2242000b tests/unit/test_webapp.py  (Noémi Ványi       2017-07-19 17:23:54 +0200  42)                                                 unresponsive_engines=set(),
+b6c3cb0b searx/tests/test_webapp.py (Adam Tauber       2015-10-03 17:26:07 +0200  43)                                                 results=self.test_results,
+c75d0d15 tests/unit/test_webapp.py  (Adam Tauber       2016-07-16 21:53:42 +0200  44)                                                 results_number=lambda: 3,
+b6c3cb0b searx/tests/test_webapp.py (Adam Tauber       2015-10-03 17:26:07 +0200  45)                                                 results_length=lambda: len(self.test_results))
+80ba6f22 searx/tests/test_webapp.py (Adam Tauber       2015-03-11 21:23:28 +0100  46) 
+044809e2 tests/unit/test_webapp.py  (Adam Tauber       2016-11-14 22:21:19 +0100  47)         Search.search = search_mock
+80ba6f22 searx/tests/test_webapp.py (Adam Tauber       2015-03-11 21:23:28 +0100  48) 
+fe691a09 tests/unit/test_webapp.py  (Noemi Vanyi       2016-04-08 16:38:05 +0200  49)         def get_current_theme_name_mock(override=None):
+7fdfeca3 tests/unit/test_webapp.py  (Alexandre Flament 2017-01-13 22:15:11 +0100  50)             if override:
+7fdfeca3 tests/unit/test_webapp.py  (Alexandre Flament 2017-01-13 22:15:11 +0100  51)                 return override
+bee7b497 tests/unit/test_webapp.py  (Adam Tauber       2016-09-22 23:51:07 +0200  52)             return 'legacy'
+fe691a09 tests/unit/test_webapp.py  (Noemi Vanyi       2016-04-08 16:38:05 +0200  53) 
+fe691a09 tests/unit/test_webapp.py  (Noemi Vanyi       2016-04-08 16:38:05 +0200  54)         webapp.get_current_theme_name = get_current_theme_name_mock
+fe691a09 tests/unit/test_webapp.py  (Noemi Vanyi       2016-04-08 16:38:05 +0200  55) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  56)         self.maxDiff = None  # to see full diffs
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  57) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  58)     def test_index_empty(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  59)         result = self.app.post('/')
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  60)         self.assertEqual(result.status_code, 200)
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  61)         self.assertIn(b'<div class="title"><h1>searx</h1></div>', result.data)
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  62) 
+80ba6f22 searx/tests/test_webapp.py (Adam Tauber       2015-03-11 21:23:28 +0100  63)     @little_documented
+def test_index_html(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  64)         result = self.app.post('/', data={'q': 'test'})
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  65)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  66)             b'<h3 class="result_title"><img width="14" height="14" class="favicon" src="/static/themes/legacy/img/icons/icon_youtube.ico" alt="youtube" /><a href="http://second.test.xyz" rel="noreferrer">Second <span class="highlight">Test</span></a></h3>',  # noqa
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  67)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  68)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  69)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  70)             b'<p class="content">first <span class="highlight">test</span> content<br class="last"/></p>',  # noqa
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  71)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  72)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  73) 
+80ba6f22 searx/tests/test_webapp.py (Adam Tauber       2015-03-11 21:23:28 +0100  74)     @little_documented
+def test_index_json(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  75)         result = self.app.post('/', data={'q': 'test', 'format': 'json'})
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  76) 
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  77)         result_dict = json.loads(result.data.decode('utf-8'))
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  78) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  79)         self.assertEqual('test', result_dict['query'])
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  80)         self.assertEqual(result_dict['results'][0]['content'], 'first test content')
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  81)         self.assertEqual(result_dict['results'][0]['url'], 'http://first.test.xyz')
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  82) 
+80ba6f22 searx/tests/test_webapp.py (Adam Tauber       2015-03-11 21:23:28 +0100  83)     def test_index_csv(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  84)         result = self.app.post('/', data={'q': 'test', 'format': 'csv'})
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  85) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  86)         self.assertEqual(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  87)             b'title,url,content,host,engine,score\r\n'
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  88)             b'First Test,http://first.test.xyz,first test content,first.test.xyz,startpage,\r\n'  # noqa
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  89)             b'Second Test,http://second.test.xyz,second test content,second.test.xyz,youtube,\r\n',  # noqa
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  90)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  91)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  92) 
+80ba6f22 searx/tests/test_webapp.py (Adam Tauber       2015-03-11 21:23:28 +0100  93)     def test_index_rss(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  94)         result = self.app.post('/', data={'q': 'test', 'format': 'rss'})
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  95) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  96)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100  97)             b'<description>Search results for "test" - searx</description>',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  98)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100  99)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 100) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 101)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 102)             b'<opensearch:totalResults>3</opensearch:totalResults>',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 103)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 104)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 105) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 106)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 107)             b'<title>First Test</title>',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 108)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 109)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 110) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 111)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 112)             b'<link>http://first.test.xyz</link>',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 113)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 114)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 115) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 116)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 117)             b'<description>first test content</description>',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 118)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 119)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 120) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 121)     @little_documented
+def test_about(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 122)         result = self.app.get('/about')
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 123)         self.assertEqual(result.status_code, 200)
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 124)         self.assertIn(b'<h1>About <a href="/">searx</a></h1>', result.data)
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 125) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 126)     @little_documented
+def test_preferences(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 127)         result = self.app.get('/preferences')
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 128)         self.assertEqual(result.status_code, 200)
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 129)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 130)             b'<form method="post" action="/preferences" id="search_form">',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 131)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 132)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 133)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 134)             b'<legend>Default categories</legend>',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 135)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 136)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 137)         self.assertIn(
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 138)             b'<legend>Interface language</legend>',
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 139)             result.data
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 140)         )
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 141) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 142)     @little_documented
+def test_stats(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 143)         result = self.app.get('/stats')
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 144)         self.assertEqual(result.status_code, 200)
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 145)         self.assertIn(b'<h2>Engine stats</h2>', result.data)
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 146) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 147)     def test_robots_txt(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 148)         result = self.app.get('/robots.txt')
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 149)         self.assertEqual(result.status_code, 200)
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 150)         self.assertIn(b'Allow: /', result.data)
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 151) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 152)     def test_opensearch_xml(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 153)         result = self.app.get('/opensearch.xml')
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 154)         self.assertEqual(result.status_code, 200)
+52e615de tests/unit/test_webapp.py  (Adam Tauber       2016-11-30 18:43:03 +0100 155)         self.assertIn(b'<Description>a privacy-respecting, hackable metasearch engine</Description>', result.data)
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 156) 
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 157)     def test_favicon(self):
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 158)         result = self.app.get('/favicon.ico')
+2bcc949a searx/tests/test_webapp.py (Matej Cotman      2014-01-31 07:08:24 +0100 159)         self.assertEqual(result.status_code, 200)

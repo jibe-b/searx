@@ -1,0 +1,88 @@
+2434c29d (woorst 2017-08-19 19:05:17 -0500  1) """
+2434c29d (woorst 2017-08-19 19:05:17 -0500  2) Genius
+2434c29d (woorst 2017-08-19 19:05:17 -0500  3) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500  4)  @website     https://www.genius.com/
+2434c29d (woorst 2017-08-19 19:05:17 -0500  5)  @provide-api yes (https://docs.genius.com/)
+2434c29d (woorst 2017-08-19 19:05:17 -0500  6) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500  7)  @using-api   yes
+2434c29d (woorst 2017-08-19 19:05:17 -0500  8)  @results     JSON
+2434c29d (woorst 2017-08-19 19:05:17 -0500  9)  @stable      yes
+2434c29d (woorst 2017-08-19 19:05:17 -0500 10)  @parse       url, title, content, thumbnail, publishedDate
+2434c29d (woorst 2017-08-19 19:05:17 -0500 11) """
+2434c29d (woorst 2017-08-19 19:05:17 -0500 12) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 13) from json import loads
+2434c29d (woorst 2017-08-19 19:05:17 -0500 14) from searx.url_utils import urlencode
+2434c29d (woorst 2017-08-19 19:05:17 -0500 15) from datetime import datetime
+2434c29d (woorst 2017-08-19 19:05:17 -0500 16) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 17) # engine dependent config
+2434c29d (woorst 2017-08-19 19:05:17 -0500 18) categories = ['music']
+2434c29d (woorst 2017-08-19 19:05:17 -0500 19) paging = True
+2434c29d (woorst 2017-08-19 19:05:17 -0500 20) language_support = False
+2434c29d (woorst 2017-08-19 19:05:17 -0500 21) page_size = 5
+2434c29d (woorst 2017-08-19 19:05:17 -0500 22) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 23) url = 'https://genius.com/api/'
+2434c29d (woorst 2017-08-19 19:05:17 -0500 24) search_url = url + 'search/{index}?{query}&page={pageno}&per_page={page_size}'
+2434c29d (woorst 2017-08-19 19:05:17 -0500 25) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 26) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 27) def request(query, params):
+2434c29d (woorst 2017-08-19 19:05:17 -0500 28)     params['url'] = search_url.format(query=urlencode({'q': query}),
+2434c29d (woorst 2017-08-19 19:05:17 -0500 29)                                       index='multi',
+2434c29d (woorst 2017-08-19 19:05:17 -0500 30)                                       page_size=page_size,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 31)                                       pageno=params['pageno'])
+2434c29d (woorst 2017-08-19 19:05:17 -0500 32)     return params
+2434c29d (woorst 2017-08-19 19:05:17 -0500 33) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 34) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 35) def parse_lyric(hit):
+2434c29d (woorst 2017-08-19 19:05:17 -0500 36)     try:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 37)         content = hit['highlights'][0]['value']
+2434c29d (woorst 2017-08-19 19:05:17 -0500 38)     except:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 39)         content = None
+2434c29d (woorst 2017-08-19 19:05:17 -0500 40)     timestamp = hit['result']['lyrics_updated_at']
+2434c29d (woorst 2017-08-19 19:05:17 -0500 41)     result = {'url': hit['result']['url'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 42)               'title': hit['result']['full_title'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 43)               'content': content,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 44)               'thumbnail': hit['result']['song_art_image_thumbnail_url'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 45)               'template': 'videos.html'}
+2434c29d (woorst 2017-08-19 19:05:17 -0500 46)     if timestamp:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 47)         result.update({'publishedDate': datetime.fromtimestamp(timestamp)})
+2434c29d (woorst 2017-08-19 19:05:17 -0500 48)     return result
+2434c29d (woorst 2017-08-19 19:05:17 -0500 49) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 50) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 51) def parse_artist(hit):
+2434c29d (woorst 2017-08-19 19:05:17 -0500 52)     result = {'url': hit['result']['url'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 53)               'title': hit['result']['name'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 54)               'content': None,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 55)               'thumbnail': hit['result']['image_url'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 56)               'template': 'videos.html'}
+2434c29d (woorst 2017-08-19 19:05:17 -0500 57)     return result
+2434c29d (woorst 2017-08-19 19:05:17 -0500 58) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 59) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 60) def parse_album(hit):
+2434c29d (woorst 2017-08-19 19:05:17 -0500 61)     result = {'url': hit['result']['url'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 62)               'title': hit['result']['full_title'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 63)               'thumbnail': hit['result']['cover_art_url'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 64)               # 'thumbnail': hit['result']['cover_art_thumbnail_url'],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 65)               'template': 'videos.html'}
+2434c29d (woorst 2017-08-19 19:05:17 -0500 66)     try:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 67)         year = hit['result']['release_date_components']['year']
+2434c29d (woorst 2017-08-19 19:05:17 -0500 68)     except:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 69)         pass
+2434c29d (woorst 2017-08-19 19:05:17 -0500 70)     else:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 71)         if year:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 72)             result.update({'content': 'Released: {}'.format(year)})
+2434c29d (woorst 2017-08-19 19:05:17 -0500 73)     return result
+2434c29d (woorst 2017-08-19 19:05:17 -0500 74) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 75) parse = {'lyric': parse_lyric, 'song': parse_lyric, 'artist': parse_artist, 'album': parse_album}
+2434c29d (woorst 2017-08-19 19:05:17 -0500 76) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 77) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 78) def response(resp):
+2434c29d (woorst 2017-08-19 19:05:17 -0500 79)     results = []
+2434c29d (woorst 2017-08-19 19:05:17 -0500 80)     json = loads(resp.text)
+2434c29d (woorst 2017-08-19 19:05:17 -0500 81)     hits = [hit for section in json['response']['sections'] for hit in section['hits']]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 82)     for hit in hits:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 83)         try:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 84)             func = parse[hit['type']]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 85)         except KeyError:
+2434c29d (woorst 2017-08-19 19:05:17 -0500 86)             continue
+2434c29d (woorst 2017-08-19 19:05:17 -0500 87)         results.append(func(hit))
+2434c29d (woorst 2017-08-19 19:05:17 -0500 88)     return results

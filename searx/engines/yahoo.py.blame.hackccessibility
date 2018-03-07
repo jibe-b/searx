@@ -1,0 +1,153 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   2)  Yahoo (Web)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   4)  @website     https://search.yahoo.com/web
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   5)  @provide-api yes (https://developer.yahoo.com/boss/search/),
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   6)               $0.80/1000 queries
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   7) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   8)  @using-api   no (because pricing)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   9)  @results     HTML (using search portal)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  10)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  11)  @parse       url, title, content, suggestion
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  12) """
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  13) 
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  14) from lxml import html
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100  15) from searx.engines.xpath import extract_text, extract_url
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  16) from searx.url_utils import unquote, urlencode
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  17) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  18) # engine dependent config
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  19) categories = ['general']
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  20) paging = True
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  21) language_support = True
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  22) time_range_support = True
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  23) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  24) # search-url
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100  25) base_url = 'https://search.yahoo.com/'
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100  26) search_url = 'search?{query}&b={offset}&fl=1&vl=lang_{lang}'
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  27) search_url_with_time = 'search?{query}&b={offset}&fl=1&vl=lang_{lang}&age={age}&btf={btf}&fr2=time'
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  28) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600  29) supported_languages_url = 'https://search.yahoo.com/web/advanced'
+f62ce21f (marc              2016-11-05 20:51:38 -0600  30) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  31) # specific xpath variables
+57996b12 (dalf              2015-02-20 12:34:13 +0100  32) results_xpath = "//div[contains(concat(' ', normalize-space(@class), ' '), ' Sr ')]"
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  33) url_xpath = './/h3/a/@href'
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  34) title_xpath = './/h3/a'
+57996b12 (dalf              2015-02-20 12:34:13 +0100  35) content_xpath = './/div[@class="compText aAbs"]'
+57996b12 (dalf              2015-02-20 12:34:13 +0100  36) suggestion_xpath = "//div[contains(concat(' ', normalize-space(@class), ' '), ' AlsoTry ')]//a"
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  37) 
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  38) time_range_dict = {'day': ['1d', 'd'],
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  39)                    'week': ['1w', 'w'],
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  40)                    'month': ['1m', 'm']}
+3acdf3f9 (Adam Tauber       2014-03-10 16:46:11 +0100  41) 
+a7c8d588 (Noemi Vanyi       2016-07-19 10:14:11 +0200  42) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  43) # remove yahoo-specific tracking-url
+0fc481f4 (Adam Tauber       2014-03-08 19:09:03 +0100  44) @little_documented
+def parse_url(url_string):
+faed14b2 (Adam Tauber       2014-03-18 10:06:14 +0100  45)     endings = ['/RS', '/RK']
+faed14b2 (Adam Tauber       2014-03-18 10:06:14 +0100  46)     endpositions = []
+9f13af8d (Cqoicebordel      2015-02-04 20:41:40 +0100  47)     start = url_string.find('http', url_string.find('/RU=') + 1)
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  48) 
+faed14b2 (Adam Tauber       2014-03-18 10:06:14 +0100  49)     for ending in endings:
+faed14b2 (Adam Tauber       2014-03-18 10:06:14 +0100  50)         endpos = url_string.rfind(ending)
+faed14b2 (Adam Tauber       2014-03-18 10:06:14 +0100  51)         if endpos > -1:
+faed14b2 (Adam Tauber       2014-03-18 10:06:14 +0100  52)             endpositions.append(endpos)
+faed14b2 (Adam Tauber       2014-03-18 10:06:14 +0100  53) 
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  54)     if start == 0 or len(endpositions) == 0:
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  55)         return url_string
+a4ffeddc (Dalf              2014-09-07 18:42:56 +0200  56)     else:
+a4ffeddc (Dalf              2014-09-07 18:42:56 +0200  57)         end = min(endpositions)
+a4ffeddc (Dalf              2014-09-07 18:42:56 +0200  58)         return unquote(url_string[start:end])
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  59) 
+3acdf3f9 (Adam Tauber       2014-03-10 16:46:11 +0100  60) 
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  61) def _get_url(query, offset, language, time_range):
+350a8452 (Adam Tauber       2016-07-26 00:22:05 +0200  62)     if time_range in time_range_dict:
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  63)         return base_url + search_url_with_time.format(offset=offset,
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  64)                                                       query=urlencode({'p': query}),
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  65)                                                       lang=language,
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  66)                                                       age=time_range_dict[time_range][0],
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  67)                                                       btf=time_range_dict[time_range][1])
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  68)     return base_url + search_url.format(offset=offset,
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  69)                                         query=urlencode({'p': query}),
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  70)                                         lang=language)
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  71) 
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  72) 
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  73) def _get_language(params):
+4d177039 (marc              2017-07-20 15:47:20 -0500  74)     if params['language'][:2] == 'zh':
+149802c5 (marc              2016-08-05 23:34:56 -0500  75)         if params['language'] == 'zh' or params['language'] == 'zh-CH':
+149802c5 (marc              2016-08-05 23:34:56 -0500  76)             return 'szh'
+149802c5 (marc              2016-08-05 23:34:56 -0500  77)         else:
+149802c5 (marc              2016-08-05 23:34:56 -0500  78)             return 'tzh'
+149802c5 (marc              2016-08-05 23:34:56 -0500  79)     else:
+149802c5 (marc              2016-08-05 23:34:56 -0500  80)         return params['language'].split('-')[0]
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  81) 
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  82) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  83) # do search-request
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  84) def request(query, params):
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100  85)     if params['time_range'] and params['time_range'] not in time_range_dict:
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100  86)         return params
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100  87) 
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  88)     offset = (params['pageno'] - 1) * 10 + 1
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  89)     language = _get_language(params)
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  90) 
+93c0c49e (Noemi Vanyi       2016-07-17 18:42:30 +0200  91)     params['url'] = _get_url(query, offset, language, params['time_range'])
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  92) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  93)     # TODO required?
+68a08325 (asciimoo          2014-01-31 05:10:49 +0100  94)     params['cookies']['sB'] = 'fl=1&vl=lang_{lang}&sh=1&rw=new&v=1'\
+3a2b9a86 (asciimoo          2014-01-31 05:11:37 +0100  95)         .format(lang=language)
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  96) 
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  97)     return params
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  98) 
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100  99) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 100) # get response from search-request
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 101) def response(resp):
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 102)     results = []
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 103) 
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 104)     dom = html.fromstring(resp.text)
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 105) 
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 106)     try:
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 107)         results_num = int(dom.xpath('//div[@class="compPagination"]/span[last()]/text()')[0]
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 108)                           .split()[0].replace(',', ''))
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 109)         results.append({'number_of_results': results_num})
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 110)     except:
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 111)         pass
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 112) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 113)     # parse results
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 114)     for result in dom.xpath(results_xpath):
+01c2eeb8 (Adam Tauber       2014-03-21 16:36:13 +0100 115)         try:
+01c2eeb8 (Adam Tauber       2014-03-21 16:36:13 +0100 116)             url = parse_url(extract_url(result.xpath(url_xpath), search_url))
+01c2eeb8 (Adam Tauber       2014-03-21 16:36:13 +0100 117)             title = extract_text(result.xpath(title_xpath)[0])
+01c2eeb8 (Adam Tauber       2014-03-21 16:36:13 +0100 118)         except:
+01c2eeb8 (Adam Tauber       2014-03-21 16:36:13 +0100 119)             continue
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 120) 
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 121)         content = extract_text(result.xpath(content_xpath)[0])
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 122) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 123)         # append result
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 124)         results.append({'url': url,
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 125)                         'title': title,
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 126)                         'content': content})
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 127) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 128)     # if no suggestion found, return results
+57996b12 (dalf              2015-02-20 12:34:13 +0100 129)     suggestions = dom.xpath(suggestion_xpath)
+57996b12 (dalf              2015-02-20 12:34:13 +0100 130)     if not suggestions:
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 131)         return results
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 132) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 133)     # parse suggestion
+57996b12 (dalf              2015-02-20 12:34:13 +0100 134)     for suggestion in suggestions:
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 135)         # append suggestion
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 136)         results.append({'suggestion': extract_text(suggestion)})
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 137) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 138)     # return results
+642986c2 (asciimoo          2014-01-30 02:33:24 +0100 139)     return results
+f62ce21f (marc              2016-11-05 20:51:38 -0600 140) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 141) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 142) # get supported languages from their site
+af35eee1 (marc              2016-12-15 00:34:43 -0600 143) @little_documented
+def _fetch_supported_languages(resp):
+f62ce21f (marc              2016-11-05 20:51:38 -0600 144)     supported_languages = []
+af35eee1 (marc              2016-12-15 00:34:43 -0600 145)     dom = html.fromstring(resp.text)
+f62ce21f (marc              2016-11-05 20:51:38 -0600 146)     options = dom.xpath('//div[@id="yschlang"]/span/label/input')
+f62ce21f (marc              2016-11-05 20:51:38 -0600 147)     for option in options:
+af35eee1 (marc              2016-12-15 00:34:43 -0600 148)         code = option.xpath('./@value')[0][5:].replace('_', '-')
+f62ce21f (marc              2016-11-05 20:51:38 -0600 149)         supported_languages.append(code)
+f62ce21f (marc              2016-11-05 20:51:38 -0600 150) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 151)     return supported_languages

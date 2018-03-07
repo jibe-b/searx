@@ -1,0 +1,146 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   2)  Bing (Images)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   4)  @website     https://www.bing.com/images
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   5)  @provide-api yes (http://datamarket.azure.com/dataset/bing/search),
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   6)               max. 5000 query/month
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   7) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   8)  @using-api   no (because of query limit)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   9)  @results     HTML (using search portal)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  10)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  11)  @parse       url, title, img_src
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  12) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  13)  @todo        currently there are up to 35 images receive per page,
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  14)               because bing does not parse count=10.
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  15)               limited response to 10 images
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  16) """
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  17) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  18) from lxml import html
+ebbf3334 (Adam Tauber       2016-02-01 21:40:28 +0100  19) from json import loads
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  20) import re
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  21) from searx.url_utils import urlencode
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  22) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  23) # engine dependent config
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  24) categories = ['images']
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  25) paging = True
+e7de9674 (Thomas Pointhuber 2015-02-08 21:53:37 +0100  26) safesearch = True
+5c02b9ef (Noémi Ványi       2016-10-30 20:58:34 +0100  27) time_range_support = True
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  28) language_support = True
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  29) supported_languages_url = 'https://www.bing.com/account/general'
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  30) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  31) # search-url
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  32) base_url = 'https://www.bing.com/'
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  33) search_string = 'images/search?{query}&count=10&first={offset}'
+5c02b9ef (Noémi Ványi       2016-10-30 20:58:34 +0100  34) time_range_string = '&qft=+filterui:age-lt{interval}'
+5c02b9ef (Noémi Ványi       2016-10-30 20:58:34 +0100  35) time_range_dict = {'day': '1440',
+5c02b9ef (Noémi Ványi       2016-10-30 20:58:34 +0100  36)                    'week': '10080',
+c59c76e6 (Noémi Ványi       2016-12-11 16:39:12 +0100  37)                    'month': '43200',
+c59c76e6 (Noémi Ványi       2016-12-11 16:39:12 +0100  38)                    'year': '525600'}
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  39) 
+e7de9674 (Thomas Pointhuber 2015-02-08 21:53:37 +0100  40) # safesearch definitions
+e7de9674 (Thomas Pointhuber 2015-02-08 21:53:37 +0100  41) safesearch_types = {2: 'STRICT',
+e7de9674 (Thomas Pointhuber 2015-02-08 21:53:37 +0100  42)                     1: 'DEMOTE',
+e7de9674 (Thomas Pointhuber 2015-02-08 21:53:37 +0100  43)                     0: 'OFF'}
+3d61d9b9 (Thomas Pointhuber 2014-09-02 17:13:44 +0200  44) 
+832ea60e (Thomas Pointhuber 2015-02-08 22:01:24 +0100  45) 
+ebbf3334 (Adam Tauber       2016-02-01 21:40:28 +0100  46) _quote_keys_regex = re.compile('({|,)([a-z][a-z0-9]*):(")', re.I | re.U)
+ebbf3334 (Adam Tauber       2016-02-01 21:40:28 +0100  47) 
+ebbf3334 (Adam Tauber       2016-02-01 21:40:28 +0100  48) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  49) # get supported region code
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  50) def get_region_code(lang, lang_list=None):
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  51)     region = None
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  52)     if lang in (lang_list or supported_languages):
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  53)         region = lang
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  54)     elif lang.startswith('no'):
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  55)         region = 'nb-NO'
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  56)     else:
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  57)         # try to get a supported country code with language
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  58)         lang = lang.split('-')[0]
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  59)         for lc in (lang_list or supported_languages):
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  60)             if lang == lc.split('-')[0]:
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  61)                 region = lc
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  62)                 break
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  63)     if region:
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  64)         return region.lower()
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  65)     else:
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  66)         return 'en-us'
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  67) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  68) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  69) # do search-request
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  70) def request(query, params):
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  71)     offset = (params['pageno'] - 1) * 10 + 1
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  72) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  73)     search_path = search_string.format(
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  74)         query=urlencode({'q': query}),
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  75)         offset=offset)
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  76) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  77)     language = get_region_code(params['language'])
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  78) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  79)     params['cookies']['SRCHHPGUSR'] = \
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  80)         'ADLT=' + safesearch_types.get(params['safesearch'], 'DEMOTE')
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  81) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  82)     params['cookies']['_EDGE_S'] = 'mkt=' + language +\
+a524dbb8 (marc              2017-10-10 16:49:49 -0500  83)         '&ui=' + language + '&F=1'
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  84) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  85)     params['url'] = base_url + search_path
+5c02b9ef (Noémi Ványi       2016-10-30 20:58:34 +0100  86)     if params['time_range'] in time_range_dict:
+5c02b9ef (Noémi Ványi       2016-10-30 20:58:34 +0100  87)         params['url'] += time_range_string.format(interval=time_range_dict[params['time_range']])
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  88) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  89)     return params
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  90) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  91) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  92) # get response from search-request
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  93) def response(resp):
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  94)     results = []
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  95) 
+604f32f6 (Adam Tauber       2015-08-28 14:51:32 +0200  96)     dom = html.fromstring(resp.text)
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  97) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200  98)     # parse results
+9ee8e552 (marc              2017-05-13 02:22:27 -0500  99)     for result in dom.xpath('//div[@id="mmComponent_images_1"]/ul/li/div/div[@class="imgpt"]'):
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 100)         link = result.xpath('./a')[0]
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 101) 
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 102)         # TODO find actual title
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 103)         title = link.xpath('.//img/@alt')[0]
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 104) 
+ebbf3334 (Adam Tauber       2016-02-01 21:40:28 +0100 105)         # parse json-data (it is required to add a space, to make it parsable)
+ebbf3334 (Adam Tauber       2016-02-01 21:40:28 +0100 106)         json_data = loads(_quote_keys_regex.sub(r'\1"\2": \3', link.attrib.get('m')))
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 107) 
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 108)         url = json_data.get('purl')
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 109)         img_src = json_data.get('murl')
+4238812a (Cqoicebordel      2015-01-17 19:24:35 +0100 110) 
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 111)         thumb_json_data = loads(_quote_keys_regex.sub(r'\1"\2": \3', link.attrib.get('mad')))
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 112)         thumbnail = thumb_json_data.get('turl')
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 113) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 114)         # append result
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 115)         results.append({'template': 'images.html',
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 116)                         'url': url,
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 117)                         'title': title,
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 118)                         'content': '',
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 119)                         'thumbnail_src': thumbnail,
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 120)                         'img_src': img_src})
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 121) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 122)         # TODO stop parsing if 10 images are found
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 123)         # if len(results) >= 10:
+9ee8e552 (marc              2017-05-13 02:22:27 -0500 124)         #     break
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 125) 
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 126)     # return results
+cdf74fe5 (Thomas Pointhuber 2014-09-01 14:39:18 +0200 127)     return results
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 128) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 129) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 130) # get supported languages from their site
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 131) def _fetch_supported_languages(resp):
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 132)     supported_languages = []
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 133)     dom = html.fromstring(resp.text)
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 134) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 135)     regions_xpath = '//div[@id="region-section-content"]' \
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 136)                     + '//ul[@class="b_vList"]/li/a/@href'
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 137) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 138)     regions = dom.xpath(regions_xpath)
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 139)     for region in regions:
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 140)         code = re.search('setmkt=[^\&]+', region).group()[7:]
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 141)         if code == 'nb-NO':
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 142)             code = 'no-NO'
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 143) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 144)         supported_languages.append(code)
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 145) 
+a524dbb8 (marc              2017-10-10 16:49:49 -0500 146)     return supported_languages

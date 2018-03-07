@@ -1,0 +1,67 @@
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  1) from collections import defaultdict
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  2) import mock
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  3) from searx.engines import mixcloud
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  4) from searx.testing import SearxTestCase
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  5) 
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  6) 
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  7) class TestMixcloudEngine(SearxTestCase):
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  8) 
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100  9)     def test_request(self):
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 10)         query = 'test_query'
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 11)         dicto = defaultdict(dict)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 12)         dicto['pageno'] = 0
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 13)         params = mixcloud.request(query, dicto)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 14)         self.assertTrue('url' in params)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 15)         self.assertTrue(query in params['url'])
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 16)         self.assertTrue('mixcloud.com' in params['url'])
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 17) 
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 18)     def test_response(self):
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 19)         self.assertRaises(AttributeError, mixcloud.response, None)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 20)         self.assertRaises(AttributeError, mixcloud.response, [])
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 21)         self.assertRaises(AttributeError, mixcloud.response, '')
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 22)         self.assertRaises(AttributeError, mixcloud.response, '[]')
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 23) 
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 24)         response = mock.Mock(text='{}')
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 25)         self.assertEqual(mixcloud.response(response), [])
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 26) 
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 27)         response = mock.Mock(text='{"data": []}')
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 28)         self.assertEqual(mixcloud.response(response), [])
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 29) 
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 30)         json = """
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 31)         {"data":[
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 32)             {
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 33)             "user": {
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 34)                 "url": "http://www.mixcloud.com/user/",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 35)                 "username": "user",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 36)                 "name": "User",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 37)                 "key": "/user/"
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 38)             },
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 39)             "key": "/user/this-is-the-url/",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 40)             "created_time": "2014-11-14T13:30:02Z",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 41)             "audio_length": 3728,
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 42)             "slug": "this-is-the-url",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 43)             "name": "Title of track",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 44)             "url": "http://www.mixcloud.com/user/this-is-the-url/",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 45)             "updated_time": "2014-11-14T13:14:10Z"
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 46)         }
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 47)         ]}
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 48)         """
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 49)         response = mock.Mock(text=json)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 50)         results = mixcloud.response(response)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 51)         self.assertEqual(type(results), list)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 52)         self.assertEqual(len(results), 1)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 53)         self.assertEqual(results[0]['title'], 'Title of track')
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 54)         self.assertEqual(results[0]['url'], 'http://www.mixcloud.com/user/this-is-the-url/')
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 55)         self.assertEqual(results[0]['content'], 'User')
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 56)         self.assertTrue('http://www.mixcloud.com/user/this-is-the-url/' in results[0]['embedded'])
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 57) 
+b3ab221b tests/unit/engines/test_mixcloud.py  (stepshal     2016-07-11 20:29:47 +0700 58)         json = r"""
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 59)         {"toto":[
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 60)             {"id":200,"name":"Artist Name",
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 61)             "link":"http:\/\/www.mixcloud.com\/artist\/1217","type":"artist"}
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 62)         ]}
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 63)         """
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 64)         response = mock.Mock(text=json)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 65)         results = mixcloud.response(response)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 66)         self.assertEqual(type(results), list)
+192f255e searx/tests/engines/test_mixcloud.py (Cqoicebordel 2015-01-25 22:33:02 +0100 67)         self.assertEqual(len(results), 0)

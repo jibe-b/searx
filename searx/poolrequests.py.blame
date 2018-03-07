@@ -1,0 +1,159 @@
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100   1) import requests
+357fc478 (Adam Tauber        2015-10-31 14:40:59 +0100   2) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100   3) from itertools import cycle
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200   4) from threading import RLock, local
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100   5) from searx import settings
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200   6) from time import time
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100   7) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100   8) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100   9) class HTTPAdapterWithConnParams(requests.adapters.HTTPAdapter):
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  10) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  11)     def __init__(self, pool_connections=requests.adapters.DEFAULT_POOLSIZE,
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  12)                  pool_maxsize=requests.adapters.DEFAULT_POOLSIZE,
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  13)                  max_retries=requests.adapters.DEFAULT_RETRIES,
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  14)                  pool_block=requests.adapters.DEFAULT_POOLBLOCK,
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  15)                  **conn_params):
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  16)         if max_retries == requests.adapters.DEFAULT_RETRIES:
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  17)             self.max_retries = requests.adapters.Retry(0, read=False)
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  18)         else:
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  19)             self.max_retries = requests.adapters.Retry.from_int(max_retries)
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  20)         self.config = {}
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  21)         self.proxy_manager = {}
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  22) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  23)         super(requests.adapters.HTTPAdapter, self).__init__()
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  24) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  25)         self._pool_connections = pool_connections
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  26)         self._pool_maxsize = pool_maxsize
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  27)         self._pool_block = pool_block
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  28)         self._conn_params = conn_params
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  29) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  30)         self.init_poolmanager(pool_connections, pool_maxsize, block=pool_block, **conn_params)
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  31) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  32)     def __setstate__(self, state):
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  33)         # Can't handle by adding 'proxy_manager' to self.__attrs__ because
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  34)         # because self.poolmanager uses a lambda function, which isn't pickleable.
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  35)         self.proxy_manager = {}
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  36)         self.config = {}
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  37) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  38)         for attr, value in state.items():
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  39)             setattr(self, attr, value)
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  40) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  41)         self.init_poolmanager(self._pool_connections, self._pool_maxsize,
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  42)                               block=self._pool_block, **self._conn_params)
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  43) 
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  44) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  45) threadLocal = local()
+3f395304 (Guilhem Bonnefille 2016-05-02 19:25:09 +0200  46) connect = settings['outgoing'].get('pool_connections', 100)  # Magic number kept from previous code
+3f395304 (Guilhem Bonnefille 2016-05-02 19:25:09 +0200  47) maxsize = settings['outgoing'].get('pool_maxsize', requests.adapters.DEFAULT_POOLSIZE)  # Picked from constructor
+1fcf066a (Adam Tauber        2015-08-02 19:38:27 +0200  48) if settings['outgoing'].get('source_ips'):
+f18a3a77 (Guilhem Bonnefille 2016-04-28 13:59:41 +0200  49)     http_adapters = cycle(HTTPAdapterWithConnParams(pool_connections=connect, pool_maxsize=maxsize,
+f18a3a77 (Guilhem Bonnefille 2016-04-28 13:59:41 +0200  50)                                                     source_address=(source_ip, 0))
+1fcf066a (Adam Tauber        2015-08-02 19:38:27 +0200  51)                           for source_ip in settings['outgoing']['source_ips'])
+f18a3a77 (Guilhem Bonnefille 2016-04-28 13:59:41 +0200  52)     https_adapters = cycle(HTTPAdapterWithConnParams(pool_connections=connect, pool_maxsize=maxsize,
+3f395304 (Guilhem Bonnefille 2016-05-02 19:25:09 +0200  53)                                                      source_address=(source_ip, 0))
+1fcf066a (Adam Tauber        2015-08-02 19:38:27 +0200  54)                            for source_ip in settings['outgoing']['source_ips'])
+03579c22 (Adam Tauber        2015-02-22 23:24:49 +0100  55) else:
+f18a3a77 (Guilhem Bonnefille 2016-04-28 13:59:41 +0200  56)     http_adapters = cycle((HTTPAdapterWithConnParams(pool_connections=connect, pool_maxsize=maxsize), ))
+f18a3a77 (Guilhem Bonnefille 2016-04-28 13:59:41 +0200  57)     https_adapters = cycle((HTTPAdapterWithConnParams(pool_connections=connect, pool_maxsize=maxsize), ))
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  58) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  59) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  60) class SessionSinglePool(requests.Session):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  61) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  62)     def __init__(self):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  63)         super(SessionSinglePool, self).__init__()
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  64) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  65)         # reuse the same adapters
+357fc478 (Adam Tauber        2015-10-31 14:40:59 +0100  66)         with RLock():
+357fc478 (Adam Tauber        2015-10-31 14:40:59 +0100  67)             self.adapters.clear()
+357fc478 (Adam Tauber        2015-10-31 14:40:59 +0100  68)             self.mount('https://', next(https_adapters))
+357fc478 (Adam Tauber        2015-10-31 14:40:59 +0100  69)             self.mount('http://', next(http_adapters))
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  70) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  71)     def close(self):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  72)         """Call super, but clear adapters since there are managed globaly"""
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  73)         self.adapters.clear()
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  74)         super(SessionSinglePool, self).close()
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  75) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  76) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  77) def set_timeout_for_thread(timeout, start_time=None):
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  78)     threadLocal.timeout = timeout
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  79)     threadLocal.start_time = start_time
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  80) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  81) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  82) def reset_time_for_thread():
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  83)     threadLocal.total_time = 0
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  84) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  85) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  86) def get_time_for_thread():
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  87)     return threadLocal.total_time
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  88) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  89) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  90) def request(method, url, **kwargs):
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  91)     """same as requests/requests/api.py request(...)"""
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  92)     time_before_request = time()
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  93) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  94)     # session start
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100  95)     session = SessionSinglePool()
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  96) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  97)     # proxies
+f2b13a7d (Adam Tauber        2017-07-19 21:33:44 +0200  98)     kwargs['proxies'] = settings['outgoing'].get('proxies') or None
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200  99) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 100)     # timeout
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 101)     if 'timeout' in kwargs:
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 102)         timeout = kwargs['timeout']
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 103)     else:
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 104)         timeout = getattr(threadLocal, 'timeout', None)
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 105)         if timeout is not None:
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 106)             kwargs['timeout'] = timeout
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 107) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 108)     # do request
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 109)     response = session.request(method=method, url=url, **kwargs)
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 110) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 111)     time_after_request = time()
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 112) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 113)     # is there a timeout for this engine ?
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 114)     if timeout is not None:
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 115)         timeout_overhead = 0.2  # seconds
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 116)         # start_time = when the user request started
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 117)         start_time = getattr(threadLocal, 'start_time', time_before_request)
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 118)         search_duration = time_after_request - start_time
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 119)         if search_duration > timeout + timeout_overhead:
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 120)             raise requests.exceptions.Timeout(response=response)
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 121) 
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 122)     # session end
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 123)     session.close()
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 124) 
+27e95846 (Adam Tauber        2017-11-23 01:52:45 +0100 125)     if hasattr(threadLocal, 'total_time'):
+27e95846 (Adam Tauber        2017-11-23 01:52:45 +0100 126)         threadLocal.total_time += time_after_request - time_before_request
+c1cfe978 (Alexandre Flament  2017-07-23 11:56:57 +0200 127) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 128)     return response
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 129) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 130) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 131) def get(url, **kwargs):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 132)     kwargs.setdefault('allow_redirects', True)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 133)     return request('get', url, **kwargs)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 134) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 135) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 136) def options(url, **kwargs):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 137)     kwargs.setdefault('allow_redirects', True)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 138)     return request('options', url, **kwargs)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 139) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 140) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 141) def head(url, **kwargs):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 142)     kwargs.setdefault('allow_redirects', False)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 143)     return request('head', url, **kwargs)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 144) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 145) 
+bd22e9a3 (Adam Tauber        2016-01-18 12:47:31 +0100 146) def post(url, data=None, **kwargs):
+06186e72 (Adam Tauber        2015-01-22 17:20:44 +0100 147)     return request('post', url, data=data, **kwargs)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 148) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 149) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 150) def put(url, data=None, **kwargs):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 151)     return request('put', url, data=data, **kwargs)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 152) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 153) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 154) def patch(url, data=None, **kwargs):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 155)     return request('patch', url, data=data, **kwargs)
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 156) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 157) 
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 158) def delete(url, **kwargs):
+d07cfd90 (dalf               2015-01-21 11:33:16 +0100 159)     return request('delete', url, **kwargs)

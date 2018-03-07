@@ -1,0 +1,138 @@
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   1) from collections import defaultdict
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   2) import mock
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   3) from searx.engines import subtitleseeker
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   4) from searx.testing import SearxTestCase
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   5) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   6) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   7) class TestSubtitleseekerEngine(SearxTestCase):
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   8) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100   9)     def test_request(self):
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  10)         query = 'test_query'
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  11)         dicto = defaultdict(dict)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  12)         dicto['pageno'] = 1
+e0c270bd tests/unit/engines/test_subtitleseeker.py  (marc         2016-12-13 23:51:15 -0600  13)         dicto['language'] = 'fr-FR'
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  14)         params = subtitleseeker.request(query, dicto)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  15)         self.assertTrue('url' in params)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  16)         self.assertTrue(query in params['url'])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  17)         self.assertTrue('subtitleseeker.com' in params['url'])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  18) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  19)     def test_response(self):
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  20)         dicto = defaultdict(dict)
+f62ce21f tests/unit/engines/test_subtitleseeker.py  (marc         2016-11-05 20:51:38 -0600  21)         dicto['language'] = 'fr-FR'
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  22)         response = mock.Mock(search_params=dicto)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  23) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  24)         self.assertRaises(AttributeError, subtitleseeker.response, None)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  25)         self.assertRaises(AttributeError, subtitleseeker.response, [])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  26)         self.assertRaises(AttributeError, subtitleseeker.response, '')
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  27)         self.assertRaises(AttributeError, subtitleseeker.response, '[]')
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  28) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  29)         response = mock.Mock(text='<html></html>', search_params=dicto)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  30)         self.assertEqual(subtitleseeker.response(response), [])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  31) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  32)         html = """
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  33)         <div class="boxRows">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  34)             <div class="boxRowsInner" style="width:600px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  35)                 <img src="http://static.subtitleseeker.com/images/movie.gif"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  36)                     style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  37)                 <a href="http://this.is.the.url/"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  38)                     class="blue" title="Title subtitle" >
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  39)                     This is the Title
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  40)                 </a>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  41)                 <br><br>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  42)                 <span class="f10b grey-dark arial" style="padding:0px 0px 5px 20px">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  43)                     "Alternative Title"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  44)                 </span>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  45)             </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  46)             <div class="boxRowsInner f12b red" style="width:70px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  47)                 1998
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  48)             </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  49)             <div class="boxRowsInner grey-web f12" style="width:120px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  50)                 <img src="http://static.subtitleseeker.com/images/basket_put.png"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  51)                     style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  52)                 1039 Subs
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  53)             </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  54)             <div class="boxRowsInner grey-web f10" style="width:130px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  55)                 <img src="http://static.subtitleseeker.com/images/arrow_refresh_small.png"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  56)                     style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  57)                 1 hours ago
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  58)             </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  59)             <div class="clear"></div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  60)         </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  61)         """
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  62)         response = mock.Mock(text=html, search_params=dicto)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  63)         results = subtitleseeker.response(response)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  64)         self.assertEqual(type(results), list)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  65)         self.assertEqual(len(results), 1)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  66)         self.assertEqual(results[0]['title'], 'This is the Title')
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  67)         self.assertEqual(results[0]['url'], 'http://this.is.the.url/French/')
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  68)         self.assertIn('1998', results[0]['content'])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  69)         self.assertIn('1039 Subs', results[0]['content'])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  70)         self.assertIn('Alternative Title', results[0]['content'])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  71) 
+e0c270bd tests/unit/engines/test_subtitleseeker.py  (marc         2016-12-13 23:51:15 -0600  72)         dicto['language'] = 'pt-BR'
+e0c270bd tests/unit/engines/test_subtitleseeker.py  (marc         2016-12-13 23:51:15 -0600  73)         results = subtitleseeker.response(response)
+e0c270bd tests/unit/engines/test_subtitleseeker.py  (marc         2016-12-13 23:51:15 -0600  74)         self.assertEqual(results[0]['url'], 'http://this.is.the.url/Brazilian/')
+e0c270bd tests/unit/engines/test_subtitleseeker.py  (marc         2016-12-13 23:51:15 -0600  75) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  76)         html = """
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  77)         <div class="boxRows">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  78)             <div class="boxRowsInner" style="width:600px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  79)                 <img src="http://static.subtitleseeker.com/images/movie.gif"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  80)                     style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  81)                 <a href="http://this.is.the.url/"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  82)                     class="blue" title="Title subtitle" >
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  83)                     This is the Title
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  84)                 </a>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  85)             </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  86)             <div class="boxRowsInner f12b red" style="width:70px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  87)                 1998
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  88)             </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  89)             <div class="boxRowsInner grey-web f12" style="width:120px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  90)                 <img src="http://static.subtitleseeker.com/images/basket_put.png"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  91)                     style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  92)                 1039 Subs
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  93)             </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  94)             <div class="boxRowsInner grey-web f10" style="width:130px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  95)                 <img src="http://static.subtitleseeker.com/images/arrow_refresh_small.png"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  96)                     style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  97)                 1 hours ago
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  98)             </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100  99)             <div class="clear"></div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 100)         </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 101)         """
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 102)         subtitleseeker.language = 'English'
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 103)         response = mock.Mock(text=html, search_params=dicto)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 104)         results = subtitleseeker.response(response)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 105)         self.assertEqual(type(results), list)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 106)         self.assertEqual(len(results), 1)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 107)         self.assertEqual(results[0]['title'], 'This is the Title')
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 108)         self.assertEqual(results[0]['url'], 'http://this.is.the.url/English/')
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 109)         self.assertIn('1998', results[0]['content'])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 110)         self.assertIn('1039 Subs', results[0]['content'])
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 111) 
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 112)         html = """
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 113)         <div class="boxRowsInner" style="width:600px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 114)             <img src="http://static.subtitleseeker.com/images/movie.gif"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 115)                 style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 116)             <a href="http://this.is.the.url/"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 117)                 class="blue" title="Title subtitle" >
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 118)                 This is the Title
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 119)             </a>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 120)         </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 121)         <div class="boxRowsInner f12b red" style="width:70px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 122)             1998
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 123)         </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 124)         <div class="boxRowsInner grey-web f12" style="width:120px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 125)             <img src="http://static.subtitleseeker.com/images/basket_put.png"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 126)                 style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 127)             1039 Subs
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 128)         </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 129)         <div class="boxRowsInner grey-web f10" style="width:130px;">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 130)             <img src="http://static.subtitleseeker.com/images/arrow_refresh_small.png"
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 131)                 style="width:16px; height:16px;" class="icon">
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 132)             1 hours ago
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 133)         </div>
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 134)         """
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 135)         response = mock.Mock(text=html, search_params=dicto)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 136)         results = subtitleseeker.response(response)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 137)         self.assertEqual(type(results), list)
+3a4d6045 searx/tests/engines/test_subtitleseeker.py (Cqoicebordel 2015-02-06 16:39:59 +0100 138)         self.assertEqual(len(results), 0)

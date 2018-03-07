@@ -1,0 +1,74 @@
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  500px (Images)
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://500px.com
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (https://developers.500px.com/)
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      no (HTML can change)
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, thumbnail, img_src, content
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200 11) 
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200 12)  @todo        rewrite to api
+4689fe34 searx/engines/www500px.py (Alexandre Flament 2015-05-02 15:45:17 +0200 13) """
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 14) 
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 15) from json import loads
+52e615de searx/engines/www500px.py (Adam Tauber       2016-11-30 18:43:03 +0100 16) from searx.url_utils import urlencode, urljoin
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 17) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 18) # engine dependent config
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 19) categories = ['images']
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 20) paging = True
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 21) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 22) # search-url
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 23) base_url = 'https://500px.com'
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 24) search_url = 'https://api.500px.com/v1/photos/search?type=photos'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 25)     '&{query}'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 26)     '&image_size%5B%5D=4'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 27)     '&image_size%5B%5D=20'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 28)     '&image_size%5B%5D=21'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 29)     '&image_size%5B%5D=1080'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 30)     '&image_size%5B%5D=1600'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 31)     '&image_size%5B%5D=2048'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 32)     '&include_states=true'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 33)     '&formats=jpeg%2Clytro'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 34)     '&include_tags=true'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 35)     '&exclude_nude=true'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 36)     '&page={pageno}'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 37)     '&rpp=50'\
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 38)     '&sdk_key=b68e60cff4c929bedea36ca978830c5caca790c3'
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 39) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 40) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 41) # do search-request
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 42) @little_documented
+def request(query, params):
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 43)     params['url'] = search_url.format(pageno=params['pageno'],
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 44)                                       query=urlencode({'term': query}))
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 45) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 46)     return params
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 47) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 48) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 49) # get response from search-request
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 50) def response(resp):
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 51)     results = []
+5d977056 searx/engines/500px.py    (Cqoicebordel      2014-12-29 21:31:04 +0100 52) 
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 53)     response_json = loads(resp.text)
+5d977056 searx/engines/500px.py    (Cqoicebordel      2014-12-29 21:31:04 +0100 54) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 55)     # parse results
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 56)     for result in response_json['photos']:
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 57)         url = urljoin(base_url, result['url'])
+4676e1dc searx/engines/www500px.py (Adam Tauber       2016-12-11 03:24:26 +0100 58)         title = result['name']
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 59)         # last index is the biggest resolution
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 60)         img_src = result['image_url'][-1]
+1a82ed6f searx/engines/www500px.py (Adam Tauber       2015-09-08 22:58:09 +0200 61)         thumbnail_src = result['image_url'][0]
+4676e1dc searx/engines/www500px.py (Adam Tauber       2016-12-11 03:24:26 +0100 62)         content = result['description'] or ''
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 63) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 64)         # append result
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 65)         results.append({'url': url,
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 66)                         'title': title,
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 67)                         'img_src': img_src,
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 68)                         'content': content,
+cb4a3fe5 searx/engines/500px.py    (Cqoicebordel      2015-01-17 19:21:09 +0100 69)                         'thumbnail_src': thumbnail_src,
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 70)                         'template': 'images.html'})
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 71) 
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 72)     # return results
+56399cf1 searx/engines/500px.py    (Cqoicebordel      2014-12-20 07:07:32 +0100 73)     return results

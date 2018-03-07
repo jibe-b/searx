@@ -1,0 +1,80 @@
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  1) # -*- coding: utf-8 -*-
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  2) from collections import defaultdict
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  3) import mock
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  4) from searx.engines import doku
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  5) from searx.testing import SearxTestCase
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  6) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  7) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  8) class TestDokuEngine(SearxTestCase):
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  9) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 10)     @little_documented
+def test_request(self):
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 11)         query = 'test_query'
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 12)         dicto = defaultdict(dict)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 13)         params = doku.request(query, dicto)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 14)         self.assertIn('url', params)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 15)         self.assertIn(query, params['url'])
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 16) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 17)     def test_response(self):
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 18)         self.assertRaises(AttributeError, doku.response, None)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 19)         self.assertRaises(AttributeError, doku.response, [])
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 20)         self.assertRaises(AttributeError, doku.response, '')
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 21)         self.assertRaises(AttributeError, doku.response, '[]')
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 22) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 23)         response = mock.Mock(text='<html></html>')
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 24)         self.assertEqual(doku.response(response), [])
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 25) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 26)         html = u"""
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 27)         <div class="search_quickresult">
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 28)             <h3>Pages trouvées :</h3>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 29)             <ul class="search_quickhits">
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 30)                 <li> <a href="/xfconf-query" class="wikilink1" title="xfconf-query">xfconf-query</a></li>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 31)             </ul>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 32)             <div class="clearer"></div>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 33)         </div>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 34)         """
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 35)         response = mock.Mock(text=html)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 36)         results = doku.response(response)
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 37)         expected = [{'content': '', 'title': 'xfconf-query', 'url': 'http://localhost:8090/xfconf-query'}]
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 38)         self.assertEqual(doku.response(response), expected)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 39) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 40)         html = u"""
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 41)         <dl class="search_results">
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 42)             <dt><a href="/xvnc?s[]=query" class="wikilink1" title="xvnc">xvnc</a>: 40 Occurrences trouvées</dt>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 43)             <dd>er = /usr/bin/Xvnc
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 44)      server_args = -inetd -<strong class="search_hit">query</strong> localhost -geometry 640x480 ... er = /usr/bin/Xvnc
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 45)      server_args = -inetd -<strong class="search_hit">query</strong> localhost -geometry 800x600 ... er = /usr/bin/Xvnc
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 46)      server_args = -inetd -<strong class="search_hit">query</strong> localhost -geometry 1024x768 ... er = /usr/bin/Xvnc
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 47)      server_args = -inetd -<strong class="search_hit">query</strong> localhost -geometry 1280x1024 -depth 8 -Sec</dd>
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 48)             <dt><a href="/postfix_mysql_tls_sasl_1404?s[]=query"
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 49)                    class="wikilink1"
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 50)                    title="postfix_mysql_tls_sasl_1404">postfix_mysql_tls_sasl_1404</a>: 14 Occurrences trouvées</dt>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 51)             <dd>tdepasse
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 52)   hosts = 127.0.0.1
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 53)   dbname = postfix
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 54)   <strong class="search_hit">query</strong> = SELECT goto FROM alias WHERE address='%s' AND a... tdepasse
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 55)   hosts = 127.0.0.1
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 56)   dbname = postfix
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 57)   <strong class="search_hit">query</strong> = SELECT domain FROM domain WHERE domain='%s'
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 58)   #optional <strong class="search_hit">query</strong> to use when relaying for backup MX
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 59)   #<strong class="search_hit">query</strong> = SELECT domain FROM domain WHERE domain='%s' and backupmx =</dd>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 60)           <dt><a href="/bind9?s[]=query" class="wikilink1" title="bind9">bind9</a>: 12 Occurrences trouvées</dt>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 61)           <dd>  printcmd
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 62) ;; Got answer:
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 63) ;; -&gt;&gt;HEADER&lt;&lt;- opcode: <strong class="search_hit">QUERY</strong>, status: NOERROR, id: 13427
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 64) ;; flags: qr aa rd ra; <strong class="search_hit">QUERY</strong>: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 1
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 65) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 66) [...]
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 67) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 68) ;; <strong class="search_hit">Query</strong> time: 1 msec
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 69) ;; SERVER: 127.0.0.1#53(127.0.0.1)
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 70) ;... par la requête (<strong class="search_hit">Query</strong> time) , entre la première et la deuxième requête.</dd>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 71)         </dl>
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 72)         """
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 73)         response = mock.Mock(text=html)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 74)         results = doku.response(response)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 75)         self.assertEqual(type(results), list)
+bb29a910 (Guilhem Bonnefille 2016-04-04 13:38:57 +0200 76)         self.assertEqual(len(results), 3)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 77)         self.assertEqual(results[0]['title'], 'xvnc')
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 78) # FIXME        self.assertEqual(results[0]['url'], u'http://this.should.be.the.link/ű')
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 79) # FIXME        self.assertEqual(results[0]['content'], 'This should be the content.')

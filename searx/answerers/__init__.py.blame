@@ -1,0 +1,50 @@
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  1) from os import listdir
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  2) from os.path import realpath, dirname, join, isdir
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  3) from sys import version_info
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  4) from searx.utils import load_module
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  5) from collections import defaultdict
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  6) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  7) if version_info[0] == 3:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  8)     unicode = str
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  9) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 10) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 11) answerers_dir = dirname(realpath(__file__))
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 12) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 13) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 14) def load_answerers():
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 15)     answerers = []
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 16)     for filename in listdir(answerers_dir):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 17)         if not isdir(join(answerers_dir, filename)) or filename.startswith('_'):
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 18)             continue
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 19)         module = load_module('answerer.py', join(answerers_dir, filename))
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 20)         if not hasattr(module, 'keywords') or not isinstance(module.keywords, tuple) or not len(module.keywords):
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 21)             exit(2)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 22)         answerers.append(module)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 23)     return answerers
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 24) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 25) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 26) def get_answerers_by_keywords(answerers):
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 27)     by_keyword = defaultdict(list)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 28)     for answerer in answerers:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 29)         for keyword in answerer.keywords:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 30)             for keyword in answerer.keywords:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 31)                 by_keyword[keyword].append(answerer.answer)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 32)     return by_keyword
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 33) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 34) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 35) def ask(query):
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 36)     results = []
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 37)     query_parts = list(filter(None, query.query.split()))
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 38) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 39)     if query_parts[0].decode('utf-8') not in answerers_by_keywords:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 40)         return results
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 41) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 42)     for answerer in answerers_by_keywords[query_parts[0].decode('utf-8')]:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 43)         result = answerer(query)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 44)         if result:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 45)             results.append(result)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 46)     return results
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 47) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 48) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 49) answerers = load_answerers()
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 50) answerers_by_keywords = get_answerers_by_keywords(answerers)

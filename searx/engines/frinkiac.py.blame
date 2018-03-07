@@ -1,0 +1,44 @@
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  1) """
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  2) Frinkiac (Images)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  3) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  4) @website     https://www.frinkiac.com
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  5) @provide-api no
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  6) @using-api   no
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  7) @results     JSON
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  8) @stable      no
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  9) @parse       url, title, img_src
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 10) """
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 11) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 12) from json import loads
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 13) from searx.url_utils import urlencode
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 14) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 15) categories = ['images']
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 16) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 17) BASE = 'https://frinkiac.com/'
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 18) SEARCH_URL = '{base}api/search?{query}'
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 19) RESULT_URL = '{base}?{query}'
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 20) THUMB_URL = '{base}img/{episode}/{timestamp}/medium.jpg'
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 21) IMAGE_URL = '{base}img/{episode}/{timestamp}.jpg'
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 22) 
+3034c851 (Noemi Vanyi 2016-02-04 21:01:44 +0100 23) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 24) def request(query, params):
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 25)     params['url'] = SEARCH_URL.format(base=BASE, query=urlencode({'q': query}))
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 26)     return params
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 27) 
+3034c851 (Noemi Vanyi 2016-02-04 21:01:44 +0100 28) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 29) def response(resp):
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 30)     results = []
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 31)     response_data = loads(resp.text)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 32)     for result in response_data:
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 33)         episode = result['Episode']
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 34)         timestamp = result['Timestamp']
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 35) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 36)         results.append({'template': 'images.html',
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 37)                         'url': RESULT_URL.format(base=BASE,
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 38)                                                  query=urlencode({'p': 'caption', 'e': episode, 't': timestamp})),
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 39)                         'title': episode,
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 40)                         'content': '',
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 41)                         'thumbnail_src': THUMB_URL.format(base=BASE, episode=episode, timestamp=timestamp),
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 42)                         'img_src': IMAGE_URL.format(base=BASE, episode=episode, timestamp=timestamp)})
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 43) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 44)     return results

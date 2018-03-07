@@ -1,0 +1,44 @@
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  1) """
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  2)  Asksteem (general)
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  3) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  4)  @website     https://asksteem.com/
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  5)  @provide-api yes
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  6) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  7)  @using-api   yes
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  8)  @results     JSON (https://github.com/Hoxly/asksteem-docs/wiki)
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100  9)  @stable      yes
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 10)  @parse       url, title, content
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 11) """
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 12) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 13) from json import loads
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 14) from searx.url_utils import urlencode
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 15) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 16) # engine dependent config
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 17) categories = ['general']
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 18) paging = True
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 19) language_support = False
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 20) disabled = True
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 21) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 22) # search-url
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 23) search_url = 'https://api.asksteem.com/search?{params}'
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 24) result_url = 'https://steemit.com/@{author}/{title}'
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 25) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 26) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 27) # do search-request
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 28) def request(query, params):
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 29)     url = search_url.format(params=urlencode({'q': query, 'pg': params['pageno']}))
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 30)     params['url'] = url
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 31)     return params
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 32) 
+03d7a8f0 (Adam Tauber 2018-02-18 23:24:59 +0100 33) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 34) # get response from search-request
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 35) def response(resp):
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 36)     json = loads(resp.text)
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 37) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 38)     results = []
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 39) 
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 40)     for result in json.get('results', []):
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 41)         results.append({'url': result_url.format(author=result['author'], title=result['permlink']),
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 42)                         'title': result['title'],
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 43)                         'content': result['summary']})
+b4c657d2 (Adam Tauber 2018-02-18 22:42:32 +0100 44)     return results

@@ -1,0 +1,104 @@
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   1) #!/usr/bin/env python
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   2) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   3) '''
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   4) searx is free software: you can redistribute it and/or modify
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   5) it under the terms of the GNU Affero General Public License as published by
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   6) the Free Software Foundation, either version 3 of the License, or
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   7) (at your option) any later version.
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   8) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100   9) searx is distributed in the hope that it will be useful,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  10) but WITHOUT ANY WARRANTY; without even the implied warranty of
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  11) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  12) GNU Affero General Public License for more details.
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  13) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  14) You should have received a copy of the GNU Affero General Public License
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  15) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  16) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  17) (C) 2016- by Alexandre Flament, <alex@al-f.net>
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  18) '''
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  19) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  20) # set path
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  21) from sys import path
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  22) from os.path import realpath, dirname
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  23) path.append(realpath(dirname(realpath(__file__)) + '/../'))
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  24) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  25) # initialization
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  26) from json import dumps
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  27) from searx import settings
+cda9f859 (NK                2017-07-25 13:39:11 +0100  28) import sys
+cda9f859 (NK                2017-07-25 13:39:11 +0100  29) import codecs
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  30) import searx.query
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  31) import searx.search
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  32) import searx.engines
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  33) import searx.preferences
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  34) import argparse
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  35) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  36) searx.engines.initialize_engines(settings['engines'])
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  37) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  38) # command line parsing
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  39) parser = argparse.ArgumentParser(description='Standalone searx.')
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  40) parser.add_argument('query', type=str,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  41)                     help='Text query')
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  42) parser.add_argument('--category', type=str, nargs='?',
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  43)                     choices=searx.engines.categories.keys(),
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  44)                     default='general',
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  45)                     help='Search category')
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  46) parser.add_argument('--lang', type=str, nargs='?',default='all',
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  47)                     help='Search language')
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  48) parser.add_argument('--pageno', type=int, nargs='?', default=1,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  49)                     help='Page number starting from 1')
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  50) parser.add_argument('--safesearch', type=str, nargs='?', choices=['0', '1', '2'], default='0',
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  51)                     help='Safe content filter from none to strict')
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  52) parser.add_argument('--timerange', type=str, nargs='?', choices=['day', 'week', 'month', 'year'],
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  53)                     help='Filter by time range')
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  54) args = parser.parse_args()
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  55) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  56) # search results for the query
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  57) form = {
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  58)     "q":args.query,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  59)     "categories":args.category.decode('utf-8'),
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  60)     "pageno":str(args.pageno),
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  61)     "language":args.lang,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  62)     "time_range":args.timerange
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  63) }
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  64) preferences = searx.preferences.Preferences(['oscar'], searx.engines.categories.keys(), searx.engines.engines, [])
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  65) preferences.key_value_settings['safesearch'].parse(args.safesearch)
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  66) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  67) search_query = searx.search.get_search_query_from_webapp(preferences, form)
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  68) search = searx.search.Search(search_query)
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  69) result_container = search.search()
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  70) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  71) # output
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  72) from datetime import datetime
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  73) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  74) def no_parsed_url(results):
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  75)     for result in results:
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  76)         del result['parsed_url']
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  77)     return results
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  78) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  79) def json_serial(obj):
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  80)     """JSON serializer for objects not serializable by default json code"""
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  81)     if isinstance(obj, datetime):
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  82)         serial = obj.isoformat()
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  83)         return serial
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  84)     raise TypeError ("Type not serializable")
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  85) 
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  86) result_container_json = {
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  87)     "search": {
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  88)         "q": search_query.query,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  89)         "pageno": search_query.pageno,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  90)         "lang": search_query.lang,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  91)         "safesearch": search_query.safesearch,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  92)         "timerange": search_query.time_range,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  93)         "engines": search_query.engines  
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  94)     },
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  95)     "results": no_parsed_url(result_container.get_ordered_results()),
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  96)     "infoboxes": result_container.infoboxes,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  97)     "suggestions": list(result_container.suggestions),
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  98)     "answers": list(result_container.answers),
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100  99)     "paging": result_container.paging,
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100 100)     "results_number": result_container.results_number()
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100 101) }
+cda9f859 (NK                2017-07-25 13:39:11 +0100 102) sys.stdout = codecs.getwriter("UTF-8")(sys.stdout)
+cda9f859 (NK                2017-07-25 13:39:11 +0100 103) sys.stdout.write(dumps(result_container_json, sort_keys=True, indent=4, ensure_ascii=False, encoding="utf-8", default=json_serial))
+369ec017 (Alexandre Flament 2017-01-04 14:01:29 +0100 104) 

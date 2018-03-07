@@ -1,0 +1,86 @@
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100  1) # -*- coding: utf-8 -*-
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100  2) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100  3) from searx.testing import SearxTestCase
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100  4) from searx import plugins
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100  5) from mock import Mock
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100  6) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100  7) 
+a959977a searx/tests/test_plugins.py (Adam Tauber       2015-10-23 23:31:53 +0200  8) @little_documented
+def get_search_mock(query, **kwargs):
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200  9)     return Mock(search_query=Mock(query=query, **kwargs),
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 10)                 result_container=Mock(answers=set()))
+a959977a searx/tests/test_plugins.py (Adam Tauber       2015-10-23 23:31:53 +0200 11) 
+a959977a searx/tests/test_plugins.py (Adam Tauber       2015-10-23 23:31:53 +0200 12) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 13) class PluginStoreTest(SearxTestCase):
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 14) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 15)     def test_PluginStore_init(self):
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 16)         store = plugins.PluginStore()
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 17)         self.assertTrue(isinstance(store.plugins, list) and len(store.plugins) == 0)
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 18) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 19)     def test_PluginStore_register(self):
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 20)         store = plugins.PluginStore()
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 21)         testplugin = plugins.Plugin()
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 22)         store.register(testplugin)
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 23) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 24)         self.assertTrue(len(store.plugins) == 1)
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 25) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 26)     def test_PluginStore_call(self):
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 27)         store = plugins.PluginStore()
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 28)         testplugin = plugins.Plugin()
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 29)         store.register(testplugin)
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 30)         setattr(testplugin, 'asdf', Mock())
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 31)         request = Mock()
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 32)         store.call([], 'asdf', request, Mock())
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 33) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 34)         self.assertFalse(testplugin.asdf.called)
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 35) 
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 36)         store.call([testplugin], 'asdf', request, Mock())
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 37)         self.assertTrue(testplugin.asdf.called)
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 38) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 39) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 40) class SelfIPTest(SearxTestCase):
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 41) 
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 42)     def test_PluginStore_init(self):
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 43)         store = plugins.PluginStore()
+0fe362ba searx/tests/test_plugins.py (Luc Didry         2015-06-15 13:36:38 +0200 44)         store.register(plugins.self_info)
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 45) 
+41fd748c searx/tests/test_plugins.py (Luc Didry         2015-06-15 10:22:37 +0200 46)         self.assertTrue(len(store.plugins) == 1)
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 47) 
+538029dc searx/tests/test_plugins.py (Luc Didry         2015-06-13 17:49:33 +0200 48)         # IP test
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 49)         request = Mock(remote_addr='127.0.0.1')
+f57149f9 searx/tests/test_plugins.py (Adam Tauber       2015-03-14 22:35:29 +0100 50)         request.headers.getlist.return_value = []
+52e615de tests/unit/test_plugins.py  (Adam Tauber       2016-11-30 18:43:03 +0100 51)         search = get_search_mock(query=b'ip', pageno=1)
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 52)         store.call(store.plugins, 'post_search', request, search)
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 53)         self.assertTrue('127.0.0.1' in search.result_container.answers)
+538029dc searx/tests/test_plugins.py (Luc Didry         2015-06-13 17:49:33 +0200 54) 
+52e615de tests/unit/test_plugins.py  (Adam Tauber       2016-11-30 18:43:03 +0100 55)         search = get_search_mock(query=b'ip', pageno=2)
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 56)         store.call(store.plugins, 'post_search', request, search)
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 57)         self.assertFalse('127.0.0.1' in search.result_container.answers)
+aa227180 tests/unit/test_plugins.py  (Noemi Vanyi       2016-08-27 16:45:25 +0200 58) 
+538029dc searx/tests/test_plugins.py (Luc Didry         2015-06-13 17:49:33 +0200 59)         # User agent test
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 60)         request = Mock(user_agent='Mock')
+538029dc searx/tests/test_plugins.py (Luc Didry         2015-06-13 17:49:33 +0200 61)         request.headers.getlist.return_value = []
+a959977a searx/tests/test_plugins.py (Adam Tauber       2015-10-23 23:31:53 +0200 62) 
+52e615de tests/unit/test_plugins.py  (Adam Tauber       2016-11-30 18:43:03 +0100 63)         search = get_search_mock(query=b'user-agent', pageno=1)
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 64)         store.call(store.plugins, 'post_search', request, search)
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 65)         self.assertTrue('Mock' in search.result_container.answers)
+a959977a searx/tests/test_plugins.py (Adam Tauber       2015-10-23 23:31:53 +0200 66) 
+52e615de tests/unit/test_plugins.py  (Adam Tauber       2016-11-30 18:43:03 +0100 67)         search = get_search_mock(query=b'user-agent', pageno=2)
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 68)         store.call(store.plugins, 'post_search', request, search)
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 69)         self.assertFalse('Mock' in search.result_container.answers)
+aa227180 tests/unit/test_plugins.py  (Noemi Vanyi       2016-08-27 16:45:25 +0200 70) 
+52e615de tests/unit/test_plugins.py  (Adam Tauber       2016-11-30 18:43:03 +0100 71)         search = get_search_mock(query=b'user-agent', pageno=1)
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 72)         store.call(store.plugins, 'post_search', request, search)
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 73)         self.assertTrue('Mock' in search.result_container.answers)
+a959977a searx/tests/test_plugins.py (Adam Tauber       2015-10-23 23:31:53 +0200 74) 
+52e615de tests/unit/test_plugins.py  (Adam Tauber       2016-11-30 18:43:03 +0100 75)         search = get_search_mock(query=b'user-agent', pageno=2)
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 76)         store.call(store.plugins, 'post_search', request, search)
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 77)         self.assertFalse('Mock' in search.result_container.answers)
+aa227180 tests/unit/test_plugins.py  (Noemi Vanyi       2016-08-27 16:45:25 +0200 78) 
+52e615de tests/unit/test_plugins.py  (Adam Tauber       2016-11-30 18:43:03 +0100 79)         search = get_search_mock(query=b'What is my User-Agent?', pageno=1)
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 80)         store.call(store.plugins, 'post_search', request, search)
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 81)         self.assertTrue('Mock' in search.result_container.answers)
+aa227180 tests/unit/test_plugins.py  (Noemi Vanyi       2016-08-27 16:45:25 +0200 82) 
+52e615de tests/unit/test_plugins.py  (Adam Tauber       2016-11-30 18:43:03 +0100 83)         search = get_search_mock(query=b'What is my User-Agent?', pageno=2)
+84a2c97a tests/unit/test_plugins.py  (Alexandre Flament 2017-01-02 12:06:04 +0100 84)         store.call(store.plugins, 'post_search', request, search)
+fbb080f3 tests/unit/test_plugins.py  (dalf              2016-10-22 14:01:53 +0200 85)         self.assertFalse('Mock' in search.result_container.answers)

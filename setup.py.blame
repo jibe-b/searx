@@ -1,0 +1,74 @@
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100  1) # -*- coding: utf-8 -*-
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100  2) """Installer for Searx package."""
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100  3) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100  4) from setuptools import setup
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100  5) from setuptools import find_packages
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100  6) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100  7) import os
+262e1220 (Reventl0v         2014-11-27 23:05:36 +0100  8) import sys
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100  9) 
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 10) # required to load VERSION_STRING constant
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 11) sys.path.insert(0, './searx')
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 12) from version import VERSION_STRING
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 13) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 14) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 15) def read(*rnames):
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 16)     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 17) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 18) 
+28b72d87 (asciimoo          2014-01-21 20:51:07 +0100 19) long_description = read('README.rst')
+5c073fdd (Adam Tauber       2016-01-02 12:36:36 +0100 20) requirements = map(str.strip, open('requirements.txt').readlines())
+5c073fdd (Adam Tauber       2016-01-02 12:36:36 +0100 21) dev_requirements = map(str.strip, open('requirements-dev.txt').readlines())
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 22) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 23) setup(
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 24)     name='searx',
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 25)     version=VERSION_STRING,
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 26)     description="A privacy-respecting, hackable metasearch engine",
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 27)     long_description=long_description,
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 28)     classifiers=[
+ce719ac5 (Adam Tauber       2014-08-08 21:51:15 +0200 29)         "Development Status :: 4 - Beta",
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 30)         "Programming Language :: Python",
+ce719ac5 (Adam Tauber       2014-08-08 21:51:15 +0200 31)         "Topic :: Internet",
+ce719ac5 (Adam Tauber       2014-08-08 21:51:15 +0200 32)         "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+ce719ac5 (Adam Tauber       2014-08-08 21:51:15 +0200 33)         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+ce719ac5 (Adam Tauber       2014-08-08 21:51:15 +0200 34)         'License :: OSI Approved :: GNU Affero General Public License v3'
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 35)     ],
+f72255e3 (Adam Tauber       2014-09-06 13:51:44 +0200 36)     keywords='metasearch searchengine search web http',
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 37)     author='Adam Tauber',
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 38)     author_email='asciimoo@gmail.com',
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 39)     url='https://github.com/asciimoo/searx',
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 40)     license='GNU Affero General Public License',
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 41)     packages=find_packages('.'),
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 42)     zip_safe=False,
+5c073fdd (Adam Tauber       2016-01-02 12:36:36 +0100 43)     install_requires=requirements,
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 44)     extras_require={
+5c073fdd (Adam Tauber       2016-01-02 12:36:36 +0100 45)         'test': dev_requirements
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 46)     },
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 47)     entry_points={
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 48)         'console_scripts': [
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 49)             'searx-run = searx.webapp:run'
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 50)         ]
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 51)     },
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 52)     package_data={
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 53)         'searx': [
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 54)             'settings.yml',
+28b72d87 (asciimoo          2014-01-21 20:51:07 +0100 55)             '../README.rst',
+ca45c241 (Adam Tauber       2016-05-30 18:00:41 +0200 56)             '../requirements.txt',
+ca45c241 (Adam Tauber       2016-05-30 18:00:41 +0200 57)             '../requirements-dev.txt',
+37eb0fb1 (Adam Tauber       2015-05-24 21:13:29 +0200 58)             'data/*',
+333b6759 (Adam Tauber       2015-05-19 08:37:03 +0200 59)             'plugins/*/*',
+4ea03de1 (Cqoicebordel      2015-01-17 20:16:34 +0100 60)             'static/*.*',
+4ea03de1 (Cqoicebordel      2015-01-17 20:16:34 +0100 61)             'static/*/*.*',
+c511b6fd (Matej Cotman      2014-11-14 10:24:40 +0100 62)             'static/*/*/*.*',
+c511b6fd (Matej Cotman      2014-11-14 10:24:40 +0100 63)             'static/*/*/*/*.*',
+c511b6fd (Matej Cotman      2014-11-14 10:24:40 +0100 64)             'static/*/*/*/*/*.*',
+c511b6fd (Matej Cotman      2014-11-14 10:24:40 +0100 65)             'templates/*/*.*',
+c511b6fd (Matej Cotman      2014-11-14 10:24:40 +0100 66)             'templates/*/*/*.*',
+5c073fdd (Adam Tauber       2016-01-02 12:36:36 +0100 67)             'tests/*',
+5c073fdd (Adam Tauber       2016-01-02 12:36:36 +0100 68)             'tests/*/*',
+5c073fdd (Adam Tauber       2016-01-02 12:36:36 +0100 69)             'tests/*/*/*',
+333b6759 (Adam Tauber       2015-05-19 08:37:03 +0200 70)             'translations/*/*/*'
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 71)         ],
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 72)     },
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 73) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 74) )

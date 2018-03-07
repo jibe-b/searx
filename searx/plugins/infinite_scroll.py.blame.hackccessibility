@@ -1,0 +1,9 @@
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 1) from flask_babel import gettext
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 2) 
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 3) name = gettext('Infinite scroll')
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 4) description = gettext('Automatically load next page when scrolling to bottom of current page')
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 5) default_on = False
+10a24bdc (Alexandre Flament 2017-02-12 15:06:01 +0100 6) preference_section = 'ui'
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 7) 
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 8) js_dependencies = ('plugins/js/infinite_scroll.js',)
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 9) css_dependencies = ('plugins/css/infinite_scroll.css',)

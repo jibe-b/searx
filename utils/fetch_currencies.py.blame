@@ -1,0 +1,163 @@
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200   1) # -*- coding: utf-8 -*-
+9984c996 (cclauss           2017-11-14 06:48:54 +0100   2) from __future__ import print_function
+9984c996 (cclauss           2017-11-14 06:48:54 +0100   3) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200   4) import json
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200   5) import re
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200   6) import unicodedata
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200   7) import string
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200   8) from urllib import urlencode
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200   9) from requests import get
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  10) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  11) languages = {'de', 'en', 'es', 'fr', 'hu', 'it', 'nl', 'jp'}
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  12) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  13) url_template = 'https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&{query}&props=labels%7Cdatatype%7Cclaims%7Caliases&languages=' + '|'.join(languages)
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  14) url_wmflabs_template = 'http://wdq.wmflabs.org/api?q='
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700  15) url_wikidata_search_template = 'http://www.wikidata.org/w/api.php?action=query&list=search&format=json&srnamespace=0&srprop=sectiontitle&{query}'
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  16) 
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  17) wmflabs_queries = [
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700  18)     'CLAIM[31:8142]',  # all devise
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  19) ]
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  20) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  21) db = {
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700  22)     'iso4217': {
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700  23)     },
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700  24)     'names': {
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700  25)     }
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  26) }
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  27) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  28) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  29) def remove_accents(data):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  30)     return unicodedata.normalize('NFKD', data).lower()
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  31) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  32) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  33) def normalize_name(name):
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700  34)     return re.sub(' +', ' ', remove_accents(name.lower()).replace('-', ' '))
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  35) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  36) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  37) def add_currency_name(name, iso4217):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  38)     global db
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  39) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  40)     db_names = db['names']
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  41) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  42)     if not isinstance(iso4217, basestring):
+9984c996 (cclauss           2017-11-14 06:48:54 +0100  43)         print("problem", name, iso4217)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  44)         return
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  45) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  46)     name = normalize_name(name)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  47) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  48)     if name == '':
+9984c996 (cclauss           2017-11-14 06:48:54 +0100  49)         print("name empty", iso4217)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  50)         return
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  51) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  52)     iso4217_set = db_names.get(name, None)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  53)     if iso4217_set is not None and iso4217 not in iso4217_set:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  54)         db_names[name].append(iso4217)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  55)     else:
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700  56)         db_names[name] = [iso4217]
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  57) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  58) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  59) def add_currency_label(label, iso4217, language):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  60)     global db
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  61) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  62)     db['iso4217'][iso4217] = db['iso4217'].get(iso4217, {})
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  63)     db['iso4217'][iso4217][language] = label
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  64) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  65) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  66) def get_property_value(data, name):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  67)     prop = data.get('claims', {}).get(name, {})
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  68)     if len(prop) == 0:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  69)         return None
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  70) 
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  71)     value = prop[0].get('mainsnak', {}).get('datavalue', {}).get('value', '')
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  72)     if value == '':
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  73)         return None
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  74) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  75)     return value
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  76) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  77) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  78) def parse_currency(data):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  79)     iso4217 = get_property_value(data, 'P498')
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  80) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  81)     if iso4217 is not None:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  82)         unit = get_property_value(data, 'P558')
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  83)         if unit is not None:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  84)             add_currency_name(unit, iso4217)
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  85) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  86)         labels = data.get('labels', {})
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  87)         for language in languages:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  88)             name = labels.get(language, {}).get('value', None)
+4261a41c (stepshal          2016-07-11 19:17:05 +0700  89)             if name is not None:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  90)                 add_currency_name(name, iso4217)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  91)                 add_currency_label(name, iso4217, language)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  92) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  93)         aliases = data.get('aliases', {})
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  94)         for language in aliases:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  95)             for i in range(0, len(aliases[language])):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  96)                 alias = aliases[language][i].get('value', None)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  97)                 add_currency_name(alias, iso4217)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200  98) 
+2f837506 (stepshal          2016-07-08 23:43:28 +0700  99) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 100) def fetch_data(wikidata_ids):
+d9231d17 (stepshal          2016-07-11 18:52:37 +0700 101)     url = url_template.format(query=urlencode({'ids': '|'.join(wikidata_ids)}))
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 102)     htmlresponse = get(url)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 103)     jsonresponse = json.loads(htmlresponse.content)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 104)     entities = jsonresponse.get('entities', {})
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 105) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 106)     for pname in entities:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 107)         pvalue = entities.get(pname)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 108)         parse_currency(pvalue)
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 109) 
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 110) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 111) def add_q(i):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 112)     return "Q" + str(i)
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 113) 
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 114) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 115) def fetch_data_batch(wikidata_ids):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 116)     while len(wikidata_ids) > 0:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 117)         if len(wikidata_ids) > 50:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 118)             fetch_data(wikidata_ids[0:49])
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 119)             wikidata_ids = wikidata_ids[50:]
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 120)         else:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 121)             fetch_data(wikidata_ids)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 122)             wikidata_ids = []
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 123) 
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 124) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 125) def wdq_query(query):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 126)     url = url_wmflabs_template + query
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 127)     htmlresponse = get(url)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 128)     jsonresponse = json.loads(htmlresponse.content)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 129)     qlist = map(add_q, jsonresponse.get('items', {}))
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 130)     error = jsonresponse.get('status', {}).get('error', None)
+4261a41c (stepshal          2016-07-11 19:17:05 +0700 131)     if error is not None and error != 'OK':
+9984c996 (cclauss           2017-11-14 06:48:54 +0100 132)         print("error for query '" + query + "' :" + error)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 133) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 134)     fetch_data_batch(qlist)
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 135) 
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 136) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 137) def wd_query(query, offset=0):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 138)     qlist = []
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 139) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 140)     url = url_wikidata_search_template.format(query=urlencode({'srsearch': query, 'srlimit': 50, 'sroffset': offset}))
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 141)     htmlresponse = get(url)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 142)     jsonresponse = json.loads(htmlresponse.content)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 143)     for r in jsonresponse.get('query', {}).get('search', {}):
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 144)         qlist.append(r.get('title', ''))
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 145)     fetch_data_batch(qlist)
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 146) 
+7e16c9d3 (stepshal          2016-07-16 00:49:23 +0700 147) 
+6e5f46db (stepshal          2016-07-11 19:40:21 +0700 148) # fetch #
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 149) for q in wmflabs_queries:
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 150)     wdq_query(q)
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 151) 
+2f837506 (stepshal          2016-07-08 23:43:28 +0700 152) # static
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 153) add_currency_name(u"euro", 'EUR')
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 154) add_currency_name(u"euros", 'EUR')
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 155) add_currency_name(u"dollar", 'USD')
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 156) add_currency_name(u"dollars", 'USD')
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 157) add_currency_name(u"peso", 'MXN')
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 158) add_currency_name(u"pesos", 'MXN')
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 159) 
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 160) # write
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 161) f = open("currencies.json", "wb")
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 162) json.dump(db, f, indent=4, encoding="utf-8")
+5525625d (Alexandre Flament 2015-05-12 20:52:08 +0200 163) f.close()

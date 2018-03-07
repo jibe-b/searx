@@ -1,0 +1,176 @@
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   1) from collections import defaultdict
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   2) import mock
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   3) from searx.engines import scanr_structures
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   4) from searx.testing import SearxTestCase
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   5) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   6) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   7) class TestScanrStructuresEngine(SearxTestCase):
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   8) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200   9)     @little_documented
+def test_request(self):
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  10)         query = 'test_query'
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  11)         dicto = defaultdict(dict)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  12)         dicto['pageno'] = 1
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  13)         params = scanr_structures.request(query, dicto)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  14)         self.assertIn('url', params)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  15)         self.assertIn(query, params['data'])
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  16)         self.assertIn('scanr.enseignementsup-recherche.gouv.fr', params['url'])
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  17) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  18)     def test_response(self):
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  19)         self.assertRaises(AttributeError, scanr_structures.response, None)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  20)         self.assertRaises(AttributeError, scanr_structures.response, [])
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  21)         self.assertRaises(AttributeError, scanr_structures.response, '')
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  22)         self.assertRaises(AttributeError, scanr_structures.response, '[]')
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  23) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  24)         response = mock.Mock(text='{}')
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  25)         self.assertEqual(scanr_structures.response(response), [])
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  26) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  27)         response = mock.Mock(text='{"data": []}')
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  28)         self.assertEqual(scanr_structures.response(response), [])
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  29) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  30)         json = u"""
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  31)         {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  32)           "request":
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  33)             {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  34)               "query":"test_query",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  35)               "page":1,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  36)               "pageSize":20,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  37)               "sortOrder":"RELEVANCY",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  38)               "sortDirection":"ASC",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  39)               "searchField":"ALL",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  40)               "from":0
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  41)             },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  42)           "total":2471,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  43)           "results":[
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  44)             {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  45)               "id":"200711886U",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  46)               "label":"Laboratoire d'Informatique de Grenoble",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  47)               "kind":"RNSR",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  48)               "publicEntity":true,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  49)               "address":{"city":"Grenoble","departement":"38"},
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  50)               "logo":"/static/logos/200711886U.png",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  51)               "acronym":"LIG",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  52)               "type":{"code":"UR","label":"Unit\xe9 de recherche"},
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  53)               "level":2,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  54)               "institutions":[
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  55)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  56)                   "id":"193819125",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  57)                   "label":"Grenoble INP",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  58)                   "acronym":"IPG",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  59)                   "code":"UMR 5217"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  60)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  61)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  62)                   "id":"130021397",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  63)                   "label":"Universit\xe9 de Grenoble Alpes",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  64)                   "acronym":"UGA",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  65)                   "code":"UMR 5217"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  66)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  67)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  68)                   "id":"180089013",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  69)                   "label":"Centre national de la recherche scientifique",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  70)                   "acronym":"CNRS",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  71)                   "code":"UMR 5217"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  72)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  73)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  74)                   "id":"180089047",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  75)                   "label":"Institut national de recherche en informatique et en automatique",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  76)                   "acronym":"Inria",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  77)                   "code":"UMR 5217"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  78)                 }
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  79)               ],
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  80)               "highlights":[
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  81)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  82)                   "type":"projects",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  83)                   "value":"linguicielles d\xe9velopp\xe9s jusqu'ici par le GETALP\
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  84)  du <strong>LIG</strong> en tant que prototypes op\xe9rationnels.\
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  85) \\r\\nDans le contexte"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  86)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  87)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  88)                   "type":"acronym",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  89)                   "value":"<strong>LIG</strong>"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  90)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  91)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  92)                   "type":"websiteContents",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  93)                   "value":"S\xe9lection\\nListe structures\\nD\xe9tail\\n\
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  94)                     Accueil\\n200711886U : <strong>LIG</strong>\
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  95)                     Laboratoire d'Informatique de Grenoble Unit\xe9 de recherche"},
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  96)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  97)                   "type":"publications",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  98)                   "value":"de noms. Nous avons d'abord d\xe9velopp\xe9 LOOV \
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  99)                     (pour <strong>Lig</strong> Overlaid OCR in Vid\xe9o), \
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 100)                     un outil d'extraction des"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 101)                 }
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 102)               ]
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 103)             },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 104)             {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 105)               "id":"199511665F",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 106)               "label":"Laboratoire Bordelais de Recherche en Informatique",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 107)               "kind":"RNSR",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 108)               "publicEntity":true,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 109)               "address":{"city":"Talence","departement":"33"},
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 110)               "logo":"/static/logos/199511665F.png",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 111)               "acronym":"LaBRI",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 112)               "type":{"code":"UR","label":"Unit\xe9 de recherche"},
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 113)               "level":2,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 114)               "institutions":[
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 115)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 116)                   "id":"130006356",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 117)                   "label":"Institut polytechnique de Bordeaux",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 118)                   "acronym":"IPB",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 119)                   "code":"UMR 5800"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 120)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 121)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 122)                   "id":"130018351",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 123)                   "label":"Universit\xe9 de Bordeaux",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 124)                   "acronym":null,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 125)                   "code":"UMR 5800"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 126)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 127)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 128)                   "id":"180089013",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 129)                   "label":"Centre national de la recherche scientifique",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 130)                   "acronym":"CNRS",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 131)                   "code":"UMR 5800"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 132)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 133)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 134)                   "id":"180089047",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 135)                   "label":"Institut national de recherche en informatique et en automatique",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 136)                   "acronym":"Inria",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 137)                   "code":"UMR 5800"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 138)                 }
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 139)               ],
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 140)               "highlights":[
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 141)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 142)                   "type":"websiteContents",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 143)                   "value":"Samia Kerdjoudj\\n2016-07-05\\nDouble-exponential\
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 144)  and <strong>triple</strong>-exponential bounds for\
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 145)  choosability problems parameterized"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 146)                 },
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 147)                 {
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 148)                   "type":"publications",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 149)                   "value":"de cam\xe9ras install\xe9es dans les lieux publiques \
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 150)  a <strong>tripl\xe9</strong> en 2009, passant de 20 000 \
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 151)  \xe0 60 000. Malgr\xe9 le"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 152)                 }
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 153)               ]
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 154)             }
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 155)           ]
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 156)         }
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 157)         """
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 158)         response = mock.Mock(text=json)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 159)         results = scanr_structures.response(response)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 160)         self.assertEqual(type(results), list)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 161)         self.assertEqual(len(results), 2)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 162)         self.assertEqual(results[0]['title'], u"Laboratoire d'Informatique de Grenoble")
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 163)         self.assertEqual(results[0]['url'], 'https://scanr.enseignementsup-recherche.gouv.fr/structure/200711886U')
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 164)         self.assertEqual(results[0]['content'],
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 165)                          u"linguicielles d\xe9velopp\xe9s jusqu'ici par le GETALP "
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 166)                          u"du LIG en tant que prototypes "
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 167)                          u"op\xe9rationnels. Dans le contexte")
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 168)         self.assertEqual(results[1]['img_src'],
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 169)                          'https://scanr.enseignementsup-recherche.gouv.fr//static/logos/199511665F.png')
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 170)         self.assertEqual(results[1]['content'],
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 171)                          "Samia Kerdjoudj 2016-07-05 Double-exponential and"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 172)                          " triple-exponential bounds for "
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 173)                          "choosability problems parameterized")
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 174)         self.assertEqual(results[1]['url'], 'https://scanr.enseignementsup-recherche.gouv.fr/structure/199511665F')
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 175)         self.assertEqual(results[1]['title'], u"Laboratoire Bordelais de Recherche en Informatique")

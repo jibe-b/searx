@@ -1,0 +1,26 @@
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  1) # -*- coding: utf-8 -*-
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  2) '''
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  3) searx is free software: you can redistribute it and/or modify
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  4) it under the terms of the GNU Affero General Public License as published by
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  5) the Free Software Foundation, either version 3 of the License, or
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  6) (at your option) any later version.
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  7) 
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  8) searx is distributed in the hope that it will be useful,
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  9) but WITHOUT ANY WARRANTY; without even the implied warranty of
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 10) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 11) GNU Affero General Public License for more details.
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 12) 
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 13) You should have received a copy of the GNU Affero General Public License
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 14) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 15) 
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 16) (C) 2013- by Adam Tauber, <asciimoo@gmail.com>
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 17) '''
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 18) 
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 19) # version of searx
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 20) VERSION_MAJOR = 0
+3ac578c0 (Adam Tauber       2018-02-19 00:20:56 +0100 21) VERSION_MINOR = 14
+3ac578c0 (Adam Tauber       2018-02-19 00:20:56 +0100 22) VERSION_BUILD = 0
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 23) 
+b1b0b82a (Adam Tauber       2014-12-02 00:09:08 +0100 24) VERSION_STRING = "{0}.{1}.{2}".format(VERSION_MAJOR,
+b1b0b82a (Adam Tauber       2014-12-02 00:09:08 +0100 25)                                       VERSION_MINOR,
+b1b0b82a (Adam Tauber       2014-12-02 00:09:08 +0100 26)                                       VERSION_BUILD)

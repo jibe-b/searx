@@ -1,0 +1,88 @@
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  1) '''
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  2) searx is free software: you can redistribute it and/or modify
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  3) it under the terms of the GNU Affero General Public License as published by
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  4) the Free Software Foundation, either version 3 of the License, or
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  5) (at your option) any later version.
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  6) 
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  7) searx is distributed in the hope that it will be useful,
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  8) but WITHOUT ANY WARRANTY; without even the implied warranty of
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  9) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 10) GNU Affero General Public License for more details.
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 11) 
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 12) You should have received a copy of the GNU Affero General Public License
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 13) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 14) 
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 15) (C) 2015 by Adam Tauber, <asciimoo@gmail.com>
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 16) '''
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 17) from sys import exit, version_info
+d2a636f7 (Adam Tauber       2015-04-13 00:30:12 +0200 18) from searx import logger
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 19) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 20) if version_info[0] == 3:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 21)     unicode = str
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 22) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 23) logger = logger.getChild('plugins')
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 24) 
+575159b1 (jibe-b            2017-09-22 23:43:05 +0200 25) from searx.plugins import (oa_doi_rewrite,
+117d36b6 (David A Roberts   2016-07-16 19:26:29 +1000 26)                            https_rewrite,
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 27)                            infinite_scroll,
+ab6a7601 (Adam Tauber       2016-02-10 18:04:04 +0100 28)                            open_results_on_new_tab,
+0fe362ba (Luc Didry         2015-06-15 13:36:38 +0200 29)                            self_info,
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 30)                            search_on_category_select,
+3246541b (Kirill Isakov     2016-04-23 22:26:02 +0600 31)                            tracker_url_remover,
+3246541b (Kirill Isakov     2016-04-23 22:26:02 +0600 32)                            vim_hotkeys)
+d2a636f7 (Adam Tauber       2015-04-13 00:30:12 +0200 33) 
+257e5295 (Adam Tauber       2016-07-04 22:46:43 +0200 34) required_attrs = (('name', (str, unicode)),
+257e5295 (Adam Tauber       2016-07-04 22:46:43 +0200 35)                   ('description', (str, unicode)),
+bf5d6f56 (Adam Tauber       2015-03-14 20:22:26 +0100 36)                   ('default_on', bool))
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 37) 
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 38) optional_attrs = (('js_dependencies', tuple),
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 39)                   ('css_dependencies', tuple))
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 40) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 41) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 42) class Plugin():
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 43)     default_on = False
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 44)     name = 'Default plugin'
+bf5d6f56 (Adam Tauber       2015-03-14 20:22:26 +0100 45)     description = 'Default plugin description'
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 46) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 47) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 48) class PluginStore():
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 49) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 50)     def __init__(self):
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 51)         self.plugins = []
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 52) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 53)     def __iter__(self):
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 54)         for plugin in self.plugins:
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 55)             yield plugin
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 56) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 57)     def register(self, *plugins):
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 58)         for plugin in plugins:
+bf5d6f56 (Adam Tauber       2015-03-14 20:22:26 +0100 59)             for plugin_attr, plugin_attr_type in required_attrs:
+bf5d6f56 (Adam Tauber       2015-03-14 20:22:26 +0100 60)                 if not hasattr(plugin, plugin_attr) or not isinstance(getattr(plugin, plugin_attr), plugin_attr_type):
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 61)                     logger.critical('missing attribute "{0}", cannot load plugin: {1}'.format(plugin_attr, plugin))
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 62)                     exit(3)
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 63)             for plugin_attr, plugin_attr_type in optional_attrs:
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 64)                 if not hasattr(plugin, plugin_attr) or not isinstance(getattr(plugin, plugin_attr), plugin_attr_type):
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 65)                     setattr(plugin, plugin_attr, plugin_attr_type())
+9cb66be2 (Adam Tauber       2015-03-11 01:42:25 +0100 66)             plugin.id = plugin.name.replace(' ', '_')
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 67)             self.plugins.append(plugin)
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 68) 
+84a2c97a (Alexandre Flament 2017-01-02 12:06:04 +0100 69)     def call(self, ordered_plugin_list, plugin_type, request, *args, **kwargs):
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 70)         ret = True
+84a2c97a (Alexandre Flament 2017-01-02 12:06:04 +0100 71)         for plugin in ordered_plugin_list:
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 72)             if hasattr(plugin, plugin_type):
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 73)                 ret = getattr(plugin, plugin_type)(request, *args, **kwargs)
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 74)                 if not ret:
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 75)                     break
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 76) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 77)         return ret
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 78) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 79) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100 80) plugins = PluginStore()
+575159b1 (jibe-b            2017-09-22 23:43:05 +0200 81) plugins.register(oa_doi_rewrite)
+d2a636f7 (Adam Tauber       2015-04-13 00:30:12 +0200 82) plugins.register(https_rewrite)
+678b9e99 (David A Roberts   2016-08-11 12:21:28 +1000 83) plugins.register(infinite_scroll)
+ab6a7601 (Adam Tauber       2016-02-10 18:04:04 +0100 84) plugins.register(open_results_on_new_tab)
+0fe362ba (Luc Didry         2015-06-15 13:36:38 +0200 85) plugins.register(self_info)
+973c97c8 (Adam Tauber       2015-04-12 19:27:48 +0200 86) plugins.register(search_on_category_select)
+617495cc (Cqoicebordel      2015-06-09 16:16:07 +0200 87) plugins.register(tracker_url_remover)
+3246541b (Kirill Isakov     2016-04-23 22:26:02 +0600 88) plugins.register(vim_hotkeys)

@@ -1,0 +1,61 @@
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  1) from collections import defaultdict
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  2) import mock
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  3) from searx.engines import github
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  4) from searx.testing import SearxTestCase
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  5) 
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  6) 
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  7) class TestGitHubEngine(SearxTestCase):
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  8) 
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200  9)     def test_request(self):
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 10)         query = 'test_query'
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 11)         params = github.request(query, defaultdict(dict))
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 12)         self.assertTrue('url' in params)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 13)         self.assertTrue(query in params['url'])
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 14)         self.assertTrue('github.com' in params['url'])
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 15)         self.assertEqual(params['headers']['Accept'], github.accept_header)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 16) 
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 17)     def test_response(self):
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 18)         self.assertRaises(AttributeError, github.response, None)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 19)         self.assertRaises(AttributeError, github.response, [])
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 20)         self.assertRaises(AttributeError, github.response, '')
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 21)         self.assertRaises(AttributeError, github.response, '[]')
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 22) 
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 23)         response = mock.Mock(text='{}')
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 24)         self.assertEqual(github.response(response), [])
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 25) 
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 26)         response = mock.Mock(text='{"items": []}')
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 27)         self.assertEqual(github.response(response), [])
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 28) 
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 29)         json = """
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 30)         {
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 31)             "items": [
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 32)                 {
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 33)                     "name": "title",
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 34)                     "html_url": "url",
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 35)                     "description": ""
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 36)                 }
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 37)             ]
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 38)         }
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 39)         """
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 40)         response = mock.Mock(text=json)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 41)         results = github.response(response)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 42)         self.assertEqual(type(results), list)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 43)         self.assertEqual(len(results), 1)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 44)         self.assertEqual(results[0]['title'], 'title')
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 45)         self.assertEqual(results[0]['url'], 'url')
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 46)         self.assertEqual(results[0]['content'], '')
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 47) 
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 48)         json = """
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 49)         {
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 50)             "items": [
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 51)                 {
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 52)                     "name": "title",
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 53)                     "html_url": "url",
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 54)                     "description": "desc"
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 55)                 }
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 56)             ]
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 57)         }
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 58)         """
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 59)         response = mock.Mock(text=json)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 60)         results = github.response(response)
+f7058006 searx/tests/engines/test_github.py (Gabor Nagy 2014-07-14 15:33:56 +0200 61)         self.assertEqual(results[0]['content'], "desc")

@@ -1,0 +1,115 @@
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   1) from collections import defaultdict
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   2) import mock
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   3) from searx.engines import gigablast
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   4) from searx.testing import SearxTestCase
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   5) 
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   6) 
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   7) class TestGigablastEngine(SearxTestCase):
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   8) 
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100   9)     @little_documented
+def test_request(self):
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  10)         query = 'test_query'
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  11)         dicto = defaultdict(dict)
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  12)         dicto['pageno'] = 0
+52e615de tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-11-30 18:43:03 +0100  13)         dicto['safesearch'] = 0
+4d177039 tests/unit/engines/test_gigablast.py  (marc              2017-07-20 15:47:20 -0500  14)         dicto['language'] = 'en-US'
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  15)         params = gigablast.request(query, dicto)
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  16)         self.assertTrue('url' in params)
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  17)         self.assertTrue(query in params['url'])
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  18)         self.assertTrue('gigablast.com' in params['url'])
+e0c270bd tests/unit/engines/test_gigablast.py  (marc              2016-12-13 23:51:15 -0600  19)         self.assertFalse('en-US' in params['url'])
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  20) 
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  21)     def test_response(self):
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  22)         self.assertRaises(AttributeError, gigablast.response, None)
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  23)         self.assertRaises(AttributeError, gigablast.response, [])
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  24)         self.assertRaises(AttributeError, gigablast.response, '')
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  25)         self.assertRaises(AttributeError, gigablast.response, '[]')
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  26) 
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  27)         response = mock.Mock(text='{"results": []}')
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  28)         self.assertEqual(gigablast.response(response), [])
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  29) 
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  30)         json = """{"results": [
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  31)     {
+0491b78f tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:53:03 +0100  32)         "title":"South by Southwest 2016",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  33)         "dmozEntry":{
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  34)             "dmozCatId":1041152,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  35)             "directCatId":1,
+0491b78f tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:53:03 +0100  36)             "dmozCatStr":"Top: Regional: North America: United States",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  37)             "dmozTitle":"South by Southwest (SXSW)",
+0491b78f tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:53:03 +0100  38)             "dmozSum":"Annual music, film, and interactive conference.",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  39)             "dmozAnchor":""
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  40)         },
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  41)         "dmozEntry":{
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  42)             "dmozCatId":763945,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  43)             "directCatId":1,
+0491b78f tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:53:03 +0100  44)             "dmozCatStr":"Top: Regional: North America: United States",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  45)             "dmozTitle":"South by Southwest (SXSW)",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  46)             "dmozSum":"",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  47)             "dmozAnchor":"www.sxsw.com"
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  48)         },
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  49)         "dmozEntry":{
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  50)             "dmozCatId":761446,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  51)             "directCatId":1,
+0491b78f tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:53:03 +0100  52)             "dmozCatStr":"Top: Regional: North America: United States",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  53)             "dmozTitle":"South by Southwest (SXSW)",
+0491b78f tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:53:03 +0100  54)             "dmozSum":"Music, film, and interactive conference and festival.",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  55)             "dmozAnchor":""
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  56)         },
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  57)         "indirectDmozCatId":1041152,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  58)         "indirectDmozCatId":763945,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  59)         "indirectDmozCatId":761446,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  60)         "contentType":"html",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  61)         "sum":"This should be the content.",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  62)         "url":"www.sxsw.com",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  63)         "hopCount":0,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  64)         "size":" 102k",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  65)         "sizeInBytes":104306,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  66)         "bytesUsedToComputeSummary":70000,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  67)         "docId":269411794364,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  68)         "docScore":586571136.000000,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  69)         "summaryGenTimeMS":12,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  70)         "summaryTagdbLookupTimeMS":0,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  71)         "summaryTitleRecLoadTimeMS":1,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  72)         "site":"www.sxsw.com",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  73)         "spidered":1452203608,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  74)         "firstIndexedDateUTC":1444167123,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  75)         "contentHash32":2170650347,
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  76)         "language":"English",
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  77)         "langAbbr":"en"
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  78)     }
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  79) ]}
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  80)         """
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  81)         response = mock.Mock(text=json)
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  82)         results = gigablast.response(response)
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  83)         self.assertEqual(type(results), list)
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  84)         self.assertEqual(len(results), 1)
+0491b78f tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:53:03 +0100  85)         self.assertEqual(results[0]['title'], 'South by Southwest 2016')
+33ff1de9 tests/unit/engines/test_gigablast.py  (Adam Tauber       2016-02-01 21:41:09 +0100  86)         self.assertEqual(results[0]['url'], 'www.sxsw.com')
+04f7118d searx/tests/engines/test_gigablast.py (Thomas Pointhuber 2015-02-08 14:12:14 +0100  87)         self.assertEqual(results[0]['content'], 'This should be the content.')
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  88) 
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  89)     def test_fetch_supported_languages(self):
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  90)         html = """<html></html>"""
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  91)         response = mock.Mock(text=html)
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  92)         results = gigablast._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  93)         self.assertEqual(type(results), list)
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  94)         self.assertEqual(len(results), 0)
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  95) 
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  96)         html = """
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  97)         <html>
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  98)             <body>
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600  99)                 <span id="menu2">
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 100)                     <a href="/search?&rxikd=1&qlang=xx"></a>
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 101)                     <a href="/search?&rxikd=1&qlang=en"></a>
+1175b390 tests/unit/engines/test_gigablast.py  (marc              2016-12-28 23:24:56 -0600 102)                     <a href="/search?&rxikd=1&prepend=gblang%3Aen"></a>
+1175b390 tests/unit/engines/test_gigablast.py  (marc              2016-12-28 23:24:56 -0600 103)                     <a href="/search?&rxikd=1&qlang=zh_"></a>
+1175b390 tests/unit/engines/test_gigablast.py  (marc              2016-12-28 23:24:56 -0600 104)                     <a href="/search?&rxikd=1&prepend=gblang%3Azh_tw"></a>
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 105)                 </span>
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 106)             </body>
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 107)         </html>
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 108)         """
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 109)         response = mock.Mock(text=html)
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 110)         languages = gigablast._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 111)         self.assertEqual(type(languages), list)
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 112)         self.assertEqual(len(languages), 2)
+af35eee1 tests/unit/engines/test_gigablast.py  (marc              2016-12-15 00:34:43 -0600 113)         self.assertIn('en', languages)
+1175b390 tests/unit/engines/test_gigablast.py  (marc              2016-12-28 23:24:56 -0600 114)         self.assertIn('zh-TW', languages)

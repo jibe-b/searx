@@ -1,0 +1,173 @@
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   1) # -*- coding: utf-8 -*-
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   2) from collections import defaultdict
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   3) import mock
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   4) from searx.engines import yahoo
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   5) from searx.testing import SearxTestCase
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   6) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   7) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   8) class TestYahooEngine(SearxTestCase):
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100   9) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  10)     @little_documented
+def test_parse_url(self):
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  11)         test_url = 'http://r.search.yahoo.com/_ylt=A0LEb9JUSKcAEGRXNyoA;_ylu=X3oDMTEzZm1qazYwBHNlYwNzcgRwb3MDMQRjb' +\
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  12)                    '2xvA2Jm2dGlkA1NNRTcwM18x/RV=2/RE=1423106085/RO=10/RU=https%3a%2f%2fthis.is.the.url%2f/RK=0/RS=' +\
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  13)                    'dtcJsfP4mEeBOjnVfUQ-'
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  14)         url = yahoo.parse_url(test_url)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  15)         self.assertEqual('https://this.is.the.url/', url)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  16) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  17)         test_url = 'http://r.search.yahoo.com/_ylt=A0LElb9JUSKcAEGRXNyoA;_ylu=X3oDMTEzZm1qazYwBHNlYwNzcgRwb3MDMQRjb' +\
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  18)                    '2xvA2Jm2dGlkA1NNRTcwM18x/RV=2/RE=1423106085/RO=10/RU=https%3a%2f%2fthis.is.the.url%2f/RS=' +\
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  19)                    'dtcJsfP4mEeBOjnVfUQ-'
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  20)         url = yahoo.parse_url(test_url)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  21)         self.assertEqual('https://this.is.the.url/', url)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  22) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  23)         test_url = 'https://this.is.the.url/'
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  24)         url = yahoo.parse_url(test_url)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  25)         self.assertEqual('https://this.is.the.url/', url)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  26) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  27)     def test_request(self):
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  28)         query = 'test_query'
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  29)         dicto = defaultdict(dict)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  30)         dicto['pageno'] = 1
+350a8452 tests/unit/engines/test_yahoo.py  (Adam Tauber  2016-07-26 00:22:05 +0200  31)         dicto['time_range'] = ''
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  32)         dicto['language'] = 'fr_FR'
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  33)         params = yahoo.request(query, dicto)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  34)         self.assertIn('url', params)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  35)         self.assertIn(query, params['url'])
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  36)         self.assertIn('search.yahoo.com', params['url'])
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  37)         self.assertIn('fr', params['url'])
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  38)         self.assertIn('cookies', params)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  39)         self.assertIn('sB', params['cookies'])
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  40)         self.assertIn('fr', params['cookies']['sB'])
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  41) 
+b0343568 tests/unit/engines/test_yahoo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  42)     def test_no_url_in_request_year_time_range(self):
+b0343568 tests/unit/engines/test_yahoo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  43)         dicto = defaultdict(dict)
+b0343568 tests/unit/engines/test_yahoo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  44)         query = 'test_query'
+b0343568 tests/unit/engines/test_yahoo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  45)         dicto['time_range'] = 'year'
+b0343568 tests/unit/engines/test_yahoo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  46)         params = yahoo.request(query, dicto)
+b0343568 tests/unit/engines/test_yahoo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  47)         self.assertEqual({}, params['url'])
+b0343568 tests/unit/engines/test_yahoo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  48) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  49)     def test_response(self):
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  50)         self.assertRaises(AttributeError, yahoo.response, None)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  51)         self.assertRaises(AttributeError, yahoo.response, [])
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  52)         self.assertRaises(AttributeError, yahoo.response, '')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  53)         self.assertRaises(AttributeError, yahoo.response, '[]')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  54) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  55)         response = mock.Mock(text='<html></html>')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  56)         self.assertEqual(yahoo.response(response), [])
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  57) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  58)         html = """
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  59) <ol class="reg mb-15 searchCenterMiddle">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  60)     <li class="first">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  61)         <div class="dd algo fst Sr">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  62)             <div class="compTitle">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  63)                 <h3 class="title"><a class=" td-u" href="http://r.search.yahoo.com/_ylt=A0LEb9JUSKcAEGRXNyoA;
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  64)                      _ylu=X3oDMTEzZm1qazYwBHNlYwNzcgRwb3MDMQRjb2xvA2Jm2dGlkA1NNRTcwM18x/RV=2/RE=1423106085/RO=10
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  65)                      /RU=https%3a%2f%2fthis.is.the.url%2f/RK=0/RS=dtcJsfP4mEeBOjnVfUQ-"
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  66)                      target="_blank" data-bid="54e712e13671c">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  67)                      <b><b>This is the title</b></b></a>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  68)                 </h3>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  69)             </div>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  70)             <div class="compText aAbs">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  71)                 <p class="lh-18"><b><b>This is the </b>content</b>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  72)                 </p>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  73)             </div>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  74)         </div>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  75)     </li>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  76)     <li>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  77)         <div class="dd algo lst Sr">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  78)             <div class="compTitle">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  79)             </div>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  80)             <div class="compText aAbs">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  81)                 <p class="lh-18">This is the second content</p>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  82)             </div>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  83)         </div>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  84)     </li>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  85) </ol>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  86) <div class="dd assist fst lst AlsoTry" data-bid="54e712e138d04">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  87)     <div class="compTitle mb-4 h-17">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  88)         <h3 class="title">Also Try</h3> </div>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  89)     <table class="compTable m-0 ac-1st td-u fz-ms">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  90)         <tbody>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  91)             <tr>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  92)                 <td class="w-50p pr-28"><a href="https://search.yahoo.com/"><B>This is the </B>suggestion<B></B></a>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  93)                 </td>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  94)             </tr>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  95)     </table>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100  96) </div>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  97)         """
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  98)         response = mock.Mock(text=html)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100  99)         results = yahoo.response(response)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 100)         self.assertEqual(type(results), list)
+56ad00bc searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-20 19:03:09 +0100 101)         self.assertEqual(len(results), 2)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 102)         self.assertEqual(results[0]['title'], 'This is the title')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 103)         self.assertEqual(results[0]['url'], 'https://this.is.the.url/')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 104)         self.assertEqual(results[0]['content'], 'This is the content')
+56ad00bc searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-20 19:03:09 +0100 105)         self.assertEqual(results[1]['suggestion'], 'This is the suggestion')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 106) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 107)         html = """
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 108) <ol class="reg mb-15 searchCenterMiddle">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 109)     <li class="first">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 110)         <div class="dd algo fst Sr">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 111)             <div class="compTitle">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 112)                 <h3 class="title"><a class=" td-u" href="http://r.search.yahoo.com/_ylt=A0LEb9JUSKcAEGRXNyoA;
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 113)                      _ylu=X3oDMTEzZm1qazYwBHNlYwNzcgRwb3MDMQRjb2xvA2Jm2dGlkA1NNRTcwM18x/RV=2/RE=1423106085/RO=10
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 114)                      /RU=https%3a%2f%2fthis.is.the.url%2f/RK=0/RS=dtcJsfP4mEeBOjnVfUQ-"
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 115)                      target="_blank" data-bid="54e712e13671c">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 116)                   <b><b>This is the title</b></b></a>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 117)                 </h3>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 118)             </div>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 119)             <div class="compText aAbs">
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 120)                 <p class="lh-18"><b><b>This is the </b>content</b>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 121)                 </p>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 122)             </div>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 123)         </div>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 124)     </li>
+57996b12 searx/tests/engines/test_yahoo.py (dalf         2015-02-20 12:34:13 +0100 125) </ol>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 126)         """
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 127)         response = mock.Mock(text=html)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 128)         results = yahoo.response(response)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 129)         self.assertEqual(type(results), list)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 130)         self.assertEqual(len(results), 1)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 131)         self.assertEqual(results[0]['title'], 'This is the title')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 132)         self.assertEqual(results[0]['url'], 'https://this.is.the.url/')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 133)         self.assertEqual(results[0]['content'], 'This is the content')
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 134) 
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 135)         html = """
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 136)         <li class="b_algo" u="0|5109|4755453613245655|UAGjXgIrPH5yh-o5oNHRx_3Zta87f_QO">
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 137)         </li>
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 138)         """
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 139)         response = mock.Mock(text=html)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 140)         results = yahoo.response(response)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 141)         self.assertEqual(type(results), list)
+9f13af8d searx/tests/engines/test_yahoo.py (Cqoicebordel 2015-02-04 20:41:40 +0100 142)         self.assertEqual(len(results), 0)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 143) 
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 144)     def test_fetch_supported_languages(self):
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 145)         html = """<html></html>"""
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 146)         response = mock.Mock(text=html)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 147)         results = yahoo._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 148)         self.assertEqual(type(results), list)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 149)         self.assertEqual(len(results), 0)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 150) 
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 151)         html = """
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 152)         <html>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 153)             <div>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 154)                 <div id="yschlang">
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 155)                     <span>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 156)                         <label><input value="lang_ar"></input></label>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 157)                     </span>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 158)                     <span>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 159)                         <label><input value="lang_zh_chs"></input></label>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 160)                         <label><input value="lang_zh_cht"></input></label>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 161)                     </span>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 162)                 </div>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 163)             </div>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 164)         </html>
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 165)         """
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 166)         response = mock.Mock(text=html)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 167)         languages = yahoo._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 168)         self.assertEqual(type(languages), list)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 169)         self.assertEqual(len(languages), 3)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 170)         self.assertIn('ar', languages)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 171)         self.assertIn('zh-chs', languages)
+af35eee1 tests/unit/engines/test_yahoo.py  (marc         2016-12-15 00:34:43 -0600 172)         self.assertIn('zh-cht', languages)

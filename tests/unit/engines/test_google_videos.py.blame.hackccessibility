@@ -1,0 +1,61 @@
+856dfc30 (marc 2017-07-21 22:17:28 -0500  1) from collections import defaultdict
+856dfc30 (marc 2017-07-21 22:17:28 -0500  2) import mock
+856dfc30 (marc 2017-07-21 22:17:28 -0500  3) from searx.engines import google_videos
+856dfc30 (marc 2017-07-21 22:17:28 -0500  4) from searx.testing import SearxTestCase
+856dfc30 (marc 2017-07-21 22:17:28 -0500  5) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500  6) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500  7) class TestGoogleVideosEngine(SearxTestCase):
+856dfc30 (marc 2017-07-21 22:17:28 -0500  8) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500  9)     @little_documented
+def test_request(self):
+856dfc30 (marc 2017-07-21 22:17:28 -0500 10)         query = 'test_query'
+856dfc30 (marc 2017-07-21 22:17:28 -0500 11)         dicto = defaultdict(dict)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 12)         dicto['pageno'] = 1
+856dfc30 (marc 2017-07-21 22:17:28 -0500 13)         dicto['safesearch'] = 1
+856dfc30 (marc 2017-07-21 22:17:28 -0500 14)         dicto['time_range'] = ''
+856dfc30 (marc 2017-07-21 22:17:28 -0500 15)         params = google_videos.request(query, dicto)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 16)         self.assertIn('url', params)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 17)         self.assertIn(query, params['url'])
+856dfc30 (marc 2017-07-21 22:17:28 -0500 18) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 19)         dicto['safesearch'] = 0
+856dfc30 (marc 2017-07-21 22:17:28 -0500 20)         params = google_videos.request(query, dicto)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 21)         self.assertNotIn('safe', params['url'])
+856dfc30 (marc 2017-07-21 22:17:28 -0500 22) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 23)     def test_response(self):
+856dfc30 (marc 2017-07-21 22:17:28 -0500 24)         self.assertRaises(AttributeError, google_videos.response, None)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 25)         self.assertRaises(AttributeError, google_videos.response, [])
+856dfc30 (marc 2017-07-21 22:17:28 -0500 26)         self.assertRaises(AttributeError, google_videos.response, '')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 27)         self.assertRaises(AttributeError, google_videos.response, '[]')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 28) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 29)         html = r"""
+856dfc30 (marc 2017-07-21 22:17:28 -0500 30)         <div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 31)             <div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 32)                 <div class="g">
+856dfc30 (marc 2017-07-21 22:17:28 -0500 33)                     <div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 34)                         <h3><a href="url_1">Title 1</h3>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 35)                     </div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 36)                     <div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 37)                         <span class="st">Content 1</span>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 38)                     </div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 39)                 </div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 40)                 <div class="g">
+856dfc30 (marc 2017-07-21 22:17:28 -0500 41)                     <div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 42)                         <h3><a href="url_2">Title 2</h3>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 43)                     </div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 44)                     <div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 45)                         <span class="st">Content 2</span>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 46)                     </div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 47)                 </div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 48)             </div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 49)         </div>
+856dfc30 (marc 2017-07-21 22:17:28 -0500 50)         """
+856dfc30 (marc 2017-07-21 22:17:28 -0500 51)         response = mock.Mock(text=html)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 52)         results = google_videos.response(response)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 53)         self.assertEqual(type(results), list)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 54)         self.assertEqual(len(results), 2)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 55)         self.assertEqual(results[0]['url'], u'url_1')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 56)         self.assertEqual(results[0]['title'], u'Title 1')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 57)         self.assertEqual(results[0]['content'], u'Content 1')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 58)         self.assertEqual(results[1]['url'], u'url_2')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 59)         self.assertEqual(results[1]['title'], u'Title 2')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 60)         self.assertEqual(results[1]['content'], u'Content 2')

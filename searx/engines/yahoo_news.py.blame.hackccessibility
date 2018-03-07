@@ -1,0 +1,106 @@
+b0fd71b7 (Adam Tauber       2014-10-19 12:18:21 +0200   1) # Yahoo (News)
+b0fd71b7 (Adam Tauber       2014-10-19 12:18:21 +0200   2) #
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200   3) # @website     https://news.yahoo.com
+b0fd71b7 (Adam Tauber       2014-10-19 12:18:21 +0200   4) # @provide-api yes (https://developer.yahoo.com/boss/search/)
+b0fd71b7 (Adam Tauber       2014-10-19 12:18:21 +0200   5) #              $0.80/1000 queries
+b0fd71b7 (Adam Tauber       2014-10-19 12:18:21 +0200   6) #
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200   7) # @using-api   no (because pricing)
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200   8) # @results     HTML (using search portal)
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200   9) # @stable      no (HTML can change)
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  10) # @parse       url, title, content, publishedDate
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  11) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  12) import re
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  13) from datetime import datetime, timedelta
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  14) from lxml import html
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  15) from searx.engines.xpath import extract_text, extract_url
+af35eee1 (marc              2016-12-15 00:34:43 -0600  16) from searx.engines.yahoo import parse_url, _fetch_supported_languages, supported_languages_url
+337bd6d9 (Thomas Pointhuber 2014-03-18 13:19:50 +0100  17) from dateutil import parser
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  18) from searx.url_utils import urlencode
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  19) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  20) # engine dependent config
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  21) categories = ['news']
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  22) paging = True
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  23) language_support = True
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  24) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  25) # search-url
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  26) search_url = 'https://news.search.yahoo.com/search?{query}&b={offset}&{lang}=uh3_news_web_gs_1&pz=10&xargs=0&vl=lang_{lang}'  # noqa
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  27) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  28) # specific xpath variables
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  29) results_xpath = '//ol[contains(@class,"searchCenterMiddle")]//li'
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  30) url_xpath = './/h3/a/@href'
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  31) title_xpath = './/h3/a'
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  32) content_xpath = './/div[@class="compText"]'
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  33) publishedDate_xpath = './/span[contains(@class,"tri")]'
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  34) suggestion_xpath = '//div[contains(@class,"VerALSOTRY")]//a'
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  35) 
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  36) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  37) # do search-request
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  38) @little_documented
+def request(query, params):
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  39)     offset = (params['pageno'] - 1) * 10 + 1
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  40) 
+4d177039 (marc              2017-07-20 15:47:20 -0500  41)     language = params['language'].split('-')[0]
+b0fd71b7 (Adam Tauber       2014-10-19 12:18:21 +0200  42) 
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  43)     params['url'] = search_url.format(offset=offset,
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  44)                                       query=urlencode({'p': query}),
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  45)                                       lang=language)
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  46) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  47)     # TODO required?
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  48)     params['cookies']['sB'] = '"v=1&vm=p&fl=1&vl=lang_{lang}&sh=1&pn=10&rw=new'\
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  49)         .format(lang=language)
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  50)     return params
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  51) 
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  52) 
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  53) def sanitize_url(url):
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  54)     if ".yahoo.com/" in url:
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700  55)         return re.sub(u"\\;\\_ylt\\=.+$", "", url)
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  56)     else:
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  57)         return url
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  58) 
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  59) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  60) # get response from search-request
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  61) @little_documented
+def response(resp):
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  62)     results = []
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  63) 
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  64)     dom = html.fromstring(resp.text)
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  65) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  66)     # parse results
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  67)     for result in dom.xpath(results_xpath):
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  68)         urls = result.xpath(url_xpath)
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  69)         if len(urls) != 1:
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  70)             continue
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  71)         url = sanitize_url(parse_url(extract_url(urls, search_url)))
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  72)         title = extract_text(result.xpath(title_xpath)[0])
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100  73)         content = extract_text(result.xpath(content_xpath)[0])
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  74) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  75)         # parse publishedDate
+5538c677 (Thomas Pointhuber 2014-03-15 19:20:29 +0100  76)         publishedDate = extract_text(result.xpath(publishedDate_xpath)[0])
+5538c677 (Thomas Pointhuber 2014-03-15 19:20:29 +0100  77) 
+44ed4424 (Alexandre Flament 2015-05-02 21:08:56 +0200  78)         # still useful ?
+5538c677 (Thomas Pointhuber 2014-03-15 19:20:29 +0100  79)         if re.match("^[0-9]+ minute(s|) ago$", publishedDate):
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  80)             publishedDate = datetime.now() - timedelta(minutes=int(re.match(r'\d+', publishedDate).group()))
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  81)         elif re.match("^[0-9]+ days? ago$", publishedDate):
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  82)             publishedDate = datetime.now() - timedelta(days=int(re.match(r'\d+', publishedDate).group()))
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  83)         elif re.match("^[0-9]+ hour(s|), [0-9]+ minute(s|) ago$", publishedDate):
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  84)             timeNumbers = re.findall(r'\d+', publishedDate)
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  85)             publishedDate = datetime.now()\
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  86)                 - timedelta(hours=int(timeNumbers[0]))\
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  87)                 - timedelta(minutes=int(timeNumbers[1]))
+5538c677 (Thomas Pointhuber 2014-03-15 19:20:29 +0100  88)         else:
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  89)             try:
+993271be (Thomas Pointhuber 2014-03-18 15:56:22 +0100  90)                 publishedDate = parser.parse(publishedDate)
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  91)             except:
+46a2c63f (Adam Tauber       2017-04-08 19:42:50 +0200  92)                 publishedDate = datetime.now()
+5538c677 (Thomas Pointhuber 2014-03-15 19:20:29 +0100  93) 
+5538c677 (Thomas Pointhuber 2014-03-15 19:20:29 +0100  94)         if publishedDate.year == 1900:
+5538c677 (Thomas Pointhuber 2014-03-15 19:20:29 +0100  95)             publishedDate = publishedDate.replace(year=datetime.now().year)
+5538c677 (Thomas Pointhuber 2014-03-15 19:20:29 +0100  96) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200  97)         # append result
+b7350935 (Adam Tauber       2014-03-15 20:20:41 +0100  98)         results.append({'url': url,
+b7350935 (Adam Tauber       2014-03-15 20:20:41 +0100  99)                         'title': title,
+b7350935 (Adam Tauber       2014-03-15 20:20:41 +0100 100)                         'content': content,
+b7350935 (Adam Tauber       2014-03-15 20:20:41 +0100 101)                         'publishedDate': publishedDate})
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100 102) 
+03db970e (Thomas Pointhuber 2014-09-01 16:17:29 +0200 103)     # return results
+f1404ce7 (Thomas Pointhuber 2014-03-04 13:11:53 +0100 104)     return results

@@ -1,0 +1,75 @@
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  1) from collections import defaultdict
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  2) import mock
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  3) from searx.engines import searchcode_code
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  4) from searx.testing import SearxTestCase
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  5) 
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  6) 
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  7) class TestSearchcodeCodeEngine(SearxTestCase):
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  8) 
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100  9)     def test_request(self):
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 10)         query = 'test_query'
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 11)         dicto = defaultdict(dict)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 12)         dicto['pageno'] = 0
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 13)         params = searchcode_code.request(query, dicto)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 14)         self.assertIn('url', params)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 15)         self.assertIn(query, params['url'])
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 16)         self.assertIn('searchcode.com', params['url'])
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 17) 
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 18)     def test_response(self):
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 19)         self.assertRaises(AttributeError, searchcode_code.response, None)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 20)         self.assertRaises(AttributeError, searchcode_code.response, [])
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 21)         self.assertRaises(AttributeError, searchcode_code.response, '')
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 22)         self.assertRaises(AttributeError, searchcode_code.response, '[]')
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 23) 
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 24)         response = mock.Mock(text='{}')
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 25)         self.assertEqual(searchcode_code.response(response), [])
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 26) 
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 27)         response = mock.Mock(text='{"data": []}')
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 28)         self.assertEqual(searchcode_code.response(response), [])
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 29) 
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 30)         json = """
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 31)         {
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 32)         "matchterm": "test",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 33)         "previouspage": null,
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 34)         "searchterm": "test",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 35)         "query": "test",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 36)         "total": 1000,
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 37)         "page": 0,
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 38)         "nextpage": 1,
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 39)         "results": [
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 40)             {
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 41)             "repo": "https://repo",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 42)             "linescount": 1044,
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 43)             "location": "/tests",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 44)             "name": "Name",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 45)             "url": "https://url",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 46)             "md5hash": "ecac6e479edd2b9406c9e08603cec655",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 47)             "lines": {
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 48)                 "1": "// Test 011",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 49)                 "2": "// Source: "
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 50)             },
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 51)             "id": 51223527,
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 52)             "filename": "File.CPP"
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 53)             }
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 54)         ]
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 55)         }
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 56)         """
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 57)         response = mock.Mock(text=json)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 58)         results = searchcode_code.response(response)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 59)         self.assertEqual(type(results), list)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 60)         self.assertEqual(len(results), 1)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 61)         self.assertEqual(results[0]['title'], 'Name - File.CPP')
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 62)         self.assertEqual(results[0]['url'], 'https://url')
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 63)         self.assertEqual(results[0]['repository'], 'https://repo')
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 64)         self.assertEqual(results[0]['code_language'], 'cpp')
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 65) 
+b3ab221b tests/unit/engines/test_searchcode_code.py  (stepshal     2016-07-11 20:29:47 +0700 66)         json = r"""
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 67)         {"toto":[
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 68)             {"id":200,"name":"Artist Name",
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 69)             "link":"http:\/\/www.searchcode_code.com\/artist\/1217","type":"artist"}
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 70)         ]}
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 71)         """
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 72)         response = mock.Mock(text=json)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 73)         results = searchcode_code.response(response)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 74)         self.assertEqual(type(results), list)
+eca5de73 searx/tests/engines/test_searchcode_code.py (Cqoicebordel 2015-01-27 22:37:11 +0100 75)         self.assertEqual(len(results), 0)

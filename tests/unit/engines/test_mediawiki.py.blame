@@ -1,0 +1,126 @@
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   1) # -*- coding: utf-8 -*-
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   2) from collections import defaultdict
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   3) import mock
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   4) from searx.engines import mediawiki
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   5) from searx.testing import SearxTestCase
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   6) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   7) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   8) class TestMediawikiEngine(SearxTestCase):
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100   9) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  10)     def test_request(self):
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  11)         query = 'test_query'
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  12)         dicto = defaultdict(dict)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  13)         dicto['pageno'] = 1
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  14)         dicto['language'] = 'fr_FR'
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  15)         params = mediawiki.request(query, dicto)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  16)         self.assertIn('url', params)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  17)         self.assertIn(query, params['url'])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  18)         self.assertIn('wikipedia.org', params['url'])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  19)         self.assertIn('fr', params['url'])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  20) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  21)         mediawiki.base_url = "http://test.url/"
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  22)         mediawiki.search_url = mediawiki.base_url +\
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  23)                                  'w/api.php?action=query'\
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  24)                                  '&list=search'\
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  25)                                  '&{query}'\
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  26)                                  '&srprop=timestamp'\
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  27)                                  '&format=json'\
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  28)                                  '&sroffset={offset}'\
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  29)                                  '&srlimit={limit}'     # noqa
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  30)         params = mediawiki.request(query, dicto)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  31)         self.assertIn('test.url', params['url'])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  32) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  33)     def test_response(self):
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  34)         dicto = defaultdict(dict)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  35)         dicto['language'] = 'fr'
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  36)         mediawiki.base_url = "https://{language}.wikipedia.org/"
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  37) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  38)         self.assertRaises(AttributeError, mediawiki.response, None)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  39)         self.assertRaises(AttributeError, mediawiki.response, [])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  40)         self.assertRaises(AttributeError, mediawiki.response, '')
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  41)         self.assertRaises(AttributeError, mediawiki.response, '[]')
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  42) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  43)         response = mock.Mock(text='{}', search_params=dicto)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  44)         self.assertEqual(mediawiki.response(response), [])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  45) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  46)         response = mock.Mock(text='{"data": []}', search_params=dicto)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  47)         self.assertEqual(mediawiki.response(response), [])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  48) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  49)         json = """
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  50)         {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  51)             "query-continue": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  52)                 "search": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  53)                     "sroffset": 1
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  54)                 }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  55)             },
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  56)             "query": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  57)                 "searchinfo": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  58)                     "totalhits": 29721
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  59)                 },
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  60)                 "search": [
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  61)                     {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  62)                         "ns": 0,
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  63)                         "title": "This is the title étude",
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  64)                         "timestamp": "2014-12-19T17:42:52Z"
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  65)                     }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  66)                 ]
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  67)             }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  68)         }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  69)         """
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  70)         response = mock.Mock(text=json, search_params=dicto)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  71)         results = mediawiki.response(response)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  72)         self.assertEqual(type(results), list)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  73)         self.assertEqual(len(results), 1)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  74)         self.assertEqual(results[0]['title'], u'This is the title étude')
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  75)         self.assertIn('fr.wikipedia.org', results[0]['url'])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  76)         self.assertIn('This_is_the_title', results[0]['url'])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  77)         self.assertIn('%C3%A9tude', results[0]['url'])
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  78)         self.assertEqual(results[0]['content'], '')
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  79) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  80)         json = """
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  81)         {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  82)             "query-continue": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  83)                 "search": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  84)                     "sroffset": 1
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  85)                 }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  86)             },
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  87)             "query": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  88)                 "searchinfo": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  89)                     "totalhits": 29721
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  90)                 },
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  91)                 "search": [
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  92)                 ]
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  93)             }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  94)         }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  95)         """
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  96)         response = mock.Mock(text=json, search_params=dicto)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  97)         results = mediawiki.response(response)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  98)         self.assertEqual(type(results), list)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100  99)         self.assertEqual(len(results), 0)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 100) 
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 101)         json = """
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 102)         {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 103)             "query-continue": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 104)                 "search": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 105)                     "sroffset": 1
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 106)                 }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 107)             },
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 108)             "query": {
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 109)             }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 110)         }
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 111)         """
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 112)         response = mock.Mock(text=json, search_params=dicto)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 113)         results = mediawiki.response(response)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 114)         self.assertEqual(type(results), list)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 115)         self.assertEqual(len(results), 0)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 116) 
+b3ab221b tests/unit/engines/test_mediawiki.py  (stepshal     2016-07-11 20:29:47 +0700 117)         json = r"""
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 118)         {"toto":[
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 119)             {"id":200,"name":"Artist Name",
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 120)             "link":"http:\/\/www.mediawiki.com\/artist\/1217","type":"artist"}
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 121)         ]}
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 122)         """
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 123)         response = mock.Mock(text=json, search_params=dicto)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 124)         results = mediawiki.response(response)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 125)         self.assertEqual(type(results), list)
+a96208be searx/tests/engines/test_mediawiki.py (Cqoicebordel 2015-02-03 19:56:26 +0100 126)         self.assertEqual(len(results), 0)

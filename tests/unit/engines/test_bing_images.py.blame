@@ -1,0 +1,118 @@
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   1) # -*- coding: utf-8 -*-
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   2) from collections import defaultdict
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   3) import mock
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   4) from searx.engines import bing_images
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   5) from searx.testing import SearxTestCase
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   6) 
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   7) 
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   8) class TestBingImagesEngine(SearxTestCase):
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100   9) 
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  10)     def test_request(self):
+a524dbb8 tests/unit/engines/test_bing_images.py  (marc              2017-10-10 16:49:49 -0500  11)         bing_images.supported_languages = ['fr-FR', 'en-US']
+a524dbb8 tests/unit/engines/test_bing_images.py  (marc              2017-10-10 16:49:49 -0500  12) 
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  13)         query = 'test_query'
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  14)         dicto = defaultdict(dict)
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  15)         dicto['pageno'] = 1
+a524dbb8 tests/unit/engines/test_bing_images.py  (marc              2017-10-10 16:49:49 -0500  16)         dicto['language'] = 'fr-FR'
+832ea60e searx/tests/engines/test_bing_images.py (Thomas Pointhuber 2015-02-08 22:01:24 +0100  17)         dicto['safesearch'] = 1
+5c02b9ef tests/unit/engines/test_bing_images.py  (Noémi Ványi       2016-10-30 20:58:34 +0100  18)         dicto['time_range'] = ''
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  19)         params = bing_images.request(query, dicto)
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  20)         self.assertTrue('url' in params)
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  21)         self.assertTrue(query in params['url'])
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  22)         self.assertTrue('bing.com' in params['url'])
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  23)         self.assertTrue('SRCHHPGUSR' in params['cookies'])
+a524dbb8 tests/unit/engines/test_bing_images.py  (marc              2017-10-10 16:49:49 -0500  24)         self.assertTrue('DEMOTE' in params['cookies']['SRCHHPGUSR'])
+a524dbb8 tests/unit/engines/test_bing_images.py  (marc              2017-10-10 16:49:49 -0500  25)         self.assertTrue('_EDGE_S' in params['cookies'])
+a524dbb8 tests/unit/engines/test_bing_images.py  (marc              2017-10-10 16:49:49 -0500  26)         self.assertTrue('fr-fr' in params['cookies']['_EDGE_S'])
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  27) 
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  28)         dicto['language'] = 'fr'
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  29)         params = bing_images.request(query, dicto)
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  30)         self.assertTrue('_EDGE_S' in params['cookies'])
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  31)         self.assertTrue('fr-fr' in params['cookies']['_EDGE_S'])
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  32) 
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  33)         dicto['language'] = 'all'
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  34)         params = bing_images.request(query, dicto)
+a524dbb8 tests/unit/engines/test_bing_images.py  (marc              2017-10-10 16:49:49 -0500  35)         self.assertTrue('_EDGE_S' in params['cookies'])
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  36)         self.assertTrue('en-us' in params['cookies']['_EDGE_S'])
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  37) 
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  38)     def test_response(self):
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  39)         self.assertRaises(AttributeError, bing_images.response, None)
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  40)         self.assertRaises(AttributeError, bing_images.response, [])
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  41)         self.assertRaises(AttributeError, bing_images.response, '')
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  42)         self.assertRaises(AttributeError, bing_images.response, '[]')
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  43) 
+604f32f6 searx/tests/engines/test_bing_images.py (Adam Tauber       2015-08-28 14:51:32 +0200  44)         response = mock.Mock(text='<html></html>')
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  45)         self.assertEqual(bing_images.response(response), [])
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  46) 
+604f32f6 searx/tests/engines/test_bing_images.py (Adam Tauber       2015-08-28 14:51:32 +0200  47)         response = mock.Mock(text='<html></html>')
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  48)         self.assertEqual(bing_images.response(response), [])
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  49) 
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  50)         html = """
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  51)         <div id="mmComponent_images_1">
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  52)             <ul>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  53)                 <li>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  54)                     <div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  55)                         <div class="imgpt">
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  56)                             <a m='{"purl":"page_url","murl":"img_url"}' mad='{"turl":"thumb_url"}'>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  57)                                 <img src="" alt="alt text" />
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  58)                             </a>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  59)                         </div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  60)                         <div></div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  61)                     </div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  62)                     <div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  63)                         <div class="imgpt">
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  64)                             <a m='{"purl":"page_url2","murl":"img_url2"}' mad='{"turl":"thumb_url2"}'>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  65)                                 <img src="" alt="alt text 2" />
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  66)                             </a>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  67)                         </div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  68)                     </div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  69)                 </li>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  70)             </ul>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  71)             <ul>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  72)                 <li>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  73)                     <div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  74)                         <div class="imgpt">
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  75)                             <a m='{"purl":"page_url3","murl":"img_url3"}' mad='{"turl":"thumb_url3"}'>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  76)                                 <img src="" alt="alt text 3" />
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  77)                             </a>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  78)                         </div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  79)                     </div>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  80)                 </li>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  81)             </ul>
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  82)         </div>
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  83)         """
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  84)         html = html.replace('\r\n', '').replace('\n', '').replace('\r', '')
+604f32f6 searx/tests/engines/test_bing_images.py (Adam Tauber       2015-08-28 14:51:32 +0200  85)         response = mock.Mock(text=html)
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  86)         results = bing_images.response(response)
+dad0434f searx/tests/engines/test_bing_images.py (Cqoicebordel      2015-01-29 20:15:52 +0100  87)         self.assertEqual(type(results), list)
+71de593a tests/unit/engines/test_bing_images.py  (Adam Tauber       2016-03-26 02:07:52 +0100  88)         self.assertEqual(len(results), 3)
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  89)         self.assertEqual(results[0]['title'], 'alt text')
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  90)         self.assertEqual(results[0]['url'], 'page_url')
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  91)         self.assertEqual(results[0]['content'], '')
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  92)         self.assertEqual(results[0]['thumbnail_src'], 'thumb_url')
+9ee8e552 tests/unit/engines/test_bing_images.py  (marc              2017-05-13 02:22:27 -0500  93)         self.assertEqual(results[0]['img_src'], 'img_url')
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  94) 
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  95)     def test_fetch_supported_languages(self):
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  96)         html = """
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  97)         <div>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  98)             <div id="region-section-content">
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500  99)                 <ul class="b_vList">
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 100)                     <li>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 101)                         <a href="https://bing...&setmkt=de-DE&s...">Germany</a>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 102)                         <a href="https://bing...&setmkt=nb-NO&s...">Norway</a>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 103)                     </li>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 104)                 </ul>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 105)                 <ul class="b_vList">
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 106)                     <li>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 107)                         <a href="https://bing...&setmkt=es-AR&s...">Argentina</a>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 108)                     </li>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 109)                 </ul>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 110)             </div>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 111)         </div>
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 112)         """
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 113)         response = mock.Mock(text=html)
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 114)         languages = list(bing_images._fetch_supported_languages(response))
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 115)         self.assertEqual(len(languages), 3)
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 116)         self.assertIn('de-DE', languages)
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 117)         self.assertIn('no-NO', languages)
+54f0ab1f tests/unit/engines/test_bing_images.py  (marc              2017-10-10 17:30:43 -0500 118)         self.assertIn('es-AR', languages)

@@ -1,0 +1,124 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   2)  Bing (News)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   4)  @website     https://www.bing.com/news
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   5)  @provide-api yes (http://datamarket.azure.com/dataset/bing/search),
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   6)               max. 5000 query/month
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   7) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   8)  @using-api   no (because of query limit)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200   9)  @results     RSS (using search portal)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  10)  @stable      yes (except perhaps for the images)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  11)  @parse       url, title, content, publishedDate, thumbnail
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  12) """
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  13) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  14) from datetime import datetime
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  15) from dateutil import parser
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  16) from lxml import etree
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  17) from searx.utils import list_get
+af35eee1 (marc              2016-12-15 00:34:43 -0600  18) from searx.engines.bing import _fetch_supported_languages, supported_languages_url
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  19) from searx.url_utils import urlencode, urlparse, parse_qsl
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  20) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  21) # engine dependent config
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  22) categories = ['news']
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  23) paging = True
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  24) language_support = True
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  25) time_range_support = True
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  26) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  27) # search-url
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  28) base_url = 'https://www.bing.com/'
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  29) search_string = 'news/search?{query}&first={offset}&format=RSS'
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  30) search_string_with_time = 'news/search?{query}&first={offset}&qft=interval%3d"{interval}"&format=RSS'
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  31) time_range_dict = {'day': '7',
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  32)                    'week': '8',
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  33)                    'month': '9'}
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  34) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  35) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  36) # remove click
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  37) def url_cleanup(url_string):
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  38)     parsed_url = urlparse(url_string)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  39)     if parsed_url.netloc == 'www.bing.com' and parsed_url.path == '/news/apiclick.aspx':
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  40)         query = dict(parse_qsl(parsed_url.query))
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  41)         return query.get('url', None)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  42)     return url_string
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  43) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  44) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  45) # replace the http://*bing4.com/th?id=... by https://www.bing.com/th?id=...
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  46) def image_url_cleanup(url_string):
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  47)     parsed_url = urlparse(url_string)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  48)     if parsed_url.netloc.endswith('bing4.com') and parsed_url.path == '/th':
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  49)         query = dict(parse_qsl(parsed_url.query))
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  50)         return "https://www.bing.com/th?id=" + query.get('id')
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  51)     return url_string
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  52) 
+3d61d9b9 (Thomas Pointhuber 2014-09-02 17:13:44 +0200  53) 
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  54) def _get_url(query, language, offset, time_range):
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  55)     if time_range in time_range_dict:
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  56)         search_path = search_string_with_time.format(
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  57)             query=urlencode({'q': query, 'setmkt': language}),
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  58)             offset=offset,
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  59)             interval=time_range_dict[time_range])
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  60)     else:
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  61)         search_path = search_string.format(
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  62)             query=urlencode({'q': query, 'setmkt': language}),
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  63)             offset=offset)
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  64)     return base_url + search_path
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  65) 
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  66) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  67) # do search-request
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  68) def request(query, params):
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100  69)     if params['time_range'] and params['time_range'] not in time_range_dict:
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100  70)         return params
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100  71) 
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  72)     offset = (params['pageno'] - 1) * 10 + 1
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  73) 
+4d177039 (marc              2017-07-20 15:47:20 -0500  74)     language = params['language']
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  75) 
+f70d4052 (Noémi Ványi       2016-10-30 18:14:42 +0100  76)     params['url'] = _get_url(query, language, offset, params['time_range'])
+efde2c21 (Cqoicebordel      2015-01-29 20:56:57 +0100  77) 
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  78)     return params
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  79) 
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  80) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  81) # get response from search-request
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  82) def response(resp):
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100  83)     results = []
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  84) 
+8db527c1 (Adam Tauber       2017-05-22 15:36:52 +0200  85)     rss = etree.fromstring(resp.content)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  86) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  87)     ns = rss.nsmap
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  88) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200  89)     # parse results
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  90)     for item in rss.xpath('./channel/item'):
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  91)         # url / title / content
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  92)         url = url_cleanup(item.xpath('./link/text()')[0])
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  93)         title = list_get(item.xpath('./title/text()'), 0, url)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  94)         content = list_get(item.xpath('./description/text()'), 0, '')
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  95) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  96)         # publishedDate
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  97)         publishedDate = list_get(item.xpath('./pubDate/text()'), 0)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  98)         try:
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200  99)             publishedDate = parser.parse(publishedDate, dayfirst=False)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 100)         except TypeError:
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 101)             publishedDate = datetime.now()
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 102)         except ValueError:
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 103)             publishedDate = datetime.now()
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 104) 
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 105)         # thumbnail
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 106)         thumbnail = list_get(item.xpath('./News:Image/text()', namespaces=ns), 0)
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 107)         if thumbnail is not None:
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 108)             thumbnail = image_url_cleanup(thumbnail)
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 109) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 110)         # append result
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 111)         if thumbnail is not None:
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 112)             results.append({'url': url,
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 113)                             'title': title,
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 114)                             'publishedDate': publishedDate,
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 115)                             'content': content,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 116)                             'img_src': thumbnail})
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 117)         else:
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 118)             results.append({'url': url,
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 119)                             'title': title,
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 120)                             'publishedDate': publishedDate,
+62cc2a56 (Dalf              2015-06-04 18:30:08 +0200 121)                             'content': content})
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 122) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 123)     # return results
+1d574195 (Thomas Pointhuber 2014-03-04 13:10:04 +0100 124)     return results

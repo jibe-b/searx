@@ -1,0 +1,122 @@
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100   1) #  Startpage (Web)
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100   2) #
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200   3) # @website     https://startpage.com
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200   4) # @provide-api no (nothing found)
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100   5) #
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200   6) # @using-api   no
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200   7) # @results     HTML
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200   8) # @stable      no (HTML can change)
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200   9) # @parse       url, title, content
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  10) #
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  11) # @todo        paging
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  12) 
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  13) from lxml import html
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  14) from dateutil import parser
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  15) from datetime import datetime, timedelta
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  16) import re
+f1c10f4f (Cqoicebordel      2015-02-06 17:31:10 +0100  17) from searx.engines.xpath import extract_text
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  18) 
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  19) # engine dependent config
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  20) categories = ['general']
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  21) # there is a mechanism to block "bot" search
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  22) # (probably the parameter qid), require
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  23) # storing of qid's between mulitble search-calls
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  24) 
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  25) # paging = False
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  26) language_support = True
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  27) 
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  28) # search-url
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  29) base_url = 'https://startpage.com/'
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  30) search_url = base_url + 'do/search'
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  31) 
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  32) # specific xpath variables
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  33) # ads xpath //div[@id="results"]/div[@id="sponsored"]//div[@class="result"]
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  34) # not ads: div[@class="result"] are the direct childs of div[@id="results"]
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  35) results_xpath = '//div[@class="result"]'
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  36) link_xpath = './/h3/a'
+9a74113b (asciimoo          2014-01-30 02:10:32 +0100  37) 
+85b81be3 (asciimoo          2014-01-24 09:35:27 +0100  38) 
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  39) # do search-request
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  40) def request(query, params):
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  41)     offset = (params['pageno'] - 1) * 10
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  42) 
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  43)     params['url'] = search_url
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  44)     params['method'] = 'POST'
+9a74113b (asciimoo          2014-01-30 02:10:32 +0100  45)     params['data'] = {'query': query,
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  46)                       'startat': offset}
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  47) 
+4d177039 (marc              2017-07-20 15:47:20 -0500  48)     # set language
+4d177039 (marc              2017-07-20 15:47:20 -0500  49)     params['data']['with_language'] = ('lang_' + params['language'].split('-')[0])
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  50) 
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  51)     return params
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  52) 
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  53) 
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  54) # get response from search-request
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  55) def response(resp):
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200  56)     results = []
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  57) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  58)     dom = html.fromstring(resp.text)
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  59) 
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  60)     # parse results
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  61)     for result in dom.xpath(results_xpath):
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  62)         links = result.xpath(link_xpath)
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  63)         if not links:
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  64)             continue
+b1234ee8 (Adam Tauber       2014-11-17 10:19:23 +0100  65)         link = links[0]
+cf6a92a9 (asciimoo          2013-10-24 23:43:39 +0200  66)         url = link.attrib.get('href')
+a01042ae (pw3t              2014-01-19 21:20:07 +0100  67) 
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  68)         # block google-ad url's
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700  69)         if re.match(r"^http(s|)://(www\.)?google\.[a-z]+/aclk.*$", url):
+23b9095c (Thomas Pointhuber 2015-08-24 11:28:55 +0200  70)             continue
+23b9095c (Thomas Pointhuber 2015-08-24 11:28:55 +0200  71) 
+23b9095c (Thomas Pointhuber 2015-08-24 11:28:55 +0200  72)         # block startpage search url's
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700  73)         if re.match(r"^http(s|)://(www\.)?startpage\.com/do/search\?.*$", url):
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  74)             continue
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  75) 
+996c96ff (Thomas Pointhuber 2015-08-24 11:31:30 +0200  76)         # block ixquick search url's
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700  77)         if re.match(r"^http(s|)://(www\.)?ixquick\.com/do/search\?.*$", url):
+996c96ff (Thomas Pointhuber 2015-08-24 11:31:30 +0200  78)             continue
+996c96ff (Thomas Pointhuber 2015-08-24 11:31:30 +0200  79) 
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100  80)         title = extract_text(link)
+f1c10f4f (Cqoicebordel      2015-02-06 17:31:10 +0100  81) 
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  82)         if result.xpath('./p[@class="desc clk"]'):
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100  83)             content = extract_text(result.xpath('./p[@class="desc clk"]'))
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  84)         else:
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200  85)             content = ''
+85b81be3 (asciimoo          2014-01-24 09:35:27 +0100  86) 
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  87)         published_date = None
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  88) 
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  89)         # check if search result starts with something like: "2 Sep 2014 ... "
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700  90)         if re.match(r"^([1-9]|[1-2][0-9]|3[0-1]) [A-Z][a-z]{2} [0-9]{4} \.\.\. ", content):
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100  91)             date_pos = content.find('...') + 4
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100  92)             date_string = content[0:date_pos - 5]
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  93)             published_date = parser.parse(date_string, dayfirst=True)
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  94) 
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  95)             # fix content string
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  96)             content = content[date_pos:]
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  97) 
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200  98)         # check if search result starts with something like: "5 days ago ... "
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700  99)         elif re.match(r"^[0-9]+ days? ago \.\.\. ", content):
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 100)             date_pos = content.find('...') + 4
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 101)             date_string = content[0:date_pos - 5]
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 102) 
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 103)             # calculate datetime
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 104)             published_date = datetime.now() - timedelta(days=int(re.match(r'\d+', date_string).group()))
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 105) 
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 106)             # fix content string
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 107)             content = content[date_pos:]
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 108) 
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 109)         if published_date:
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 110)             # append result
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 111)             results.append({'url': url,
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 112)                             'title': title,
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 113)                             'content': content,
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 114)                             'publishedDate': published_date})
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 115)         else:
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 116)             # append result
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 117)             results.append({'url': url,
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 118)                             'title': title,
+4508c966 (Thomas Pointhuber 2015-10-24 16:15:30 +0200 119)                             'content': content})
+85b81be3 (asciimoo          2014-01-24 09:35:27 +0100 120) 
+678a80f0 (Thomas Pointhuber 2014-09-02 19:57:01 +0200 121)     # return results
+57eaeb9b (asciimoo          2013-10-19 18:29:39 +0200 122)     return results

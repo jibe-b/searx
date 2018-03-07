@@ -1,0 +1,93 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Kickass Torrent (Videos, Music, Files)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://kickass.so
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api no (nothing found)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML (using search portal)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content, seed, leech, magnetlink
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 12) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 13) from lxml import html
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 14) from operator import itemgetter
+8ea749d6 (Cqoicebordel      2015-01-30 21:02:17 +0100 15) from searx.engines.xpath import extract_text
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 16) from searx.utils import get_torrent_size, convert_str_to_int
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 17) from searx.url_utils import quote, urljoin
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 18) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 19) # engine dependent config
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 20) categories = ['videos', 'music', 'files']
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 21) paging = True
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 22) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 23) # search-url
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 24) url = 'https://kickass.cd/'
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 25) search_url = url + 'search/{search_term}/{pageno}/'
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 26) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 27) # specific xpath variables
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 28) magnet_xpath = './/a[@title="Torrent magnet link"]'
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 29) torrent_xpath = './/a[@title="Download torrent file"]'
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 30) content_xpath = './/span[@class="font11px lightgrey block"]'
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 31) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 32) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 33) # do search-request
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 34) @little_documented
+def request(query, params):
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 35)     params['url'] = search_url.format(search_term=quote(query),
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 36)                                       pageno=params['pageno'])
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 37) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 38)     return params
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 39) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 40) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 41) # get response from search-request
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 42) def response(resp):
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 43)     results = []
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 44) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 45)     dom = html.fromstring(resp.text)
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 46) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 47)     search_res = dom.xpath('//table[@class="data"]//tr')
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 48) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 49)     # return empty array if nothing is found
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 50)     if not search_res:
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 51)         return []
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 52) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 53)     # parse results
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 54)     for result in search_res[1:]:
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 55)         link = result.xpath('.//a[@class="cellMainLink"]')[0]
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 56)         href = urljoin(url, link.attrib['href'])
+8ea749d6 (Cqoicebordel      2015-01-30 21:02:17 +0100 57)         title = extract_text(link)
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 58)         content = extract_text(result.xpath(content_xpath))
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 59)         seed = extract_text(result.xpath('.//td[contains(@class, "green")]'))
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 60)         leech = extract_text(result.xpath('.//td[contains(@class, "red")]'))
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 61)         filesize_info = extract_text(result.xpath('.//td[contains(@class, "nobr")]'))
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 62)         files = extract_text(result.xpath('.//td[contains(@class, "center")][2]'))
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 63) 
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 64)         seed = convert_str_to_int(seed)
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 65)         leech = convert_str_to_int(leech)
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 66) 
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 67)         filesize, filesize_multiplier = filesize_info.split()
+53c9fde9 (Noémi Ványi       2016-10-11 19:31:42 +0200 68)         filesize = get_torrent_size(filesize, filesize_multiplier)
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 69)         if files.isdigit():
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 70)             files = int(files)
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 71)         else:
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 72)             files = None
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 73) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 74)         magnetlink = result.xpath(magnet_xpath)[0].attrib['href']
+81151510 (Thomas Pointhuber 2015-01-10 20:01:36 +0100 75) 
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 76)         torrentfile = result.xpath(torrent_xpath)[0].attrib['href']
+c59d0c20 (Cqoicebordel      2015-01-11 19:34:11 +0100 77)         torrentfileurl = quote(torrentfile, safe="%/:=&?~#+!$,;'@()*")
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 78) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 79)         # append result
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 80)         results.append({'url': href,
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 81)                         'title': title,
+e623ee59 (Cqoicebordel      2014-12-14 23:27:27 +0100 82)                         'content': content,
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 83)                         'seed': seed,
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 84)                         'leech': leech,
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 85)                         'filesize': filesize,
+830f70a6 (Thomas Pointhuber 2015-01-10 19:40:27 +0100 86)                         'files': files,
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 87)                         'magnetlink': magnetlink,
+c59d0c20 (Cqoicebordel      2015-01-11 19:34:11 +0100 88)                         'torrentfile': torrentfileurl,
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 89)                         'template': 'torrent.html'})
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 90) 
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 91)     # return results sorted by seeder
+15a4c10c (Cqoicebordel      2014-12-09 19:19:39 +0100 92)     return sorted(results, key=itemgetter('seed'), reverse=True)

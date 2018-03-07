@@ -1,0 +1,256 @@
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   1) from collections import defaultdict
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   2) import mock
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   3) from searx.engines import duckduckgo_definitions
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   4) from searx.testing import SearxTestCase
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   5) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   6) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   7) class TestDDGDefinitionsEngine(SearxTestCase):
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   8) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100   9)     @little_documented
+def test_result_to_text(self):
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  10)         url = ''
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  11)         text = 'Text'
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  12)         html_result = 'Html'
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  13)         result = duckduckgo_definitions.result_to_text(url, text, html_result)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  14)         self.assertEqual(result, text)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  15) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  16)         html_result = '<a href="url">Text in link</a>'
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  17)         result = duckduckgo_definitions.result_to_text(url, text, html_result)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  18)         self.assertEqual(result, 'Text in link')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  19) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  20)     @little_documented
+def test_request(self):
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  21)         query = 'test_query'
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  22)         dicto = defaultdict(dict)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  23)         dicto['pageno'] = 1
+a11948c7 tests/unit/engines/test_duckduckgo_definitions.py  (marc         2016-10-29 21:04:01 -0500  24)         dicto['language'] = 'es'
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  25)         params = duckduckgo_definitions.request(query, dicto)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  26)         self.assertIn('url', params)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  27)         self.assertIn(query, params['url'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  28)         self.assertIn('duckduckgo.com', params['url'])
+a11948c7 tests/unit/engines/test_duckduckgo_definitions.py  (marc         2016-10-29 21:04:01 -0500  29)         self.assertIn('headers', params)
+a11948c7 tests/unit/engines/test_duckduckgo_definitions.py  (marc         2016-10-29 21:04:01 -0500  30)         self.assertIn('Accept-Language', params['headers'])
+a11948c7 tests/unit/engines/test_duckduckgo_definitions.py  (marc         2016-10-29 21:04:01 -0500  31)         self.assertIn('es', params['headers']['Accept-Language'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  32) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  33)     def test_response(self):
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  34)         self.assertRaises(AttributeError, duckduckgo_definitions.response, None)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  35)         self.assertRaises(AttributeError, duckduckgo_definitions.response, [])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  36)         self.assertRaises(AttributeError, duckduckgo_definitions.response, '')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  37)         self.assertRaises(AttributeError, duckduckgo_definitions.response, '[]')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  38) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  39)         response = mock.Mock(text='{}')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  40)         self.assertEqual(duckduckgo_definitions.response(response), [])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  41) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  42)         response = mock.Mock(text='{"data": []}')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  43)         self.assertEqual(duckduckgo_definitions.response(response), [])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  44) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  45)         json = """
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  46)         {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  47)           "DefinitionSource": "definition source",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  48)           "Heading": "heading",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  49)           "ImageWidth": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  50)           "RelatedTopics": [
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  51)             {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  52)               "Result": "Top-level domains",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  53)               "Icon": {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  54)                 "URL": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  55)                 "Height": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  56)                 "Width": ""
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  57)               },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  58)               "FirstURL": "https://first.url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  59)               "Text": "text"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  60)             },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  61)             {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  62)               "Topics": [
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  63)                 {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  64)                   "Result": "result topic",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  65)                   "Icon": {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  66)                     "URL": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  67)                     "Height": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  68)                     "Width": ""
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  69)                   },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  70)                   "FirstURL": "https://duckduckgo.com/?q=2%2F2",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  71)                   "Text": "result topic text"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  72)                 }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  73)               ],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  74)               "Name": "name"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  75)             }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  76)           ],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  77)           "Entity": "Entity",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  78)           "Type": "A",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  79)           "Redirect": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  80)           "DefinitionURL": "http://definition.url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  81)           "AbstractURL": "https://abstract.url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  82)           "Definition": "this is the definition",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  83)           "AbstractSource": "abstract source",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  84)           "Infobox": {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  85)             "content": [
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  86)               {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  87)                 "data_type": "string",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  88)                 "value": "1999",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  89)                 "label": "Introduced",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  90)                 "wiki_order": 0
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  91)               }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  92)             ],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  93)             "meta": [
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  94)               {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  95)                 "data_type": "string",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  96)                 "value": ".test",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  97)                 "label": "article_title"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  98)               }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100  99)             ]
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 100)           },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 101)           "Image": "image.png",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 102)           "ImageIsLogo": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 103)           "Abstract": "abstract",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 104)           "AbstractText": "abstract text",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 105)           "AnswerType": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 106)           "ImageHeight": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 107)           "Results": [{
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 108)                  "Result" : "result title",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 109)                  "Icon" : {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 110)                     "URL" : "result url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 111)                     "Height" : 16,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 112)                     "Width" : 16
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 113)                  },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 114)                  "FirstURL" : "result first url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 115)                  "Text" : "result text"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 116)               }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 117)           ],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 118)           "Answer": "answer"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 119)         }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 120)         """
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 121)         response = mock.Mock(text=json)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 122)         results = duckduckgo_definitions.response(response)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 123)         self.assertEqual(type(results), list)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 124)         self.assertEqual(len(results), 4)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 125)         self.assertEqual(results[0]['answer'], 'answer')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 126)         self.assertEqual(results[1]['title'], 'heading')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 127)         self.assertEqual(results[1]['url'], 'result first url')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 128)         self.assertEqual(results[2]['suggestion'], 'text')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 129)         self.assertEqual(results[3]['infobox'], 'heading')
+6dca14e9 tests/unit/engines/test_duckduckgo_definitions.py  (a01200356    2016-04-17 16:21:44 -0500 130)         self.assertEqual(results[3]['id'], 'https://definition.url')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 131)         self.assertEqual(results[3]['entity'], 'Entity')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 132)         self.assertIn('abstract', results[3]['content'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 133)         self.assertIn('this is the definition', results[3]['content'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 134)         self.assertEqual(results[3]['img_src'], 'image.png')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 135)         self.assertIn('Introduced', results[3]['attributes'][0]['label'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 136)         self.assertIn('1999', results[3]['attributes'][0]['value'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 137)         self.assertIn({'url': 'https://abstract.url', 'title': 'abstract source'}, results[3]['urls'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 138)         self.assertIn({'url': 'http://definition.url', 'title': 'definition source'}, results[3]['urls'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 139)         self.assertIn({'name': 'name', 'suggestions': ['result topic text']}, results[3]['relatedTopics'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 140) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 141)         json = """
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 142)         {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 143)           "DefinitionSource": "definition source",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 144)           "Heading": "heading",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 145)           "ImageWidth": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 146)           "RelatedTopics": [],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 147)           "Entity": "Entity",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 148)           "Type": "A",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 149)           "Redirect": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 150)           "DefinitionURL": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 151)           "AbstractURL": "https://abstract.url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 152)           "Definition": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 153)           "AbstractSource": "abstract source",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 154)           "Image": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 155)           "ImageIsLogo": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 156)           "Abstract": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 157)           "AbstractText": "abstract text",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 158)           "AnswerType": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 159)           "ImageHeight": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 160)           "Results": [],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 161)           "Answer": ""
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 162)         }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 163)         """
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 164)         response = mock.Mock(text=json)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 165)         results = duckduckgo_definitions.response(response)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 166)         self.assertEqual(type(results), list)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 167)         self.assertEqual(len(results), 1)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 168)         self.assertEqual(results[0]['url'], 'https://abstract.url')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 169)         self.assertEqual(results[0]['title'], 'heading')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 170)         self.assertEqual(results[0]['content'], '')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 171) 
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 172)         json = """
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 173)         {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 174)           "DefinitionSource": "definition source",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 175)           "Heading": "heading",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 176)           "ImageWidth": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 177)           "RelatedTopics": [
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 178)             {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 179)               "Result": "Top-level domains",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 180)               "Icon": {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 181)                 "URL": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 182)                 "Height": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 183)                 "Width": ""
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 184)               },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 185)               "FirstURL": "https://first.url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 186)               "Text": "heading"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 187)             },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 188)             {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 189)               "Name": "name"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 190)             },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 191)             {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 192)               "Topics": [
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 193)                 {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 194)                   "Result": "result topic",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 195)                   "Icon": {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 196)                     "URL": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 197)                     "Height": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 198)                     "Width": ""
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 199)                   },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 200)                   "FirstURL": "https://duckduckgo.com/?q=2%2F2",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 201)                   "Text": "heading"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 202)                 }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 203)               ],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 204)               "Name": "name"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 205)             }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 206)           ],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 207)           "Entity": "Entity",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 208)           "Type": "A",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 209)           "Redirect": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 210)           "DefinitionURL": "http://definition.url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 211)           "AbstractURL": "https://abstract.url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 212)           "Definition": "this is the definition",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 213)           "AbstractSource": "abstract source",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 214)           "Infobox": {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 215)             "meta": [
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 216)               {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 217)                 "data_type": "string",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 218)                 "value": ".test",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 219)                 "label": "article_title"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 220)               }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 221)             ]
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 222)           },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 223)           "Image": "image.png",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 224)           "ImageIsLogo": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 225)           "Abstract": "abstract",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 226)           "AbstractText": "abstract text",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 227)           "AnswerType": "",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 228)           "ImageHeight": 0,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 229)           "Results": [{
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 230)                  "Result" : "result title",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 231)                  "Icon" : {
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 232)                     "URL" : "result url",
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 233)                     "Height" : 16,
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 234)                     "Width" : 16
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 235)                  },
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 236)                  "Text" : "result text"
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 237)               }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 238)           ],
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 239)           "Answer": ""
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 240)         }
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 241)         """
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 242)         response = mock.Mock(text=json)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 243)         results = duckduckgo_definitions.response(response)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 244)         self.assertEqual(type(results), list)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 245)         self.assertEqual(len(results), 1)
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 246)         self.assertEqual(results[0]['infobox'], 'heading')
+6dca14e9 tests/unit/engines/test_duckduckgo_definitions.py  (a01200356    2016-04-17 16:21:44 -0500 247)         self.assertEqual(results[0]['id'], 'https://definition.url')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 248)         self.assertEqual(results[0]['entity'], 'Entity')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 249)         self.assertIn('abstract', results[0]['content'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 250)         self.assertIn('this is the definition', results[0]['content'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 251)         self.assertEqual(results[0]['img_src'], 'image.png')
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 252)         self.assertIn({'url': 'https://abstract.url', 'title': 'abstract source'}, results[0]['urls'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 253)         self.assertIn({'url': 'http://definition.url', 'title': 'definition source'}, results[0]['urls'])
+8c2a5f04 searx/tests/engines/test_duckduckgo_definitions.py (Cqoicebordel 2015-02-09 18:28:08 +0100 254)         self.assertIn({'name': 'name', 'suggestions': []}, results[0]['relatedTopics'])

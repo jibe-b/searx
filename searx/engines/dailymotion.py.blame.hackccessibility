@@ -1,0 +1,96 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Dailymotion (Videos)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://www.dailymotion.com
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (http://www.dailymotion.com/developer)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, thumbnail, publishedDate, embedded
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 12)  @todo        set content-parameter with correct data
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 13) """
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 14) 
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 15) from json import loads
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 16) from datetime import datetime
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 17) from searx.url_utils import urlencode
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 18) 
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 19) # engine dependent config
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 20) categories = ['videos']
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 21) paging = True
+7f1e2ba2 (Dalf              2014-09-07 17:14:42 +0200 22) language_support = True
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 23) 
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 24) # search-url
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 25) # see http://www.dailymotion.com/doc/api/obj-video.html
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 26) search_url = 'https://api.dailymotion.com/videos?fields=created_time,title,description,duration,url,thumbnail_360_url,id&sort=relevance&limit=5&page={pageno}&{query}'  # noqa
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 27) embedded_url = '<iframe frameborder="0" width="540" height="304" ' +\
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 28)     'data-src="//www.dailymotion.com/embed/video/{videoid}" allowfullscreen></iframe>'
+5d54c7d5 (asciimoo          2014-01-30 00:01:42 +0100 29) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 30) supported_languages_url = 'https://api.dailymotion.com/languages'
+f62ce21f (marc              2016-11-05 20:51:38 -0600 31) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 32) 
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 33) # do search-request
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 34) @little_documented
+def request(query, params):
+4d177039 (marc              2017-07-20 15:47:20 -0500 35)     locale = params['language']
+7f1e2ba2 (Dalf              2014-09-07 17:14:42 +0200 36) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 37)     params['url'] = search_url.format(
+5d54c7d5 (asciimoo          2014-01-30 00:01:42 +0100 38)         query=urlencode({'search': query, 'localization': locale}),
+5d54c7d5 (asciimoo          2014-01-30 00:01:42 +0100 39)         pageno=params['pageno'])
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 40) 
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 41)     return params
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 42) 
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 43) 
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 44) # get response from search-request
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 45) def response(resp):
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 46)     results = []
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 47) 
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 48)     search_res = loads(resp.text)
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 49) 
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 50)     # return empty array if there are no results
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 51)     if 'list' not in search_res:
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 52)         return []
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 53) 
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 54)     # parse results
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 55)     for res in search_res['list']:
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 56)         title = res['title']
+d3e272d0 (dalf              2013-12-30 22:42:37 +0100 57)         url = res['url']
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 58)         content = res['description']
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 59)         thumbnail = res['thumbnail_360_url']
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 60)         publishedDate = datetime.fromtimestamp(res['created_time'], None)
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 61)         embedded = embedded_url.format(videoid=res['id'])
+49c85fce (Dalf              2014-01-05 13:55:17 +0100 62) 
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 63)         # http to https
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 64)         thumbnail = thumbnail.replace("http://", "https://")
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 65) 
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 66)         results.append({'template': 'videos.html',
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 67)                         'url': url,
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 68)                         'title': title,
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 69)                         'content': content,
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 70)                         'publishedDate': publishedDate,
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 71)                         'embedded': embedded,
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 72)                         'thumbnail': thumbnail})
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 73) 
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 74)     # return results
+90dcfc1d (Thomas Pointhuber 2014-09-01 15:36:53 +0200 75)     return results
+f62ce21f (marc              2016-11-05 20:51:38 -0600 76) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 77) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 78) # get supported languages from their site
+af35eee1 (marc              2016-12-15 00:34:43 -0600 79) @little_documented
+def _fetch_supported_languages(resp):
+f62ce21f (marc              2016-11-05 20:51:38 -0600 80)     supported_languages = {}
+f62ce21f (marc              2016-11-05 20:51:38 -0600 81) 
+af35eee1 (marc              2016-12-15 00:34:43 -0600 82)     response_json = loads(resp.text)
+f62ce21f (marc              2016-11-05 20:51:38 -0600 83) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 84)     for language in response_json['list']:
+f62ce21f (marc              2016-11-05 20:51:38 -0600 85)         supported_languages[language['code']] = {}
+f62ce21f (marc              2016-11-05 20:51:38 -0600 86) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 87)         name = language['native_name']
+f62ce21f (marc              2016-11-05 20:51:38 -0600 88)         if name:
+f62ce21f (marc              2016-11-05 20:51:38 -0600 89)             supported_languages[language['code']]['name'] = name
+f62ce21f (marc              2016-11-05 20:51:38 -0600 90)         english_name = language['name']
+f62ce21f (marc              2016-11-05 20:51:38 -0600 91)         if english_name:
+f62ce21f (marc              2016-11-05 20:51:38 -0600 92)             supported_languages[language['code']]['english_name'] = english_name
+f62ce21f (marc              2016-11-05 20:51:38 -0600 93) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 94)     return supported_languages

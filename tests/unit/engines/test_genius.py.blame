@@ -1,0 +1,231 @@
+2434c29d (woorst 2017-08-19 19:05:17 -0500   1) from collections import defaultdict
+2434c29d (woorst 2017-08-19 19:05:17 -0500   2) import mock
+2434c29d (woorst 2017-08-19 19:05:17 -0500   3) from datetime import datetime
+2434c29d (woorst 2017-08-19 19:05:17 -0500   4) from searx.engines import genius
+2434c29d (woorst 2017-08-19 19:05:17 -0500   5) from searx.testing import SearxTestCase
+2434c29d (woorst 2017-08-19 19:05:17 -0500   6) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500   7) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500   8) class TestGeniusEngine(SearxTestCase):
+2434c29d (woorst 2017-08-19 19:05:17 -0500   9) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500  10)     def test_request(self):
+2434c29d (woorst 2017-08-19 19:05:17 -0500  11)         query = 'test_query'
+2434c29d (woorst 2017-08-19 19:05:17 -0500  12)         dicto = defaultdict(dict)
+2434c29d (woorst 2017-08-19 19:05:17 -0500  13)         dicto['pageno'] = 1
+2434c29d (woorst 2017-08-19 19:05:17 -0500  14)         params = genius.request(query, dicto)
+2434c29d (woorst 2017-08-19 19:05:17 -0500  15)         self.assertTrue('url' in params)
+2434c29d (woorst 2017-08-19 19:05:17 -0500  16)         self.assertTrue(query in params['url'])
+2434c29d (woorst 2017-08-19 19:05:17 -0500  17)         self.assertTrue('genius.com' in params['url'])
+2434c29d (woorst 2017-08-19 19:05:17 -0500  18) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500  19)     def test_response(self):
+2434c29d (woorst 2017-08-19 19:05:17 -0500  20) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500  21)         json_empty = """
+2434c29d (woorst 2017-08-19 19:05:17 -0500  22)         {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  23)         "meta": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  24)             "status": 200
+2434c29d (woorst 2017-08-19 19:05:17 -0500  25)         },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  26)         "response": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  27)             "sections": [
+2434c29d (woorst 2017-08-19 19:05:17 -0500  28)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  29)                 "type": "top_hit",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  30)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  31)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  32)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  33)                 "type": "song",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  34)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  35)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  36)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  37)                 "type": "lyric",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  38)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  39)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  40)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  41)                 "type": "artist",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  42)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  43)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  44)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  45)                 "type": "album",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  46)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  47)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  48)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  49)                 "type": "tag",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  50)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  51)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  52)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  53)                 "type": "video",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  54)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  55)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  56)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  57)                 "type": "article",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  58)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  59)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  60)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  61)                 "type": "user",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  62)                 "hits": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  63)             }
+2434c29d (woorst 2017-08-19 19:05:17 -0500  64)             ]
+2434c29d (woorst 2017-08-19 19:05:17 -0500  65)         }
+2434c29d (woorst 2017-08-19 19:05:17 -0500  66)         }
+2434c29d (woorst 2017-08-19 19:05:17 -0500  67)         """
+2434c29d (woorst 2017-08-19 19:05:17 -0500  68) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500  69)         resp = mock.Mock(text=json_empty)
+2434c29d (woorst 2017-08-19 19:05:17 -0500  70)         self.assertEqual(genius.response(resp), [])
+2434c29d (woorst 2017-08-19 19:05:17 -0500  71) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500  72)         json = """
+2434c29d (woorst 2017-08-19 19:05:17 -0500  73)         {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  74)         "meta": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  75)             "status": 200
+2434c29d (woorst 2017-08-19 19:05:17 -0500  76)         },
+2434c29d (woorst 2017-08-19 19:05:17 -0500  77)         "response": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  78)             "sections": [
+2434c29d (woorst 2017-08-19 19:05:17 -0500  79)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  80)                 "type": "lyric",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  81)                 "hits": [
+2434c29d (woorst 2017-08-19 19:05:17 -0500  82)                 {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  83)                     "highlights": [
+2434c29d (woorst 2017-08-19 19:05:17 -0500  84)                     {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  85)                         "property": "lyrics",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  86)                         "value": "Sample lyrics",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  87)                         "snippet": true,
+2434c29d (woorst 2017-08-19 19:05:17 -0500  88)                         "ranges": []
+2434c29d (woorst 2017-08-19 19:05:17 -0500  89)                     }
+2434c29d (woorst 2017-08-19 19:05:17 -0500  90)                     ],
+2434c29d (woorst 2017-08-19 19:05:17 -0500  91)                     "index": "lyric",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  92)                     "type": "song",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  93)                     "result": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500  94)                     "_type": "song",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  95)                     "annotation_count": 45,
+2434c29d (woorst 2017-08-19 19:05:17 -0500  96)                     "api_path": "/songs/52916",
+636b7601 (woorst 2017-08-21 11:45:23 -0500  97)                     "full_title": "J't'emmerde by MC Jean Gab'1",
+62b2f79c (woorst 2017-08-20 21:10:51 -0500  98)                     "header_image_thumbnail_url": "https://images.genius.com/xxx.300x300x1.jpg",
+2434c29d (woorst 2017-08-19 19:05:17 -0500  99)                     "header_image_url": "https://images.genius.com/ef9f736a86df3c3b1772f3fb7fbdb21c.1000x1000x1.jpg",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 100)                     "id": 52916,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 101)                     "instrumental": false,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 102)                     "lyrics_owner_id": 15586,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 103)                     "lyrics_state": "complete",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 104)                     "lyrics_updated_at": 1498744545,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 105)                     "path": "/Mc-jean-gab1-jtemmerde-lyrics",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 106)                     "pyongs_count": 4,
+62b2f79c (woorst 2017-08-20 21:10:51 -0500 107)                     "song_art_image_thumbnail_url": "https://images.genius.com/xxx.300x300x1.jpg",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 108)                     "stats": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 109)                         "hot": false,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 110)                         "unreviewed_annotations": 0,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 111)                         "pageviews": 62490
+2434c29d (woorst 2017-08-19 19:05:17 -0500 112)                     },
+2434c29d (woorst 2017-08-19 19:05:17 -0500 113)                     "title": "J't'emmerde",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 114)                     "title_with_featured": "J't'emmerde",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 115)                     "updated_by_human_at": 1498744546,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 116)                     "url": "https://genius.com/Mc-jean-gab1-jtemmerde-lyrics",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 117)                     "primary_artist": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 118)                         "_type": "artist",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 119)                         "api_path": "/artists/12691",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 120)                         "header_image_url": "https://images.genius.com/c7847662a58f8c2b0f02a6e217d60907.960x657x1.jpg",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 121)                         "id": 12691,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 122)                         "image_url": "https://s3.amazonaws.com/rapgenius/Mc-jean-gab1.jpg",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 123)                         "index_character": "m",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 124)                         "is_meme_verified": false,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 125)                         "is_verified": false,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 126)                         "name": "MC Jean Gab'1",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 127)                         "slug": "Mc-jean-gab1",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 128)                         "url": "https://genius.com/artists/Mc-jean-gab1"
+2434c29d (woorst 2017-08-19 19:05:17 -0500 129)                     }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 130)                     }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 131)                 }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 132)                 ]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 133)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500 134)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 135)                 "type": "artist",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 136)                 "hits": [
+2434c29d (woorst 2017-08-19 19:05:17 -0500 137)                 {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 138)                     "highlights": [],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 139)                     "index": "artist",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 140)                     "type": "artist",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 141)                     "result": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 142)                     "_type": "artist",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 143)                     "api_path": "/artists/191580",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 144)                     "header_image_url": "https://assets.genius.com/images/default_avatar_300.png?1503090542",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 145)                     "id": 191580,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 146)                     "image_url": "https://assets.genius.com/images/default_avatar_300.png?1503090542",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 147)                     "index_character": "a",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 148)                     "is_meme_verified": false,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 149)                     "is_verified": false,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 150)                     "name": "ASDF Guy",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 151)                     "slug": "Asdf-guy",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 152)                     "url": "https://genius.com/artists/Asdf-guy"
+2434c29d (woorst 2017-08-19 19:05:17 -0500 153)                     }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 154)                 }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 155)                 ]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 156)             },
+2434c29d (woorst 2017-08-19 19:05:17 -0500 157)             {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 158)                 "type": "album",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 159)                 "hits": [
+2434c29d (woorst 2017-08-19 19:05:17 -0500 160)                 {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 161)                     "highlights": [],
+2434c29d (woorst 2017-08-19 19:05:17 -0500 162)                     "index": "album",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 163)                     "type": "album",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 164)                     "result": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 165)                     "_type": "album",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 166)                     "api_path": "/albums/132332",
+62b2f79c (woorst 2017-08-20 21:10:51 -0500 167)                     "cover_art_thumbnail_url": "https://images.genius.com/xxx.300x300x1.jpg",
+62b2f79c (woorst 2017-08-20 21:10:51 -0500 168)                     "cover_art_url": "https://images.genius.com/xxx.600x600x1.jpg",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 169)                     "full_title": "ASD by A Skylit Drive",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 170)                     "id": 132332,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 171)                     "name": "ASD",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 172)                     "name_with_artist": "ASD (artist: A Skylit Drive)",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 173)                     "release_date_components": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 174)                         "year": 2015,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 175)                         "month": null,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 176)                         "day": null
+2434c29d (woorst 2017-08-19 19:05:17 -0500 177)                     },
+2434c29d (woorst 2017-08-19 19:05:17 -0500 178)                     "url": "https://genius.com/albums/A-skylit-drive/Asd",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 179)                     "artist": {
+2434c29d (woorst 2017-08-19 19:05:17 -0500 180)                         "_type": "artist",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 181)                         "api_path": "/artists/48712",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 182)                         "header_image_url": "https://images.genius.com/814c1551293172c56306d0e310c6aa89.620x400x1.jpg",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 183)                         "id": 48712,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 184)                         "image_url": "https://images.genius.com/814c1551293172c56306d0e310c6aa89.620x400x1.jpg",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 185)                         "index_character": "s",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 186)                         "is_meme_verified": false,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 187)                         "is_verified": false,
+2434c29d (woorst 2017-08-19 19:05:17 -0500 188)                         "name": "A Skylit Drive",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 189)                         "slug": "A-skylit-drive",
+2434c29d (woorst 2017-08-19 19:05:17 -0500 190)                         "url": "https://genius.com/artists/A-skylit-drive"
+2434c29d (woorst 2017-08-19 19:05:17 -0500 191)                     }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 192)                     }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 193)                 }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 194)                 ]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 195)             }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 196)             ]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 197)         }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 198)         }
+2434c29d (woorst 2017-08-19 19:05:17 -0500 199)         """
+2434c29d (woorst 2017-08-19 19:05:17 -0500 200) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 201)         resp = mock.Mock(text=json)
+2434c29d (woorst 2017-08-19 19:05:17 -0500 202)         results = genius.response(resp)
+2434c29d (woorst 2017-08-19 19:05:17 -0500 203) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 204)         self.assertEqual(len(results), 3)
+2434c29d (woorst 2017-08-19 19:05:17 -0500 205)         self.assertEqual(type(results), list)
+2434c29d (woorst 2017-08-19 19:05:17 -0500 206) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 207)         # check lyric parsing
+2434c29d (woorst 2017-08-19 19:05:17 -0500 208)         r = results[0]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 209)         self.assertEqual(r['url'], 'https://genius.com/Mc-jean-gab1-jtemmerde-lyrics')
+636b7601 (woorst 2017-08-21 11:45:23 -0500 210)         self.assertEqual(r['title'], "J't'emmerde by MC Jean Gab'1")
+2434c29d (woorst 2017-08-19 19:05:17 -0500 211)         self.assertEqual(r['content'], "Sample lyrics")
+2434c29d (woorst 2017-08-19 19:05:17 -0500 212)         self.assertEqual(r['template'], 'videos.html')
+62b2f79c (woorst 2017-08-20 21:10:51 -0500 213)         self.assertEqual(r['thumbnail'], 'https://images.genius.com/xxx.300x300x1.jpg')
+2434c29d (woorst 2017-08-19 19:05:17 -0500 214)         created = datetime.fromtimestamp(1498744545)
+2434c29d (woorst 2017-08-19 19:05:17 -0500 215)         self.assertEqual(r['publishedDate'], created)
+2434c29d (woorst 2017-08-19 19:05:17 -0500 216) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 217)         # check artist parsing
+2434c29d (woorst 2017-08-19 19:05:17 -0500 218)         r = results[1]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 219)         self.assertEqual(r['url'], 'https://genius.com/artists/Asdf-guy')
+2434c29d (woorst 2017-08-19 19:05:17 -0500 220)         self.assertEqual(r['title'], "ASDF Guy")
+2434c29d (woorst 2017-08-19 19:05:17 -0500 221)         self.assertEqual(r['content'], None)
+2434c29d (woorst 2017-08-19 19:05:17 -0500 222)         self.assertEqual(r['template'], 'videos.html')
+2434c29d (woorst 2017-08-19 19:05:17 -0500 223)         self.assertEqual(r['thumbnail'], 'https://assets.genius.com/images/default_avatar_300.png?1503090542')
+2434c29d (woorst 2017-08-19 19:05:17 -0500 224) 
+2434c29d (woorst 2017-08-19 19:05:17 -0500 225)         # check album parsing
+2434c29d (woorst 2017-08-19 19:05:17 -0500 226)         r = results[2]
+2434c29d (woorst 2017-08-19 19:05:17 -0500 227)         self.assertEqual(r['url'], 'https://genius.com/albums/A-skylit-drive/Asd')
+2434c29d (woorst 2017-08-19 19:05:17 -0500 228)         self.assertEqual(r['title'], "ASD by A Skylit Drive")
+2434c29d (woorst 2017-08-19 19:05:17 -0500 229)         self.assertEqual(r['content'], "Released: 2015")
+2434c29d (woorst 2017-08-19 19:05:17 -0500 230)         self.assertEqual(r['template'], 'videos.html')
+62b2f79c (woorst 2017-08-20 21:10:51 -0500 231)         self.assertEqual(r['thumbnail'], 'https://images.genius.com/xxx.600x600x1.jpg')

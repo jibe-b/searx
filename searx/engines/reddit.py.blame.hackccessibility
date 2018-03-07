@@ -1,0 +1,77 @@
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  1) """
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  2)  Reddit
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  3) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  4)  @website      https://www.reddit.com/
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  5)  @provide-api  yes (https://www.reddit.com/dev/api)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  6) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  7)  @using-api    yes
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  8)  @results      JSON
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  9)  @stable       yes
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 10)  @parse        url, title, content, thumbnail, publishedDate
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 11) """
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 12) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 13) import json
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 14) from datetime import datetime
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 15) from searx.url_utils import urlencode, urljoin, urlparse
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 16) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 17) # engine dependent config
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 18) categories = ['general', 'images', 'news', 'social media']
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 19) page_size = 25
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 20) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 21) # search-url
+4eeb5fb7 (Kirill Isakov 2016-04-16 16:22:31 +0600 22) base_url = 'https://www.reddit.com/'
+4eeb5fb7 (Kirill Isakov 2016-04-16 16:22:31 +0600 23) search_url = base_url + 'search.json?{query}'
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 24) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 25) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 26) # do search-request
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 27) @little_documented
+def request(query, params):
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 28)     query = urlencode({'q': query, 'limit': page_size})
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 29)     params['url'] = search_url.format(query=query)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 30) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 31)     return params
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 32) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 33) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 34) # get response from search-request
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 35) def response(resp):
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 36)     img_results = []
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 37)     text_results = []
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 38) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 39)     search_results = json.loads(resp.text)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 40) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 41)     # return empty array if there are no results
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 42)     if 'data' not in search_results:
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 43)         return []
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 44) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 45)     posts = search_results.get('data', {}).get('children', [])
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 46) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 47)     # process results
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 48)     for post in posts:
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 49)         data = post['data']
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 50) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 51)         # extract post information
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 52)         params = {
+4eeb5fb7 (Kirill Isakov 2016-04-16 16:22:31 +0600 53)             'url': urljoin(base_url, data['permalink']),
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 54)             'title': data['title']
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 55)         }
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 56) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 57)         # if thumbnail field contains a valid URL, we need to change template
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 58)         thumbnail = data['thumbnail']
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 59)         url_info = urlparse(thumbnail)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 60)         # netloc & path
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 61)         if url_info[1] != '' and url_info[2] != '':
+4eeb5fb7 (Kirill Isakov 2016-04-16 16:22:31 +0600 62)             params['img_src'] = data['url']
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 63)             params['thumbnail_src'] = thumbnail
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 64)             params['template'] = 'images.html'
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 65)             img_results.append(params)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 66)         else:
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 67)             created = datetime.fromtimestamp(data['created_utc'])
+16bdc0ba (Adam Tauber   2016-12-09 11:44:24 +0100 68)             content = data['selftext']
+a8832574 (Kirill Isakov 2016-03-27 05:09:04 +0600 69)             if len(content) > 500:
+a8832574 (Kirill Isakov 2016-03-27 05:09:04 +0600 70)                 content = content[:500] + '...'
+a8832574 (Kirill Isakov 2016-03-27 05:09:04 +0600 71)             params['content'] = content
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 72)             params['publishedDate'] = created
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 73)             text_results.append(params)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 74) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 75)     # show images first and text results second
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 76)     return img_results + text_results

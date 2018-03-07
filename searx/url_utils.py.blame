@@ -1,0 +1,30 @@
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  1) from sys import version_info
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  2) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  3) if version_info[0] == 2:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  4)     from urllib import quote, quote_plus, unquote, urlencode
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200  5)     from urlparse import parse_qs, parse_qsl, urljoin, urlparse, urlunparse, ParseResult
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  6) else:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  7)     from urllib.parse import (
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200  8)         parse_qs,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  9)         parse_qsl,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 10)         quote,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 11)         quote_plus,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 12)         unquote,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 13)         urlencode,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 14)         urljoin,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 15)         urlparse,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 16)         urlunparse,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 17)         ParseResult
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 18)     )
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 19) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 20) 
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200 21) __export__ = (parse_qs,
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200 22)               parse_qsl,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 23)               quote,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 24)               quote_plus,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 25)               unquote,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 26)               urlencode,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 27)               urljoin,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 28)               urlparse,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 29)               urlunparse,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 30)               ParseResult)

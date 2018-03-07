@@ -1,0 +1,166 @@
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   1) # -*- coding: utf-8 -*-
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   2) from collections import defaultdict
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   3) import mock
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   4) from searx.engines import piratebay
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   5) from searx.testing import SearxTestCase
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   6) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   7) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   8) class TestPiratebayEngine(SearxTestCase):
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100   9) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  10)     def test_request(self):
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  11)         query = 'test_query'
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  12)         dicto = defaultdict(dict)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  13)         dicto['pageno'] = 1
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  14)         dicto['category'] = 'Toto'
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  15)         params = piratebay.request(query, dicto)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  16)         self.assertIn('url', params)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  17)         self.assertIn(query, params['url'])
+3f31e1ce searx/tests/engines/test_piratebay.py (Adam Tauber  2015-08-25 22:56:40 +0200  18)         self.assertIn('piratebay.se', params['url'])
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  19)         self.assertIn('0', params['url'])
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  20) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  21)         dicto['category'] = 'music'
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  22)         params = piratebay.request(query, dicto)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  23)         self.assertIn('100', params['url'])
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  24) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  25)     def test_response(self):
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  26)         self.assertRaises(AttributeError, piratebay.response, None)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  27)         self.assertRaises(AttributeError, piratebay.response, [])
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  28)         self.assertRaises(AttributeError, piratebay.response, '')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  29)         self.assertRaises(AttributeError, piratebay.response, '[]')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  30) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  31)         response = mock.Mock(text='<html></html>')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  32)         self.assertEqual(piratebay.response(response), [])
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  33) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  34)         html = """
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  35)         <table id="searchResult">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  36)             <tr>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  37)             </tr>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  38)             <tr>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  39)                 <td class="vertTh">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  40)                     <center>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  41)                         <a href="#" title="More from this category">Anime</a><br/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  42)                         (<a href="#" title="More from this category">Anime</a>)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  43)                     </center>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  44)                 </td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  45)                 <td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  46)                     <div class="detName">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  47)                         <a href="/this.is.the.link" class="detLink" title="Title">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  48)                             This is the title
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  49)                         </a>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  50)                     </div>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  51)                     <a href="magnet:?xt=urn:btih:MAGNETLINK" title="Download this torrent using magnet">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  52)                         <img src="/static/img/icon-magnet.gif" alt="Magnet link"/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  53)                     </a>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  54)                     <a href="http://torcache.net/torrent/TORRENTFILE.torrent" title="Download this torrent">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  55)                         <img src="/static/img/dl.gif" class="dl" alt="Download"/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  56)                     </a>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  57)                     <a href="/user/HorribleSubs">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  58)                         <img src="/static/img/vip.gif" alt="VIP" title="VIP" style="width:11px;" border='0'/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  59)                     </a>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  60)                     <img src="/static/img/11x11p.png"/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  61)                     <font class="detDesc">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  62)                         This is the content <span>and should be</span> OK
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  63)                     </font>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  64)                 </td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  65)                 <td align="right">13</td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  66)                 <td align="right">334</td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  67)             </tr>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  68)             <tr>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  69)                 <td class="vertTh">
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  70)                     <center>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  71)                         <a href="#" title="More from this category">Anime</a><br/>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  72)                         (<a href="#" title="More from this category">Anime</a>)
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  73)                     </center>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  74)                 </td>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  75)                 <td>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  76)                     <div class="detName">
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  77)                         <a href="/this.is.the.link" class="detLink" title="Title">
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  78)                             This is the title
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  79)                         </a>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  80)                     </div>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  81)                     <a href="magnet:?xt=urn:btih:MAGNETLINK" title="Download this torrent using magnet">
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  82)                         <img src="/static/img/icon-magnet.gif" alt="Magnet link"/>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  83)                     </a>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  84)                     <a href="/user/HorribleSubs">
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  85)                         <img src="/static/img/vip.gif" alt="VIP" title="VIP" style="width:11px;" border='0'/>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  86)                     </a>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  87)                     <img src="/static/img/11x11p.png"/>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  88)                     <font class="detDesc">
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  89)                         This is the content <span>and should be</span> OK
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  90)                     </font>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  91)                 </td>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  92)                 <td align="right">13</td>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  93)                 <td align="right">334</td>
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200  94)             </tr>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  95)         </table>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  96)         """
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  97)         response = mock.Mock(text=html)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  98)         results = piratebay.response(response)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100  99)         self.assertEqual(type(results), list)
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200 100)         self.assertEqual(len(results), 2)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 101)         self.assertEqual(results[0]['title'], 'This is the title')
+3f31e1ce searx/tests/engines/test_piratebay.py (Adam Tauber  2015-08-25 22:56:40 +0200 102)         self.assertEqual(results[0]['url'], 'https://thepiratebay.se/this.is.the.link')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 103)         self.assertEqual(results[0]['content'], 'This is the content and should be OK')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 104)         self.assertEqual(results[0]['seed'], 13)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 105)         self.assertEqual(results[0]['leech'], 334)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 106)         self.assertEqual(results[0]['magnetlink'], 'magnet:?xt=urn:btih:MAGNETLINK')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 107)         self.assertEqual(results[0]['torrentfile'], 'http://torcache.net/torrent/TORRENTFILE.torrent')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 108) 
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200 109)         self.assertEqual(results[1]['torrentfile'], None)
+52d243f7 searx/tests/engines/test_piratebay.py (Adam Tauber  2015-03-29 21:05:43 +0200 110) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 111)         html = """
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 112)         <table id="searchResult">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 113)             <tr>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 114)             </tr>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 115)             <tr>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 116)                 <td class="vertTh">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 117)                     <center>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 118)                         <a href="#" title="More from this category">Anime</a><br/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 119)                         (<a href="#" title="More from this category">Anime</a>)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 120)                     </center>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 121)                 </td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 122)                 <td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 123)                     <div class="detName">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 124)                         <a href="/this.is.the.link" class="detLink" title="Title">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 125)                             This is the title
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 126)                         </a>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 127)                     </div>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 128)                     <a href="magnet:?xt=urn:btih:MAGNETLINK" title="Download this torrent using magnet">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 129)                         <img src="/static/img/icon-magnet.gif" alt="Magnet link"/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 130)                     </a>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 131)                     <a href="http://torcache.net/torrent/TORRENTFILE.torrent" title="Download this torrent">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 132)                         <img src="/static/img/dl.gif" class="dl" alt="Download"/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 133)                     </a>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 134)                     <a href="/user/HorribleSubs">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 135)                         <img src="/static/img/vip.gif" alt="VIP" title="VIP" style="width:11px;" border='0'/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 136)                     </a>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 137)                     <img src="/static/img/11x11p.png"/>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 138)                     <font class="detDesc">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 139)                         This is the content <span>and should be</span> OK
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 140)                     </font>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 141)                 </td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 142)                 <td align="right">s</td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 143)                 <td align="right">d</td>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 144)             </tr>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 145)         </table>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 146)         """
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 147)         response = mock.Mock(text=html)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 148)         results = piratebay.response(response)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 149)         self.assertEqual(type(results), list)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 150)         self.assertEqual(len(results), 1)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 151)         self.assertEqual(results[0]['title'], 'This is the title')
+3f31e1ce searx/tests/engines/test_piratebay.py (Adam Tauber  2015-08-25 22:56:40 +0200 152)         self.assertEqual(results[0]['url'], 'https://thepiratebay.se/this.is.the.link')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 153)         self.assertEqual(results[0]['content'], 'This is the content and should be OK')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 154)         self.assertEqual(results[0]['seed'], 0)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 155)         self.assertEqual(results[0]['leech'], 0)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 156)         self.assertEqual(results[0]['magnetlink'], 'magnet:?xt=urn:btih:MAGNETLINK')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 157)         self.assertEqual(results[0]['torrentfile'], 'http://torcache.net/torrent/TORRENTFILE.torrent')
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 158) 
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 159)         html = """
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 160)         <table id="searchResult">
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 161)         </table>
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 162)         """
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 163)         response = mock.Mock(text=html)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 164)         results = piratebay.response(response)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 165)         self.assertEqual(type(results), list)
+5a160774 searx/tests/engines/test_piratebay.py (Cqoicebordel 2015-02-01 15:23:26 +0100 166)         self.assertEqual(len(results), 0)

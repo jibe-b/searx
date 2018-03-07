@@ -1,0 +1,112 @@
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   1) """
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   2)  PDBe (Protein Data Bank in Europe)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   3) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   4)  @website       https://www.ebi.ac.uk/pdbe
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   5)  @provide-api   yes (https://www.ebi.ac.uk/pdbe/api/doc/search.html),
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   6)                 unlimited
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   7)  @using-api     yes
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   8)  @results       python dictionary (from json)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200   9)  @stable        yes
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  10)  @parse         url, title, content, img_src
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  11) """
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  12) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  13) from json import loads
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  14) from flask_babel import gettext
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  15) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  16) categories = ['science']
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  17) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  18) hide_obsolete = False
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  19) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  20) # status codes of unpublished entries
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  21) pdb_unpublished_codes = ['HPUB', 'HOLD', 'PROC', 'WAIT', 'AUTH', 'AUCO', 'REPL', 'POLC', 'REFI', 'TRSF', 'WDRN']
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  22) # url for api query
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  23) pdbe_solr_url = 'https://www.ebi.ac.uk/pdbe/search/pdb/select?'
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  24) # base url for results
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  25) pdbe_entry_url = 'https://www.ebi.ac.uk/pdbe/entry/pdb/{pdb_id}'
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  26) # link to preview image of structure
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  27) pdbe_preview_url = 'https://www.ebi.ac.uk/pdbe/static/entry/{pdb_id}_deposited_chain_front_image-200x200.png'
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  28) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  29) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  30) def request(query, params):
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  31) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  32)     params['url'] = pdbe_solr_url
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  33)     params['method'] = 'POST'
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  34)     params['data'] = {
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  35)         'q': query,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  36)         'wt': "json"  # request response in parsable format
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  37)     }
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  38)     return params
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  39) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  40) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  41) def construct_body(result):
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  42)     # set title
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  43)     title = result['title']
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  44) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  45)     # construct content body
+801b5a56 (Adam Tauber      2017-12-01 20:46:28 +0100  46)     content = """{title} - {authors} {journal} ({volume}) {page} ({year})"""
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  47) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  48)     # replace placeholders with actual content
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  49)     try:
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  50)         if result['journal']:
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  51)             content = content.format(
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  52)                 title=result['citation_title'],
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  53)                 authors=result['entry_author_list'][0], journal=result['journal'], volume=result['journal_volume'],
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  54)                 page=result['journal_page'], year=result['citation_year'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  55)         else:
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  56)             content = content.format(
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  57)                 title=result['citation_title'],
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  58)                 authors=result['entry_author_list'][0], journal='', volume='', page='', year=result['release_year'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  59)         img_src = pdbe_preview_url.format(pdb_id=result['pdb_id'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  60)     except (KeyError):
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  61)         content = None
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  62)         img_src = None
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  63) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  64)     # construct url for preview image
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  65)     try:
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  66)         img_src = pdbe_preview_url.format(pdb_id=result['pdb_id'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  67)     except (KeyError):
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  68)         img_src = None
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  69) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  70)     return [title, content, img_src]
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  71) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  72) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  73) def response(resp):
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  74) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  75)     results = []
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  76)     json = loads(resp.text)['response']['docs']
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  77) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  78)     # parse results
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  79)     for result in json:
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  80)         # catch obsolete entries and mark them accordingly
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  81)         if result['status'] in pdb_unpublished_codes:
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  82)             continue
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  83)         if hide_obsolete:
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  84)             continue
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  85)         if result['status'] == 'OBS':
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  86)             # expand title to add some sort of warning message
+801b5a56 (Adam Tauber      2017-12-01 20:46:28 +0100  87)             title = gettext('{title} (OBSOLETE)').format(title=result['title'])
+801b5a56 (Adam Tauber      2017-12-01 20:46:28 +0100  88)             try:
+801b5a56 (Adam Tauber      2017-12-01 20:46:28 +0100  89)                 superseded_url = pdbe_entry_url.format(pdb_id=result['superseded_by'])
+801b5a56 (Adam Tauber      2017-12-01 20:46:28 +0100  90)             except:
+801b5a56 (Adam Tauber      2017-12-01 20:46:28 +0100  91)                 continue
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  92) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  93)             # since we can't construct a proper body from the response, we'll make up our own
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  94)             msg_superseded = gettext("This entry has been superseded by")
+801b5a56 (Adam Tauber      2017-12-01 20:46:28 +0100  95)             content = '{msg_superseded}: {url} ({pdb_id})'.format(
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  96)                 msg_superseded=msg_superseded,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  97)                 url=superseded_url,
+801b5a56 (Adam Tauber      2017-12-01 20:46:28 +0100  98)                 pdb_id=result['superseded_by'])
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200  99) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 100)             # obsoleted entries don't have preview images
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 101)             img_src = None
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 102)         else:
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 103)             title, content, img_src = construct_body(result)
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 104) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 105)         results.append({
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 106)             'url': pdbe_entry_url.format(pdb_id=result['pdb_id']),
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 107)             'title': title,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 108)             'content': content,
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 109)             'img_src': img_src
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 110)         })
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 111) 
+3c588340 (Alexander Minges 2016-09-13 00:53:53 +0200 112)     return results

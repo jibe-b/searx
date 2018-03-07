@@ -1,0 +1,927 @@
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200   1) #!/usr/bin/env python
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200   2) 
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200   3) '''
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200   4) searx is free software: you can redistribute it and/or modify
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200   5) it under the terms of the GNU Affero General Public License as published by
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200   6) the Free Software Foundation, either version 3 of the License, or
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200   7) (at your option) any later version.
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200   8) 
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200   9) searx is distributed in the hope that it will be useful,
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  10) but WITHOUT ANY WARRANTY; without even the implied warranty of
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  11) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  12) GNU Affero General Public License for more details.
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  13) 
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  14) You should have received a copy of the GNU Affero General Public License
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  15) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  16) 
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  17) (C) 2013- by Adam Tauber, <asciimoo@gmail.com>
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  18) '''
+554f3a95 (asciimoo          2013-10-15 00:33:18 +0200  19) 
+fd651083 (asciimoo          2014-02-14 16:16:20 +0100  20) if __name__ == '__main__':
+fd651083 (asciimoo          2014-02-14 16:16:20 +0100  21)     from sys import path
+fd651083 (asciimoo          2014-02-14 16:16:20 +0100  22)     from os.path import realpath, dirname
+df9cf9d0 (Adam Tauber       2015-02-10 15:23:56 +0100  23)     path.append(realpath(dirname(realpath(__file__)) + '/../'))
+fd651083 (asciimoo          2014-02-14 16:16:20 +0100  24) 
+b6d27aca (dalf              2015-01-17 21:54:40 +0100  25) import hashlib
+19a6ca0b (Adam Tauber       2016-10-16 23:40:56 +0200  26) import hmac
+19a6ca0b (Adam Tauber       2016-10-16 23:40:56 +0200  27) import json
+19a6ca0b (Adam Tauber       2016-10-16 23:40:56 +0200  28) import os
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  29) import sys
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  30) 
+b2e026dd (Adam Tauber       2015-04-10 01:10:49 +0200  31) import requests
+7295df30 (asciimoo          2014-01-21 21:28:54 +0100  32) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  33) from searx import logger
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  34) logger = logger.getChild('webapp')
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  35) 
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  36) try:
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  37)     from pygments import highlight
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  38)     from pygments.lexers import get_lexer_by_name
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  39)     from pygments.formatters import HtmlFormatter
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  40) except:
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  41)     logger.critical("cannot import dependency: pygments")
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  42)     from sys import exit
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  43)     exit(1)
+ef2ef797 (Adam Tauber       2016-12-09 19:10:33 +0100  44) from cgi import escape
+b88146d6 (Thomas Pointhuber 2014-03-14 09:55:04 +0100  45) from datetime import datetime, timedelta
+91f7c031 (Adam Tauber       2015-02-07 12:28:36 +0100  46) from werkzeug.contrib.fixers import ProxyFix
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100  47) from flask import (
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100  48)     Flask, request, render_template, url_for, Response, make_response,
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100  49)     redirect, send_from_directory
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100  50) )
+257e5295 (Adam Tauber       2016-07-04 22:46:43 +0200  51) from flask_babel import Babel, gettext, format_date, format_decimal
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200  52) from flask.json import jsonify
+3e755442 (dalf              2016-10-22 19:07:37 +0200  53) from searx import settings, searx_dir, searx_debug
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  54) from searx.exceptions import SearxParameterException
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100  55) from searx.engines import (
+a605377c (Adam Tauber       2016-12-27 17:25:19 +0100  56)     categories, engines, engine_shortcuts, get_engines_stats, initialize_engines
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100  57) )
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000  58) from searx.utils import (
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100  59)     UnicodeWriter, highlight_content, html_to_text, get_resources_directory,
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100  60)     get_static_files, get_result_templates, get_themes, gen_useragent,
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100  61)     dict_subset, prettify_url
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000  62) )
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100  63) from searx.version import VERSION_STRING
+2a788c8f (asciimoo          2014-01-31 04:35:23 +0100  64) from searx.languages import language_codes
+a757c2f0 (Adam Tauber       2016-11-14 22:15:03 +0100  65) from searx.search import SearchWithPlugins, get_search_query_from_webapp
+a757c2f0 (Adam Tauber       2016-11-14 22:15:03 +0100  66) from searx.query import RawTextQuery
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  67) from searx.autocomplete import searx_bang, backends as autocomplete_backends
+00cc4dcb (Adam Tauber       2015-03-10 19:55:22 +0100  68) from searx.plugins import plugins
+1b10abfc (Noémi Ványi       2017-11-01 13:58:48 +0100  69) from searx.plugins.oa_doi_rewrite import get_doi_resolver
+27218b85 (Adam Tauber       2016-06-07 21:43:24 +0200  70) from searx.preferences import Preferences, ValidationException
+971ed0ab (Adam Tauber       2016-11-19 20:53:51 +0100  71) from searx.answerers import answerers
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  72) from searx.url_utils import urlencode, urlparse, urljoin
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200  73) from searx.utils import new_hmac
+5c8382c1 (asciimoo          2013-12-01 23:52:49 +0100  74) 
+181c12ae (Alexandre Flament 2017-03-23 15:33:18 +0100  75) # check if the pyopenssl package is installed.
+181c12ae (Alexandre Flament 2017-03-23 15:33:18 +0100  76) # It is needed for SSL connection without trouble, see #298
+18761749 (Alexandre Flament 2015-04-26 18:58:31 +0200  77) try:
+18761749 (Alexandre Flament 2015-04-26 18:58:31 +0200  78)     import OpenSSL.SSL  # NOQA
+18761749 (Alexandre Flament 2015-04-26 18:58:31 +0200  79) except ImportError:
+181c12ae (Alexandre Flament 2017-03-23 15:33:18 +0100  80)     logger.critical("The pyopenssl package has to be installed.\n"
+006841c4 (Noemi Vanyi       2016-04-09 14:46:02 +0200  81)                     "Some HTTPS connections will fail")
+18761749 (Alexandre Flament 2015-04-26 18:58:31 +0200  82) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  83) try:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  84)     from cStringIO import StringIO
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  85) except:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  86)     from io import StringIO
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  87) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  88) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  89) if sys.version_info[0] == 3:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  90)     unicode = str
+f65f90bf (Adam Tauber       2017-11-23 17:42:34 +0100  91)     PY3 = True
+f65f90bf (Adam Tauber       2017-11-23 17:42:34 +0100  92) else:
+f65f90bf (Adam Tauber       2017-11-23 17:42:34 +0100  93)     PY3 = False
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  94) 
+f90eb428 (Eig8phei          2016-09-15 14:47:09 +0300  95) # serve pages with HTTP/1.1
+f90eb428 (Eig8phei          2016-09-15 14:47:09 +0300  96) from werkzeug.serving import WSGIRequestHandler
+14f58bda (Adam Tauber       2016-12-25 23:31:51 +0100  97) WSGIRequestHandler.protocol_version = "HTTP/{}".format(settings['server'].get('http_protocol_version', '1.0'))
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200  98) 
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100  99) # about static
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 100) static_path = get_resources_directory(searx_dir, 'static', settings['ui']['static_path'])
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 101) logger.debug('static directory is %s', static_path)
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 102) static_files = get_static_files(static_path)
+4da79589 (Adam Tauber       2014-10-09 19:26:02 +0200 103) 
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 104) # about templates
+1fcf066a (Adam Tauber       2015-08-02 19:38:27 +0200 105) default_theme = settings['ui']['default_theme']
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 106) templates_path = get_resources_directory(searx_dir, 'templates', settings['ui']['templates_path'])
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 107) logger.debug('templates directory is %s', templates_path)
+9c91ab33 (Alexandre Flament 2017-01-06 13:52:59 +0100 108) themes = get_themes(templates_path)
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 109) result_templates = get_result_templates(templates_path)
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 110) global_favicons = []
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 111) for indice, theme in enumerate(themes):
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 112)     global_favicons.append([])
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 113)     theme_img_path = os.path.join(static_path, 'themes', theme, 'img', 'icons')
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 114)     for (dirpath, dirnames, filenames) in os.walk(theme_img_path):
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 115)         global_favicons[indice].extend(filenames)
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 116) 
+ee080fea (Alexandre Flament 2017-01-06 13:23:30 +0100 117) # Flask app
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 118) app = Flask(
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 119)     __name__,
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 120)     static_folder=static_path,
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 121)     template_folder=templates_path
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 122) )
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 123) 
+bbb5e235 (Cqoicebordel      2015-02-14 01:42:06 +0100 124) app.jinja_env.trim_blocks = True
+bbb5e235 (Cqoicebordel      2015-02-14 01:42:06 +0100 125) app.jinja_env.lstrip_blocks = True
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 126) app.secret_key = settings['server']['secret_key']
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 127) 
+6d76d9b2 (Adam Tauber       2017-06-12 12:47:42 +0200 128) if not searx_debug \
+6d76d9b2 (Adam Tauber       2017-06-12 12:47:42 +0200 129)    or os.environ.get("WERKZEUG_RUN_MAIN") == "true" \
+6d76d9b2 (Adam Tauber       2017-06-12 12:47:42 +0200 130)    or os.environ.get('UWSGI_ORIGINAL_PROC_NAME') is not None:
+7388067f (Adam Tauber       2016-12-28 21:17:51 +0100 131)     initialize_engines(settings['engines'])
+7388067f (Adam Tauber       2016-12-28 21:17:51 +0100 132) 
+598535b2 (asciimoo          2014-01-22 00:15:23 +0100 133) babel = Babel(app)
+598535b2 (asciimoo          2014-01-22 00:15:23 +0100 134) 
+df9cf9d0 (Adam Tauber       2015-02-10 15:23:56 +0100 135) rtl_locales = ['ar', 'arc', 'bcc', 'bqi', 'ckb', 'dv', 'fa', 'glk', 'he',
+df9cf9d0 (Adam Tauber       2015-02-10 15:23:56 +0100 136)                'ku', 'mzn', 'pnb'', ''ps', 'sd', 'ug', 'ur', 'yi']
+df9cf9d0 (Adam Tauber       2015-02-10 15:23:56 +0100 137) 
+adb1169f (Noemi Vanyi       2016-04-09 19:47:06 +0200 138) # used when translating category names
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 139) _category_names = (gettext('files'),
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 140)                    gettext('general'),
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 141)                    gettext('music'),
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 142)                    gettext('social media'),
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 143)                    gettext('images'),
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 144)                    gettext('videos'),
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 145)                    gettext('it'),
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 146)                    gettext('news'),
+fab69800 (Adam Tauber       2016-01-21 10:45:34 +0100 147)                    gettext('map'),
+8bc0f04f (Thomas Pointhuber 2016-01-21 15:57:02 +0100 148)                    gettext('science'))
+e43f6106 (Adam Tauber       2015-02-10 23:14:37 +0100 149) 
+f2b13a7d (Adam Tauber       2017-07-19 21:33:44 +0200 150) outgoing_proxies = settings['outgoing'].get('proxies') or None
+f6f9af45 (asciimoo          2014-01-19 23:04:09 +0100 151) 
+f6f9af45 (asciimoo          2014-01-19 23:04:09 +0100 152) 
+598535b2 (asciimoo          2014-01-22 00:15:23 +0100 153) @babel.localeselector
+598535b2 (asciimoo          2014-01-22 00:15:23 +0100 154) @little_documented
+def get_locale():
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 155)     locale = request.accept_languages.best_match(settings['locales'].keys())
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 156) 
+5867e979 (Noemi Vanyi       2016-04-09 18:32:07 +0200 157)     if request.preferences.get_value('locale') != '':
+5867e979 (Noemi Vanyi       2016-04-09 18:32:07 +0200 158)         locale = request.preferences.get_value('locale')
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 159) 
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 160)     if 'locale' in request.args\
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 161)        and request.args['locale'] in settings['locales']:
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 162)         locale = request.args['locale']
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 163) 
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 164)     if 'locale' in request.form\
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 165)        and request.form['locale'] in settings['locales']:
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 166)         locale = request.form['locale']
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 167) 
+b70ce84e (Adam Tauber       2018-02-18 23:42:30 +0100 168)     if locale == 'zh_TW':
+b70ce84e (Adam Tauber       2018-02-18 23:42:30 +0100 169)         locale = 'zh_Hant_TW'
+b70ce84e (Adam Tauber       2018-02-18 23:42:30 +0100 170) 
+852dfc77 (asciimoo          2014-01-22 00:59:18 +0100 171)     return locale
+598535b2 (asciimoo          2014-01-22 00:15:23 +0100 172) 
+598535b2 (asciimoo          2014-01-22 00:15:23 +0100 173) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 174) # code-highlighter
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 175) @app.template_filter('code_highlighter')
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 176) def code_highlighter(codelines, language=None):
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 177)     if not language:
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 178)         language = 'text'
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 179) 
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 180)     try:
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 181)         # find lexer by programing language
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 182)         lexer = get_lexer_by_name(language, stripall=True)
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 183)     except:
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 184)         # if lexer is not found, using default one
+a61a96d9 (Adam Tauber       2015-01-15 18:39:40 +0100 185)         logger.debug('highlighter cannot find lexer for {0}'.format(language))
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 186)         lexer = get_lexer_by_name('text', stripall=True)
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 187) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 188)     html_code = ''
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 189)     tmp_code = ''
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 190)     last_line = None
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 191) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 192)     # parse lines
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 193)     for line, code in codelines:
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 194)         if not last_line:
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 195)             line_code_start = line
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 196) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 197)         # new codeblock is detected
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 198)         if last_line is not None and\
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 199)            last_line + 1 != line:
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 200) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 201)             # highlight last codepart
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 202)             formatter = HtmlFormatter(linenos='inline',
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 203)                                       linenostart=line_code_start)
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 204)             html_code = html_code + highlight(tmp_code, lexer, formatter)
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 205) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 206)             # reset conditions for next codepart
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 207)             tmp_code = ''
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 208)             line_code_start = line
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 209) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 210)         # add codepart
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 211)         tmp_code += code + '\n'
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 212) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 213)         # update line
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 214)         last_line = line
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 215) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 216)     # highlight last codepart
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 217)     formatter = HtmlFormatter(linenos='inline', linenostart=line_code_start)
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 218)     html_code = html_code + highlight(tmp_code, lexer, formatter)
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 219) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 220)     return html_code
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 221) 
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 222) 
+d740e738 (Cqoicebordel      2015-02-15 19:09:17 +0100 223) # Extract domain from url
+d740e738 (Cqoicebordel      2015-02-15 19:09:17 +0100 224) @app.template_filter('extract_domain')
+d740e738 (Cqoicebordel      2015-02-15 19:09:17 +0100 225) def extract_domain(url):
+d740e738 (Cqoicebordel      2015-02-15 19:09:17 +0100 226)     return urlparse(url)[1]
+d740e738 (Cqoicebordel      2015-02-15 19:09:17 +0100 227) 
+d740e738 (Cqoicebordel      2015-02-15 19:09:17 +0100 228) 
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 229) def get_base_url():
+3afdd1d9 (asciimoo          2014-01-19 00:17:02 +0100 230)     if settings['server']['base_url']:
+3afdd1d9 (asciimoo          2014-01-19 00:17:02 +0100 231)         hostname = settings['server']['base_url']
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 232)     else:
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 233)         scheme = 'http'
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 234)         if request.is_secure:
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 235)             scheme = 'https'
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 236)         hostname = url_for('index', _external=True, _scheme=scheme)
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 237)     return hostname
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 238) 
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 239) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 240) def get_current_theme_name(override=None):
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 241)     """Returns theme name.
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 242) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 243)     Checks in this order:
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 244)     1. override
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 245)     2. cookies
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 246)     3. settings"""
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 247) 
+7fdfeca3 (Alexandre Flament 2017-01-13 22:15:11 +0100 248)     if override and (override in themes or override == '__common__'):
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 249)         return override
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 250)     theme_name = request.args.get('theme', request.preferences.get_value('theme'))
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 251)     if theme_name not in themes:
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 252)         theme_name = default_theme
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 253)     return theme_name
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 254) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 255) 
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 256) @little_documented
+def get_result_template(theme, template_name):
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 257)     themed_path = theme + '/result_templates/' + template_name
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 258)     if themed_path in result_templates:
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 259)         return themed_path
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 260)     return 'result_templates/' + template_name
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 261) 
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 262) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 263) def url_for_theme(endpoint, override_theme=None, **values):
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 264)     if endpoint == 'static' and values.get('filename'):
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 265)         theme_name = get_current_theme_name(override=override_theme)
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 266)         filename_with_theme = "themes/{}/{}".format(theme_name, values['filename'])
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 267)         if filename_with_theme in static_files:
+9f12605f (Adam Tauber       2015-01-01 17:48:12 +0100 268)             values['filename'] = filename_with_theme
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 269)     return url_for(endpoint, **values)
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 270) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 271) 
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 272) @little_documented
+def proxify(url):
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 273)     if url.startswith('//'):
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 274)         url = 'https:' + url
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 275) 
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 276)     if not settings.get('result_proxy'):
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 277)         return url
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 278) 
+a67a4bf2 (Adam Tauber       2016-10-29 23:12:24 +0200 279)     url_params = dict(mortyurl=url.encode('utf-8'))
+a67a4bf2 (Adam Tauber       2016-10-29 23:12:24 +0200 280) 
+a67a4bf2 (Adam Tauber       2016-10-29 23:12:24 +0200 281)     if settings['result_proxy'].get('key'):
+a67a4bf2 (Adam Tauber       2016-10-29 23:12:24 +0200 282)         url_params['mortyhash'] = hmac.new(settings['result_proxy']['key'],
+a67a4bf2 (Adam Tauber       2016-10-29 23:12:24 +0200 283)                                            url.encode('utf-8'),
+a67a4bf2 (Adam Tauber       2016-10-29 23:12:24 +0200 284)                                            hashlib.sha256).hexdigest()
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 285) 
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 286)     return '{0}?{1}'.format(settings['result_proxy']['url'],
+a67a4bf2 (Adam Tauber       2016-10-29 23:12:24 +0200 287)                             urlencode(url_params))
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 288) 
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 289) 
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 290) def image_proxify(url):
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 291) 
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 292)     if url.startswith('//'):
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 293)         url = 'https:' + url
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 294) 
+5867e979 (Noemi Vanyi       2016-04-09 18:32:07 +0200 295)     if not request.preferences.get_value('image_proxy'):
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 296)         return url
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 297) 
+6243639f (Adam Tauber       2016-10-30 21:15:18 +0100 298)     if settings.get('result_proxy'):
+6243639f (Adam Tauber       2016-10-30 21:15:18 +0100 299)         return proxify(url)
+6243639f (Adam Tauber       2016-10-30 21:15:18 +0100 300) 
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 301)     h = new_hmac(settings['server']['secret_key'], url.encode('utf-8'))
+1d515121 (dalf              2015-01-18 09:54:24 +0100 302) 
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 303)     return '{0}?{1}'.format(url_for('image_proxy'),
+c7112126 (Adam Tauber       2015-02-09 12:24:54 +0100 304)                             urlencode(dict(url=url.encode('utf-8'), h=h)))
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 305) 
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 306) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 307) def render(template_name, override_theme=None, **kwargs):
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200 308)     disabled_engines = request.preferences.engines.get_disabled()
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 309) 
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200 310)     enabled_categories = set(category for engine_name in engines
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200 311)                              for category in engines[engine_name].categories
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200 312)                              if (engine_name, category) not in disabled_engines)
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 313) 
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 314)     if 'categories' not in kwargs:
+13a27b90 (Adam Tauber       2014-03-08 14:00:20 +0100 315)         kwargs['categories'] = ['general']
+13a27b90 (Adam Tauber       2014-03-08 14:00:20 +0100 316)         kwargs['categories'].extend(x for x in
+13a27b90 (Adam Tauber       2014-03-08 14:00:20 +0100 317)                                     sorted(categories.keys())
+16155ddc (Adam Tauber       2014-03-08 14:03:42 +0100 318)                                     if x != 'general'
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200 319)                                     and x in enabled_categories)
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 320) 
+0978f108 (Thomas Pointhuber 2015-06-05 08:48:47 +0200 321)     if 'all_categories' not in kwargs:
+0978f108 (Thomas Pointhuber 2015-06-05 08:48:47 +0200 322)         kwargs['all_categories'] = ['general']
+0978f108 (Thomas Pointhuber 2015-06-05 08:48:47 +0200 323)         kwargs['all_categories'].extend(x for x in
+0978f108 (Thomas Pointhuber 2015-06-05 08:48:47 +0200 324)                                         sorted(categories.keys())
+0978f108 (Thomas Pointhuber 2015-06-05 08:48:47 +0200 325)                                         if x != 'general')
+0978f108 (Thomas Pointhuber 2015-06-05 08:48:47 +0200 326) 
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 327)     if 'selected_categories' not in kwargs:
+9bc6865d (asciimoo          2013-10-17 21:46:35 +0200 328)         kwargs['selected_categories'] = []
+c23db1b2 (Adam Tauber       2014-09-06 15:21:29 +0200 329)         for arg in request.args:
+c23db1b2 (Adam Tauber       2014-09-06 15:21:29 +0200 330)             if arg.startswith('category_'):
+c23db1b2 (Adam Tauber       2014-09-06 15:21:29 +0200 331)                 c = arg.split('_', 1)[1]
+c23db1b2 (Adam Tauber       2014-09-06 15:21:29 +0200 332)                 if c in categories:
+c23db1b2 (Adam Tauber       2014-09-06 15:21:29 +0200 333)                     kwargs['selected_categories'].append(c)
+0978f108 (Thomas Pointhuber 2015-06-05 08:48:47 +0200 334) 
+c23db1b2 (Adam Tauber       2014-09-06 15:21:29 +0200 335)     if not kwargs['selected_categories']:
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 336)         cookie_categories = request.preferences.get_value('categories')
+9bc6865d (asciimoo          2013-10-17 21:46:35 +0200 337)         for ccateg in cookie_categories:
+5867e979 (Noemi Vanyi       2016-04-09 18:32:07 +0200 338)             kwargs['selected_categories'].append(ccateg)
+0978f108 (Thomas Pointhuber 2015-06-05 08:48:47 +0200 339) 
+c23db1b2 (Adam Tauber       2014-09-06 15:21:29 +0200 340)     if not kwargs['selected_categories']:
+c23db1b2 (Adam Tauber       2014-09-06 15:21:29 +0200 341)         kwargs['selected_categories'] = ['general']
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 342) 
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 343)     if 'autocomplete' not in kwargs:
+5867e979 (Noemi Vanyi       2016-04-09 18:32:07 +0200 344)         kwargs['autocomplete'] = request.preferences.get_value('autocomplete')
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 345) 
+df9cf9d0 (Adam Tauber       2015-02-10 15:23:56 +0100 346)     if get_locale() in rtl_locales and 'rtl' not in kwargs:
+df9cf9d0 (Adam Tauber       2015-02-10 15:23:56 +0100 347)         kwargs['rtl'] = True
+df9cf9d0 (Adam Tauber       2015-02-10 15:23:56 +0100 348) 
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 349)     kwargs['searx_version'] = VERSION_STRING
+aba65369 (Thomas Pointhuber 2014-11-18 11:37:42 +0100 350) 
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 351)     kwargs['method'] = request.preferences.get_value('method')
+32e98967 (Matej Cotman      2014-03-29 16:45:22 +0100 352) 
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 353)     kwargs['safesearch'] = str(request.preferences.get_value('safesearch'))
+e7de9674 (Thomas Pointhuber 2015-02-08 21:53:37 +0100 354) 
+149802c5 (marc              2016-08-05 23:34:56 -0500 355)     kwargs['language_codes'] = language_codes
+149802c5 (marc              2016-08-05 23:34:56 -0500 356)     if 'current_language' not in kwargs:
+149802c5 (marc              2016-08-05 23:34:56 -0500 357)         kwargs['current_language'] = request.preferences.get_value('language')
+149802c5 (marc              2016-08-05 23:34:56 -0500 358) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 359)     # override url_for function in templates
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 360)     kwargs['url_for'] = url_for_theme
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 361) 
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 362)     kwargs['image_proxify'] = image_proxify
+01143f48 (Adam Tauber       2015-01-16 16:26:15 +0100 363) 
+f2b13a7d (Adam Tauber       2017-07-19 21:33:44 +0200 364)     kwargs['proxify'] = proxify if settings.get('result_proxy', {}).get('url') else None
+1be6e72d (Adam Tauber       2016-10-17 00:22:41 +0200 365) 
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 366)     kwargs['get_result_template'] = get_result_template
+2f9a386c (Adam Tauber       2015-01-01 18:59:53 +0100 367) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 368)     kwargs['theme'] = get_current_theme_name(override=override_theme)
+cfdfca0d (Adam Tauber       2014-11-18 19:55:39 +0100 369) 
+c21a907c (Thomas Pointhuber 2014-09-22 22:42:29 +0200 370)     kwargs['template_name'] = template_name
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 371) 
+816a2c5c (Cqoicebordel      2015-01-20 16:29:54 +0100 372)     kwargs['cookies'] = request.cookies
+816a2c5c (Cqoicebordel      2015-01-20 16:29:54 +0100 373) 
+832cf37a (Adam Tauber       2016-11-14 22:07:23 +0100 374)     kwargs['errors'] = request.errors
+832cf37a (Adam Tauber       2016-11-14 22:07:23 +0100 375) 
+0fbd7052 (Adam Tauber       2016-02-27 18:16:40 +0100 376)     kwargs['instance_name'] = settings['general']['instance_name']
+0fbd7052 (Adam Tauber       2016-02-27 18:16:40 +0100 377) 
+b4b02316 (Adam Tauber       2016-09-04 15:56:46 +0200 378)     kwargs['results_on_new_tab'] = request.preferences.get_value('results_on_new_tab')
+b4b02316 (Adam Tauber       2016-09-04 15:56:46 +0200 379) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 380)     kwargs['unicode'] = unicode
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 381) 
+e060aedc (Adam Tauber       2017-12-05 22:30:20 +0100 382)     kwargs['preferences'] = request.preferences
+e060aedc (Adam Tauber       2017-12-05 22:30:20 +0100 383) 
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 384)     kwargs['scripts'] = set()
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 385)     for plugin in request.user_plugins:
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 386)         for script in plugin.js_dependencies:
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 387)             kwargs['scripts'].add(script)
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 388) 
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 389)     kwargs['styles'] = set()
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 390)     for plugin in request.user_plugins:
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 391)         for css in plugin.css_dependencies:
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 392)             kwargs['styles'].add(css)
+dd84814b (Adam Tauber       2015-04-12 19:24:01 +0200 393) 
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 394)     return render_template(
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 395)         '{}/{}'.format(kwargs['theme'], template_name), **kwargs)
+b752ace6 (asciimoo          2013-10-15 20:50:12 +0200 396) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 397) 
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 398) @app.before_request
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 399) def pre_request():
+832cf37a (Adam Tauber       2016-11-14 22:07:23 +0100 400)     request.errors = []
+832cf37a (Adam Tauber       2016-11-14 22:07:23 +0100 401) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 402)     preferences = Preferences(themes, list(categories.keys()), engines, plugins)
+827f9e41 (Adam Tauber       2016-11-15 09:56:18 +0100 403)     request.preferences = preferences
+b4b02316 (Adam Tauber       2016-09-04 15:56:46 +0200 404)     try:
+38d6ba40 (Adam Tauber       2017-07-10 12:47:25 +0200 405)         preferences.parse_dict(request.cookies)
+b4b02316 (Adam Tauber       2016-09-04 15:56:46 +0200 406)     except:
+832cf37a (Adam Tauber       2016-11-14 22:07:23 +0100 407)         request.errors.append(gettext('Invalid settings, please edit your preferences'))
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 408) 
+832cf37a (Adam Tauber       2016-11-14 22:07:23 +0100 409)     # merge GET, POST vars
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 410)     # request.form
+88aee611 (Adam Tauber       2015-03-10 22:45:59 +0100 411)     request.form = dict(request.form.items())
+22c4195c (Adam Tauber       2015-03-15 12:13:24 +0100 412)     for k, v in request.args.items():
+88aee611 (Adam Tauber       2015-03-10 22:45:59 +0100 413)         if k not in request.form:
+88aee611 (Adam Tauber       2015-03-10 22:45:59 +0100 414)             request.form[k] = v
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 415) 
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 416)     if request.form.get('preferences'):
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 417)         preferences.parse_encoded_data(request.form['preferences'])
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 418)     else:
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 419)         try:
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 420)             preferences.parse_dict(request.form)
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 421)         except Exception as e:
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 422)             logger.exception('invalid settings')
+5f758b2d (Adam Tauber       2017-10-25 23:56:37 +0200 423)             request.errors.append(gettext('Invalid settings'))
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 424) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 425)     # request.user_plugins
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 426)     request.user_plugins = []
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 427)     allowed_plugins = preferences.plugins.get_enabled()
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 428)     disabled_plugins = preferences.plugins.get_disabled()
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 429)     for plugin in plugins:
+37c58fd9 (Adam Tauber       2015-03-11 18:57:36 +0100 430)         if ((plugin.default_on and plugin.id not in disabled_plugins)
+37c58fd9 (Adam Tauber       2015-03-11 18:57:36 +0100 431)                 or plugin.id in allowed_plugins):
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 432)             request.user_plugins.append(plugin)
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 433) 
+cae22bfc (Adam Tauber       2015-03-10 20:44:02 +0100 434) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 435) def index_error(output_format, error_message):
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 436)     if output_format == 'json':
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 437)         return Response(json.dumps({'error': error_message}),
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 438)                         mimetype='application/json')
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 439)     elif output_format == 'csv':
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 440)         response = Response('', mimetype='application/csv')
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 441)         cont_disp = 'attachment;Filename=searx.csv'
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 442)         response.headers.add('Content-Disposition', cont_disp)
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 443)         return response
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 444)     elif output_format == 'rss':
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 445)         response_rss = render(
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 446)             'opensearch_response_rss.xml',
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 447)             results=[],
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 448)             q=request.form['q'] if 'q' in request.form else '',
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 449)             number_of_results=0,
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 450)             base_url=get_base_url(),
+87f67333 (Alexandre Flament 2017-02-13 21:36:45 +0100 451)             error_message=error_message,
+87f67333 (Alexandre Flament 2017-02-13 21:36:45 +0100 452)             override_theme='__common__',
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 453)         )
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 454)         return Response(response_rss, mimetype='text/xml')
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 455)     else:
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 456)         # html
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 457)         request.errors.append(gettext('search error'))
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 458)         return render(
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 459)             'index.html',
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 460)         )
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 461) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 462) 
+a41c1392 (Adam Tauber       2014-05-01 10:14:47 +0200 463) @app.route('/search', methods=['GET', 'POST'])
+facc4ad3 (asciimoo          2014-01-14 18:19:21 +0100 464) @app.route('/', methods=['GET', 'POST'])
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200 465) def index():
+2bcc949a (Matej Cotman      2014-01-31 07:08:24 +0100 466)     """Render index page.
+2bcc949a (Matej Cotman      2014-01-31 07:08:24 +0100 467) 
+2bcc949a (Matej Cotman      2014-01-31 07:08:24 +0100 468)     Supported outputs: html, json, csv, rss.
+2bcc949a (Matej Cotman      2014-01-31 07:08:24 +0100 469)     """
+70278567 (asciimoo          2013-11-04 00:18:07 +0100 470) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 471)     # output_format
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 472)     output_format = request.form.get('format', 'html')
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 473)     if output_format not in ['html', 'csv', 'json', 'rss']:
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 474)         output_format = 'html'
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 475) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 476)     # check if there is query
+832cf37a (Adam Tauber       2016-11-14 22:07:23 +0100 477)     if request.form.get('q') is None:
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 478)         if output_format == 'html':
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 479)             return render(
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 480)                 'index.html',
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 481)             )
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 482)         else:
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 483)             return index_error(output_format, 'No query'), 400
+599c801e (asciimoo          2014-02-07 03:15:34 +0100 484) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 485)     # search
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 486)     search_query = None
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 487)     result_container = None
+0540ea9e (asciimoo          2014-02-07 01:19:07 +0100 488)     try:
+58a6c045 (Alexandre Flament 2016-11-02 14:52:22 +0100 489)         search_query = get_search_query_from_webapp(request.preferences, request.form)
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 490)         # search = Search(search_query) #  without plugins
+84a2c97a (Alexandre Flament 2017-01-02 12:06:04 +0100 491)         search = SearchWithPlugins(search_query, request.user_plugins, request)
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 492)         result_container = search.search()
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 493)     except Exception as e:
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 494)         # log exception
+94196c4b (Adam Tauber       2016-11-14 15:49:06 +0100 495)         logger.exception('search error')
+8bb94e3d (asciimoo          2014-01-29 20:52:04 +0100 496) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 497)         # is it an invalid input parameter or something else ?
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 498)         if (issubclass(e.__class__, SearxParameterException)):
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 499)             return index_error(output_format, e.message), 400
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 500)         else:
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 501)             return index_error(output_format, gettext('search error')), 500
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 502) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 503)     # results
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 504)     results = result_container.get_ordered_results()
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 505)     number_of_results = result_container.results_number()
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 506)     if number_of_results < result_container.results_length():
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 507)         number_of_results = 0
+0540ea9e (asciimoo          2014-02-07 01:19:07 +0100 508) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 509)     # UI
+58a6c045 (Alexandre Flament 2016-11-02 14:52:22 +0100 510)     advanced_search = request.form.get('advanced_search', None)
+5b5478bb (Adam Tauber       2016-07-16 21:41:02 +0200 511) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 512)     # output
+5b5478bb (Adam Tauber       2016-07-16 21:41:02 +0200 513)     for result in results:
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 514)         if output_format == 'html':
+da4f1c25 (Adam Tauber       2016-09-05 22:22:25 +0200 515)             if 'content' in result and result['content']:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 516)                 result['content'] = highlight_content(escape(result['content'][:1024]), search_query.query)
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 517)             result['title'] = highlight_content(escape(result['title'] or u''), search_query.query)
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100 518)         else:
+f59daa4a (Adam Tauber       2015-04-12 17:37:01 +0200 519)             if result.get('content'):
+7b4ec5c5 (asciimoo          2014-01-10 23:38:08 +0100 520)                 result['content'] = html_to_text(result['content']).strip()
+5695ec58 (asciimoo          2014-02-04 19:42:32 +0100 521)             # removing html content and whitespace duplications
+f59daa4a (Adam Tauber       2015-04-12 17:37:01 +0200 522)             result['title'] = ' '.join(html_to_text(result['title']).strip().split())
+96c8b20a (Adam Tauber       2014-06-24 16:30:04 +0200 523) 
+8de97dac (Adam Tauber       2015-01-29 19:44:52 +0100 524)         result['pretty_url'] = prettify_url(result['url'])
+ad7c83e3 (asciimoo          2013-11-15 19:28:30 +0100 525) 
+b88146d6 (Thomas Pointhuber 2014-03-14 09:55:04 +0100 526)         # TODO, check if timezone is calculated right
+b88146d6 (Thomas Pointhuber 2014-03-14 09:55:04 +0100 527)         if 'publishedDate' in result:
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 528)             try:  # test if publishedDate >= 1900 (datetime module bug)
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 529)                 result['pubdate'] = result['publishedDate'].strftime('%Y-%m-%d %H:%M:%S%z')
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 530)             except ValueError:
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 531)                 result['publishedDate'] = None
+b88146d6 (Thomas Pointhuber 2014-03-14 09:55:04 +0100 532)             else:
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 533)                 if result['publishedDate'].replace(tzinfo=None) >= datetime.now() - timedelta(days=1):
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 534)                     timedifference = datetime.now() - result['publishedDate'].replace(tzinfo=None)
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 535)                     minutes = int((timedifference.seconds / 60) % 60)
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 536)                     hours = int(timedifference.seconds / 60 / 60)
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 537)                     if hours == 0:
+bd361e60 (Adam Tauber       2016-05-24 12:49:21 +0200 538)                         result['publishedDate'] = gettext(u'{minutes} minute(s) ago').format(minutes=minutes)
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 539)                     else:
+bd361e60 (Adam Tauber       2016-05-24 12:49:21 +0200 540)                         result['publishedDate'] = gettext(u'{hours} hour(s), {minutes} minute(s) ago').format(hours=hours, minutes=minutes)  # noqa
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 541)                 else:
+092e15cc (jibe-b            2016-03-29 11:59:16 +0200 542)                     result['publishedDate'] = format_date(result['publishedDate'])
+b88146d6 (Thomas Pointhuber 2014-03-14 09:55:04 +0100 543) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 544)     if output_format == 'json':
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 545)         return Response(json.dumps({'query': search_query.query.decode('utf-8'),
+485da549 (Adam Tauber       2016-07-16 21:37:40 +0200 546)                                     'number_of_results': number_of_results,
+a764ebb4 (Adam Tauber       2016-12-10 21:38:34 +0100 547)                                     'results': results,
+a764ebb4 (Adam Tauber       2016-12-10 21:38:34 +0100 548)                                     'answers': list(result_container.answers),
+1d30141c (David A Roberts   2017-01-14 18:40:37 +1000 549)                                     'corrections': list(result_container.corrections),
+a764ebb4 (Adam Tauber       2016-12-10 21:38:34 +0100 550)                                     'infoboxes': result_container.infoboxes,
+243d3e42 (Noémi Ványi       2017-07-09 22:09:46 +0200 551)                                     'suggestions': list(result_container.suggestions),
+ed1c78d9 (yujunqiang        2017-11-15 21:31:27 +0800 552)                                     'unresponsive_engines': list(result_container.unresponsive_engines)},
+ed1c78d9 (yujunqiang        2017-11-15 21:31:27 +0800 553)                                    default=lambda item: list(item) if isinstance(item, set) else item),
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 554)                         mimetype='application/json')
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 555)     elif output_format == 'csv':
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 556)         csv = UnicodeWriter(StringIO())
+ba131c84 (asciimoo          2013-12-02 21:36:09 +0100 557)         keys = ('title', 'url', 'content', 'host', 'engine', 'score')
+b6c3cb0b (Adam Tauber       2015-10-03 17:26:07 +0200 558)         csv.writerow(keys)
+5b5478bb (Adam Tauber       2016-07-16 21:41:02 +0200 559)         for row in results:
+b6c3cb0b (Adam Tauber       2015-10-03 17:26:07 +0200 560)             row['host'] = row['parsed_url'].netloc
+b6c3cb0b (Adam Tauber       2015-10-03 17:26:07 +0200 561)             csv.writerow([row.get(key, '') for key in keys])
+b6c3cb0b (Adam Tauber       2015-10-03 17:26:07 +0200 562)         csv.stream.seek(0)
+ad7c83e3 (asciimoo          2013-11-15 19:28:30 +0100 563)         response = Response(csv.stream.read(), mimetype='application/csv')
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 564)         cont_disp = 'attachment;Filename=searx_-_{0}.csv'.format(search_query.query)
+9eb31c01 (asciimoo          2014-02-07 02:45:12 +0100 565)         response.headers.add('Content-Disposition', cont_disp)
+a192438e (asciimoo          2013-11-15 18:55:18 +0100 566)         return response
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 567)     elif output_format == 'rss':
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 568)         response_rss = render(
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 569)             'opensearch_response_rss.xml',
+5b5478bb (Adam Tauber       2016-07-16 21:41:02 +0200 570)             results=results,
+58a6c045 (Alexandre Flament 2016-11-02 14:52:22 +0100 571)             q=request.form['q'],
+485da549 (Adam Tauber       2016-07-16 21:37:40 +0200 572)             number_of_results=number_of_results,
+7fdfeca3 (Alexandre Flament 2017-01-13 22:15:11 +0100 573)             base_url=get_base_url(),
+7fdfeca3 (Alexandre Flament 2017-01-13 22:15:11 +0100 574)             override_theme='__common__',
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 575)         )
+348187cf (asciimoo          2014-01-14 22:18:21 +0100 576)         return Response(response_rss, mimetype='text/xml')
+9cb744f4 (asciimoo          2014-01-14 18:17:19 +0100 577) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 578)     return render(
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 579)         'results.html',
+5b5478bb (Adam Tauber       2016-07-16 21:41:02 +0200 580)         results=results,
+58a6c045 (Alexandre Flament 2016-11-02 14:52:22 +0100 581)         q=request.form['q'],
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 582)         selected_categories=search_query.categories,
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 583)         pageno=search_query.pageno,
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 584)         time_range=search_query.time_range,
+485da549 (Adam Tauber       2016-07-16 21:37:40 +0200 585)         number_of_results=format_decimal(number_of_results),
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 586)         advanced_search=advanced_search,
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 587)         suggestions=result_container.suggestions,
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 588)         answers=result_container.answers,
+1d30141c (David A Roberts   2017-01-14 18:40:37 +1000 589)         corrections=result_container.corrections,
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 590)         infoboxes=result_container.infoboxes,
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 591)         paging=result_container.paging,
+243d3e42 (Noémi Ványi       2017-07-09 22:09:46 +0200 592)         unresponsive_engines=result_container.unresponsive_engines,
+f62ce21f (marc              2016-11-05 20:51:38 -0600 593)         current_language=search_query.lang,
+6ff57dfb (Adam Tauber       2014-03-04 18:53:56 +0100 594)         base_url=get_base_url(),
+0bfc7931 (Cqoicebordel      2014-12-12 19:09:02 +0100 595)         theme=get_current_theme_name(),
+e71b665f (Cqoicebordel      2014-12-13 21:37:28 +0100 596)         favicons=global_favicons[themes.index(get_current_theme_name())]
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 597)     )
+1df69730 (asciimoo          2014-01-01 22:16:53 +0100 598) 
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200 599) 
+9ead6546 (asciimoo          2013-10-21 00:28:48 +0200 600) @app.route('/about', methods=['GET'])
+9ead6546 (asciimoo          2013-10-21 00:28:48 +0200 601) def about():
+2bcc949a (Matej Cotman      2014-01-31 07:08:24 +0100 602)     """Render about page"""
+a76525d1 (Thomas Pointhuber 2014-03-21 12:19:48 +0100 603)     return render(
+a76525d1 (Thomas Pointhuber 2014-03-21 12:19:48 +0100 604)         'about.html',
+a76525d1 (Thomas Pointhuber 2014-03-21 12:19:48 +0100 605)     )
+8b3ca111 (asciimoo          2014-01-17 16:23:23 +0100 606) 
+8b3ca111 (asciimoo          2014-01-17 16:23:23 +0100 607) 
+8abf4ab9 (Thomas Pointhuber 2014-03-20 10:28:24 +0100 608) @app.route('/autocompleter', methods=['GET', 'POST'])
+8abf4ab9 (Thomas Pointhuber 2014-03-20 10:28:24 +0100 609) def autocompleter():
+8abf4ab9 (Thomas Pointhuber 2014-03-20 10:28:24 +0100 610)     """Return autocompleter results"""
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 611) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 612)     # set blocked engines
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200 613)     disabled_engines = request.preferences.engines.get_disabled()
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 614) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 615)     # parse query
+f65f90bf (Adam Tauber       2017-11-23 17:42:34 +0100 616)     if PY3:
+f65f90bf (Adam Tauber       2017-11-23 17:42:34 +0100 617)         raw_text_query = RawTextQuery(request.form.get('q', b''), disabled_engines)
+f65f90bf (Adam Tauber       2017-11-23 17:42:34 +0100 618)     else:
+f65f90bf (Adam Tauber       2017-11-23 17:42:34 +0100 619)         raw_text_query = RawTextQuery(request.form.get('q', u'').encode('utf-8'), disabled_engines)
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 620)     raw_text_query.parse_query()
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 621) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 622)     # check if search query is set
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 623)     if not raw_text_query.getSearchQuery():
+aff33ea8 (Adam Tauber       2015-01-10 15:27:42 +0100 624)         return '', 400
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 625) 
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 626)     # run autocompleter
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 627)     completer = autocomplete_backends.get(request.preferences.get_value('autocomplete'))
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 628) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 629)     # parse searx specific autocompleter results like !bang
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 630)     raw_results = searx_bang(raw_text_query)
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 631) 
+78081baa (Adam Tauber       2015-01-25 22:52:48 +0100 632)     # normal autocompletion results only appear if max 3 inner results returned
+78081baa (Adam Tauber       2015-01-25 22:52:48 +0100 633)     if len(raw_results) <= 3 and completer:
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 634)         # get language from cookie
+5867e979 (Noemi Vanyi       2016-04-09 18:32:07 +0200 635)         language = request.preferences.get_value('language')
+4d177039 (marc              2017-07-20 15:47:20 -0500 636)         if not language:
+4d177039 (marc              2017-07-20 15:47:20 -0500 637)             language = settings['search']['language']
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 638)         else:
+149802c5 (marc              2016-08-05 23:34:56 -0500 639)             language = language.split('-')[0]
+c19b0899 (Thomas Pointhuber 2015-01-10 19:55:21 +0100 640)         # run autocompletion
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 641)         raw_results.extend(completer(raw_text_query.getSearchQuery(), language))
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 642) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 643)     # parse results (write :language and !engine back to result string)
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 644)     results = []
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 645)     for result in raw_results:
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 646)         raw_text_query.changeSearchQuery(result)
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 647) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 648)         # add parsed result
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 649)         results.append(raw_text_query.getFullQuery())
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 650) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 651)     # return autocompleter results
+58a6c045 (Alexandre Flament 2016-11-02 14:52:22 +0100 652)     if request.form.get('format') == 'x-suggestions':
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 653)         return Response(json.dumps([raw_text_query.query, results]),
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 654)                         mimetype='application/json')
+78081baa (Adam Tauber       2015-01-25 22:52:48 +0100 655) 
+78081baa (Adam Tauber       2015-01-25 22:52:48 +0100 656)     return Response(json.dumps(results),
+78081baa (Adam Tauber       2015-01-25 22:52:48 +0100 657)                     mimetype='application/json')
+8abf4ab9 (Thomas Pointhuber 2014-03-20 10:28:24 +0100 658) 
+8abf4ab9 (Thomas Pointhuber 2014-03-20 10:28:24 +0100 659) 
+1df69730 (asciimoo          2014-01-01 22:16:53 +0100 660) @app.route('/preferences', methods=['GET', 'POST'])
+1df69730 (asciimoo          2014-01-01 22:16:53 +0100 661) def preferences():
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 662)     """Render preferences page && save user preferences"""
+c0013edc (asciimoo          2014-02-07 00:35:15 +0100 663) 
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 664)     # save preferences
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 665)     if request.method == 'POST':
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 666)         resp = make_response(redirect(urljoin(settings['server']['base_url'], url_for('index'))))
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 667)         try:
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 668)             request.preferences.parse_form(request.form)
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 669)         except ValidationException:
+832cf37a (Adam Tauber       2016-11-14 22:07:23 +0100 670)             request.errors.append(gettext('Invalid settings, please edit your preferences'))
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 671)             return resp
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 672)         return request.preferences.save(resp)
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 673) 
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 674)     # render preferences
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 675)     image_proxy = request.preferences.get_value('image_proxy')
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 676)     lang = request.preferences.get_value('language')
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200 677)     disabled_engines = request.preferences.engines.get_disabled()
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 678)     allowed_plugins = request.preferences.plugins.get_enabled()
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 679) 
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 680)     # stats for preferences page
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 681)     stats = {}
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 682) 
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 683)     for c in categories:
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 684)         for e in categories[c]:
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 685)             stats[e.name] = {'time': None,
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 686)                              'warn_timeout': False,
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 687)                              'warn_time': False}
+1fcf066a (Adam Tauber       2015-08-02 19:38:27 +0200 688)             if e.timeout > settings['outgoing']['request_timeout']:
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 689)                 stats[e.name]['warn_timeout'] = True
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 690) 
+01e2648e (Alexandre Flament 2016-11-05 13:45:20 +0100 691)     # get first element [0], the engine time,
+01e2648e (Alexandre Flament 2016-11-05 13:45:20 +0100 692)     # and then the second element [1] : the time (the first one is the label)
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 693)     for engine_stat in get_engines_stats()[0][1]:
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 694)         stats[engine_stat.get('name')]['time'] = round(engine_stat.get('avg'), 3)
+1fcf066a (Adam Tauber       2015-08-02 19:38:27 +0200 695)         if engine_stat.get('avg') > settings['outgoing']['request_timeout']:
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 696)             stats[engine_stat.get('name')]['warn_time'] = True
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 697)     # end of stats
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 698) 
+ba0f818e (asciimoo          2014-01-22 01:20:38 +0100 699)     return render('preferences.html',
+ba0f818e (asciimoo          2014-01-22 01:20:38 +0100 700)                   locales=settings['locales'],
+2a788c8f (asciimoo          2014-01-31 04:35:23 +0100 701)                   current_locale=get_locale(),
+9ca50676 (Adam Tauber       2015-01-16 17:37:34 +0100 702)                   image_proxy=image_proxy,
+6f73f4e7 (Adam Tauber       2015-04-07 18:09:38 +0200 703)                   engines_by_category=categories,
+d4d2dd9c (Alexandre Flament 2015-05-30 12:15:23 +0200 704)                   stats=stats,
+971ed0ab (Adam Tauber       2016-11-19 20:53:51 +0100 705)                   answerers=[{'info': a.self_info(), 'keywords': a.keywords} for a in answerers],
+7daf9893 (Noemi Vanyi       2016-04-09 18:48:23 +0200 706)                   disabled_engines=disabled_engines,
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 707)                   autocomplete_backends=autocomplete_backends,
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 708)                   shortcuts={y: x for x, y in engine_shortcuts.items()},
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 709)                   themes=themes,
+37c58fd9 (Adam Tauber       2015-03-11 18:57:36 +0100 710)                   plugins=plugins,
+575159b1 (jibe-b            2017-09-22 23:43:05 +0200 711)                   doi_resolvers=settings['doi_resolvers'],
+1b10abfc (Noémi Ványi       2017-11-01 13:58:48 +0100 712)                   current_doi_resolver=get_doi_resolver(request.args, request.preferences.get_value('doi_resolver')),
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 713)                   allowed_plugins=allowed_plugins,
+149802c5 (marc              2016-08-05 23:34:56 -0500 714)                   theme=get_current_theme_name(),
+38d6ba40 (Adam Tauber       2017-07-10 12:47:25 +0200 715)                   preferences_url_params=request.preferences.get_as_url_params(),
+38d6ba40 (Adam Tauber       2017-07-10 12:47:25 +0200 716)                   base_url=get_base_url(),
+149802c5 (marc              2016-08-05 23:34:56 -0500 717)                   preferences=True)
+1df69730 (asciimoo          2014-01-01 22:16:53 +0100 718) 
+1df69730 (asciimoo          2014-01-01 22:16:53 +0100 719) 
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 720) @app.route('/image_proxy', methods=['GET'])
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 721) @little_documented
+def image_proxy():
+14079ea2 (Thomas Pointhuber 2015-02-01 10:18:32 +0100 722)     url = request.args.get('url').encode('utf-8')
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 723) 
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 724)     if not url:
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 725)         return '', 400
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 726) 
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 727)     h = new_hmac(settings['server']['secret_key'], url)
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 728) 
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 729)     if h != request.args.get('h'):
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 730)         return '', 400
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 731) 
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 732)     headers = dict_subset(request.headers, {'If-Modified-Since', 'If-None-Match'})
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 733)     headers['User-Agent'] = gen_useragent()
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 734) 
+b2e026dd (Adam Tauber       2015-04-10 01:10:49 +0200 735)     resp = requests.get(url,
+b2e026dd (Adam Tauber       2015-04-10 01:10:49 +0200 736)                         stream=True,
+1fcf066a (Adam Tauber       2015-08-02 19:38:27 +0200 737)                         timeout=settings['outgoing']['request_timeout'],
+cde37be4 (Alexandre Flament 2015-04-25 11:44:53 +0200 738)                         headers=headers,
+cde37be4 (Alexandre Flament 2015-04-25 11:44:53 +0200 739)                         proxies=outgoing_proxies)
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 740) 
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 741)     if resp.status_code == 304:
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 742)         return '', resp.status_code
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 743) 
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 744)     if resp.status_code != 200:
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 745)         logger.debug('image-proxy: wrong response code: {0}'.format(resp.status_code))
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 746)         if resp.status_code >= 400:
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 747)             return '', resp.status_code
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 748)         return '', 400
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 749) 
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 750)     if not resp.headers.get('content-type', '').startswith('image/'):
+ff322d33 (Adam Tauber       2015-06-21 16:50:42 +0200 751)         logger.debug('image-proxy: wrong content-type: {0}'.format(resp.headers.get('content-type')))
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 752)         return '', 400
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 753) 
+e73cb148 (Noémi Ványi       2017-07-20 15:44:02 +0200 754)     img = b''
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 755)     chunk_counter = 0
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 756) 
+df9cf9d0 (Adam Tauber       2015-02-10 15:23:56 +0100 757)     for chunk in resp.iter_content(1024 * 1024):
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 758)         chunk_counter += 1
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 759)         if chunk_counter > 5:
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 760)             return '', 502  # Bad gateway - file is too big (>5M)
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 761)         img += chunk
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 762) 
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 763)     headers = dict_subset(resp.headers, {'Content-Length', 'Length', 'Date', 'Last-Modified', 'Expires', 'Etag'})
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 764) 
+b6d27aca (dalf              2015-01-17 21:54:40 +0100 765)     return Response(img, mimetype=resp.headers['content-type'], headers=headers)
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 766) 
+60eb8319 (Adam Tauber       2015-01-16 16:02:21 +0100 767) 
+66d96198 (asciimoo          2013-10-27 01:03:05 +0200 768) @app.route('/stats', methods=['GET'])
+66d96198 (asciimoo          2013-10-27 01:03:05 +0200 769) def stats():
+2bcc949a (Matej Cotman      2014-01-31 07:08:24 +0100 770)     """Render engine statistics page."""
+66d96198 (asciimoo          2013-10-27 01:03:05 +0200 771)     stats = get_engines_stats()
+a76525d1 (Thomas Pointhuber 2014-03-21 12:19:48 +0100 772)     return render(
+a76525d1 (Thomas Pointhuber 2014-03-21 12:19:48 +0100 773)         'stats.html',
+a76525d1 (Thomas Pointhuber 2014-03-21 12:19:48 +0100 774)         stats=stats,
+a76525d1 (Thomas Pointhuber 2014-03-21 12:19:48 +0100 775)     )
+66d96198 (asciimoo          2013-10-27 01:03:05 +0200 776) 
+1df69730 (asciimoo          2014-01-01 22:16:53 +0100 777) 
+822bf2f3 (asciimoo          2013-12-01 16:10:38 +0100 778) @app.route('/robots.txt', methods=['GET'])
+822bf2f3 (asciimoo          2013-12-01 16:10:38 +0100 779) def robots():
+822bf2f3 (asciimoo          2013-12-01 16:10:38 +0100 780)     return Response("""User-agent: *
+822bf2f3 (asciimoo          2013-12-01 16:10:38 +0100 781) Allow: /
+822bf2f3 (asciimoo          2013-12-01 16:10:38 +0100 782) Allow: /about
+822bf2f3 (asciimoo          2013-12-01 16:10:38 +0100 783) Disallow: /stats
+8305da3e (asciimoo          2014-02-07 18:43:05 +0100 784) Disallow: /preferences
+dceb9031 (Adam Tauber       2016-10-01 20:22:52 +0200 785) Disallow: /*?*q=*
+822bf2f3 (asciimoo          2013-12-01 16:10:38 +0100 786) """, mimetype='text/plain')
+822bf2f3 (asciimoo          2013-12-01 16:10:38 +0100 787) 
+1df69730 (asciimoo          2014-01-01 22:16:53 +0100 788) 
+6bddaf57 (asciimoo          2013-10-16 00:01:08 +0200 789) @app.route('/opensearch.xml', methods=['GET'])
+6bddaf57 (asciimoo          2013-10-16 00:01:08 +0200 790) @little_documented
+def opensearch():
+174daf70 (asciimoo          2013-10-20 22:37:55 +0200 791)     method = 'post'
+7004de6a (Luc Didry         2015-03-15 20:07:50 +0100 792) 
+fe691a09 (Noemi Vanyi       2016-04-08 16:38:05 +0200 793)     if request.preferences.get_value('method') == 'GET':
+7004de6a (Luc Didry         2015-03-15 20:07:50 +0100 794)         method = 'get'
+7004de6a (Luc Didry         2015-03-15 20:07:50 +0100 795) 
+9ead6546 (asciimoo          2013-10-21 00:28:48 +0200 796)     # chrome/chromium only supports HTTP GET....
+174daf70 (asciimoo          2013-10-20 22:37:55 +0200 797)     if request.headers.get('User-Agent', '').lower().find('webkit') >= 0:
+174daf70 (asciimoo          2013-10-20 22:37:55 +0200 798)         method = 'get'
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 799) 
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 800)     ret = render('opensearch.xml',
+a41c1392 (Adam Tauber       2014-05-01 10:14:47 +0200 801)                  opensearch_method=method,
+bc81eda6 (Adam Tauber       2016-03-02 11:51:11 +0100 802)                  host=get_base_url(),
+7fdfeca3 (Alexandre Flament 2017-01-13 22:15:11 +0100 803)                  urljoin=urljoin,
+7fdfeca3 (Alexandre Flament 2017-01-13 22:15:11 +0100 804)                  override_theme='__common__')
+41dd4d9b (Adam Tauber       2014-03-29 16:29:19 +0100 805) 
+6bddaf57 (asciimoo          2013-10-16 00:01:08 +0200 806)     resp = Response(response=ret,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 807)                     status=200,
+8cd76170 (Adam Tauber       2015-01-18 14:26:52 +0100 808)                     mimetype="text/xml")
+6bddaf57 (asciimoo          2013-10-16 00:01:08 +0200 809)     return resp
+6bddaf57 (asciimoo          2013-10-16 00:01:08 +0200 810) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 811) 
+5c8382c1 (asciimoo          2013-12-01 23:52:49 +0100 812) @app.route('/favicon.ico')
+5c8382c1 (asciimoo          2013-12-01 23:52:49 +0100 813) @little_documented
+def favicon():
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 814)     return send_from_directory(os.path.join(app.root_path,
+ae99f907 (misnyo            2017-09-08 20:33:14 +0200 815)                                             static_path,
+ae99f907 (misnyo            2017-09-08 20:33:14 +0200 816)                                             'themes',
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 817)                                             get_current_theme_name(),
+08eaffe2 (Matej Cotman      2014-04-24 23:46:40 +0000 818)                                             'img'),
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 819)                                'favicon.png',
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 820)                                mimetype='image/vnd.microsoft.icon')
+5c8382c1 (asciimoo          2013-12-01 23:52:49 +0100 821) 
+5c8382c1 (asciimoo          2013-12-01 23:52:49 +0100 822) 
+1184f45c (Adam Tauber       2015-04-07 11:07:48 +0200 823) @app.route('/clear_cookies')
+1184f45c (Adam Tauber       2015-04-07 11:07:48 +0200 824) def clear_cookies():
+29dfd967 (Adam Tauber       2015-10-23 23:07:36 +0200 825)     resp = make_response(redirect(urljoin(settings['server']['base_url'], url_for('index'))))
+1184f45c (Adam Tauber       2015-04-07 11:07:48 +0200 826)     for cookie_name in request.cookies:
+1184f45c (Adam Tauber       2015-04-07 11:07:48 +0200 827)         resp.delete_cookie(cookie_name)
+1184f45c (Adam Tauber       2015-04-07 11:07:48 +0200 828)     return resp
+1184f45c (Adam Tauber       2015-04-07 11:07:48 +0200 829) 
+1184f45c (Adam Tauber       2015-04-07 11:07:48 +0200 830) 
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 831) @app.route('/config')
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 832) def config():
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 833)     return jsonify({'categories': categories.keys(),
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 834)                     'engines': [{'name': engine_name,
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 835)                                  'categories': engine.categories,
+fbbb307f (Adam Tauber       2016-07-07 09:27:34 +0200 836)                                  'shortcut': engine.shortcut,
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 837)                                  'enabled': not engine.disabled,
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 838)                                  'paging': engine.paging,
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 839)                                  'language_support': engine.language_support,
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 840)                                  'supported_languages':
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 841)                                  engine.supported_languages.keys()
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 842)                                  if isinstance(engine.supported_languages, dict)
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 843)                                  else engine.supported_languages,
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 844)                                  'safesearch': engine.safesearch,
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 845)                                  'time_range_support': engine.time_range_support,
+06bea829 (Dalf              2017-01-07 14:42:55 +0100 846)                                  'timeout': engine.timeout}
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 847)                                 for engine_name, engine in engines.items()],
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 848)                     'plugins': [{'name': plugin.name,
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 849)                                  'enabled': plugin.default_on}
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 850)                                 for plugin in plugins],
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 851)                     'instance_name': settings['general']['instance_name'],
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 852)                     'locales': settings['locales'],
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 853)                     'default_locale': settings['ui']['default_locale'],
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 854)                     'autocomplete': settings['search']['autocomplete'],
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 855)                     'safe_search': settings['search']['safe_search'],
+6334fca1 (Noémi Ványi       2016-10-30 15:47:49 +0100 856)                     'default_theme': settings['ui']['default_theme'],
+575159b1 (jibe-b            2017-09-22 23:43:05 +0200 857)                     'version': VERSION_STRING,
+575159b1 (jibe-b            2017-09-22 23:43:05 +0200 858)                     'doi_resolvers': [r for r in search['doi_resolvers']],
+575159b1 (jibe-b            2017-09-22 23:43:05 +0200 859)                     'default_doi_resolver': settings['default_doi_resolver'],
+575159b1 (jibe-b            2017-09-22 23:43:05 +0200 860)                     })
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 861) 
+d43d9727 (Noemi Vanyi       2016-06-07 23:08:48 +0200 862) 
+0056c403 (Noemi Vanyi       2016-08-24 19:53:09 +0200 863) @app.errorhandler(404)
+0056c403 (Noemi Vanyi       2016-08-24 19:53:09 +0200 864) def page_not_found(e):
+8d4dd3c5 (Adam Tauber       2016-09-07 08:32:01 +0200 865)     return render('404.html'), 404
+0056c403 (Noemi Vanyi       2016-08-24 19:53:09 +0200 866) 
+0056c403 (Noemi Vanyi       2016-08-24 19:53:09 +0200 867) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 868) def run():
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 869)     logger.debug('starting webserver on %s:%s', settings['server']['port'], settings['server']['bind_address'])
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 870)     app.run(
+3e755442 (dalf              2016-10-22 19:07:37 +0200 871)         debug=searx_debug,
+3e755442 (dalf              2016-10-22 19:07:37 +0200 872)         use_debugger=searx_debug,
+d0830d4e (Adam Tauber       2015-08-02 19:03:55 +0200 873)         port=settings['server']['port'],
+fa5bc3a5 (Adam Tauber       2016-09-05 22:44:48 +0200 874)         host=settings['server']['bind_address'],
+fa5bc3a5 (Adam Tauber       2016-09-05 22:44:48 +0200 875)         threaded=True
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 876)     )
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 877) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 878) 
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 879) class ReverseProxyPathFix(object):
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 880)     '''Wrap the application in this middleware and configure the
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 881)     front-end server to add these headers, to let you quietly bind
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 882)     this to a URL other than / and to an HTTP scheme that is
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 883)     different than what is used locally.
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 884) 
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 885)     http://flask.pocoo.org/snippets/35/
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 886) 
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 887)     In nginx:
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 888)     location /myprefix {
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 889)         proxy_pass http://127.0.0.1:8000;
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 890)         proxy_set_header Host $host;
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 891)         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 892)         proxy_set_header X-Scheme $scheme;
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 893)         proxy_set_header X-Script-Name /myprefix;
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 894)         }
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 895) 
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 896)     :param app: the WSGI application
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 897)     '''
+cd9b494c (stepshal          2016-07-10 21:44:27 +0700 898) 
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 899)     def __init__(self, app):
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 900)         self.app = app
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 901) 
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 902)     def __call__(self, environ, start_response):
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 903)         script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 904)         if script_name:
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 905)             environ['SCRIPT_NAME'] = script_name
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 906)             path_info = environ['PATH_INFO']
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 907)             if path_info.startswith(script_name):
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 908)                 environ['PATH_INFO'] = path_info[len(script_name):]
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 909) 
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 910)         scheme = environ.get('HTTP_X_SCHEME', '')
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 911)         if scheme:
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 912)             environ['wsgi.url_scheme'] = scheme
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 913)         return self.app(environ, start_response)
+7d5c1313 (Martin Zimmermann 2014-07-03 22:02:53 +0200 914) 
+91f7c031 (Adam Tauber       2015-02-07 12:28:36 +0100 915) 
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 916) application = app
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 917) # patch app to handle non root url-s behind proxy & wsgi
+6ef7c327 (Adam Tauber       2015-06-16 19:55:31 +0200 918) app.wsgi_app = ReverseProxyPathFix(ProxyFix(application.wsgi_app))
+7d5c1313 (Martin Zimmermann 2014-07-03 22:02:53 +0200 919) 
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 920) if __name__ == "__main__":
+e740c8a8 (Matej Cotman      2014-01-12 12:40:27 +0100 921)     run()

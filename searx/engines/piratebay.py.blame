@@ -1,0 +1,96 @@
+52d243f7 (Adam Tauber       2015-03-29 21:05:43 +0200  1) #  Piratebay (Videos, Music, Files)
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  2) #
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200  3) # @website     https://thepiratebay.se
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200  4) # @provide-api no (nothing found)
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  5) #
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200  6) # @using-api   no
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200  7) # @results     HTML (using search portal)
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200  8) # @stable      yes (HTML can change)
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200  9) # @parse       url, title, content, seed, leech, magnetlink
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 10) 
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100 11) from lxml import html
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 12) from operator import itemgetter
+5a160774 (Cqoicebordel      2015-02-01 15:23:26 +0100 13) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 14) from searx.url_utils import quote, urljoin
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 15) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 16) # engine dependent config
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 17) categories = ['videos', 'music', 'files']
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 18) paging = True
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 19) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 20) # search-url
+3f31e1ce (Adam Tauber       2015-08-25 22:56:40 +0200 21) url = 'https://thepiratebay.se/'
+c567308e (asciimoo          2014-01-30 01:48:07 +0100 22) search_url = url + 'search/{search_term}/{pageno}/99/{search_type}'
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 23) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 24) # piratebay specific type-definitions
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 25) search_types = {'files': '0',
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 26)                 'music': '100',
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 27)                 'videos': '200'}
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 28) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 29) # specific xpath variables
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 30) magnet_xpath = './/a[@title="Download this torrent using magnet"]'
+5a160774 (Cqoicebordel      2015-02-01 15:23:26 +0100 31) torrent_xpath = './/a[@title="Download this torrent"]'
+5a160774 (Cqoicebordel      2015-02-01 15:23:26 +0100 32) content_xpath = './/font[@class="detDesc"]'
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 33) 
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 34) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 35) # do search-request
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 36) def request(query, params):
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 37)     search_type = search_types.get(params['category'], '0')
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 38) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 39)     params['url'] = search_url.format(search_term=quote(query),
+c567308e (asciimoo          2014-01-30 01:48:07 +0100 40)                                       search_type=search_type,
+c567308e (asciimoo          2014-01-30 01:48:07 +0100 41)                                       pageno=params['pageno'] - 1)
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 42) 
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 43)     return params
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 44) 
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 45) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 46) # get response from search-request
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 47) def response(resp):
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 48)     results = []
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 49) 
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 50)     dom = html.fromstring(resp.text)
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 51) 
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 52)     search_res = dom.xpath('//table[@id="searchResult"]//tr')
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 53) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 54)     # return empty array if nothing is found
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 55)     if not search_res:
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 56)         return []
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 57) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 58)     # parse results
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 59)     for result in search_res[1:]:
+9ad8013a (asciimoo          2013-10-22 18:58:01 +0200 60)         link = result.xpath('.//div[@class="detName"]//a')[0]
+74b6be39 (asciimoo          2013-10-23 23:55:37 +0200 61)         href = urljoin(url, link.attrib.get('href'))
+5a160774 (Cqoicebordel      2015-02-01 15:23:26 +0100 62)         title = extract_text(link)
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 63)         content = extract_text(result.xpath(content_xpath))
+ef7e1199 (asciimoo          2013-10-22 19:15:30 +0200 64)         seed, leech = result.xpath('.//td[@align="right"]/text()')[:2]
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 65) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 66)         # convert seed to int if possible
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 67)         if seed.isdigit():
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 68)             seed = int(seed)
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 69)         else:
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 70)             seed = 0
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 71) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 72)         # convert leech to int if possible
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 73)         if leech.isdigit():
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 74)             leech = int(leech)
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 75)         else:
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 76)             leech = 0
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 77) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 78)         magnetlink = result.xpath(magnet_xpath)[0]
+52d243f7 (Adam Tauber       2015-03-29 21:05:43 +0200 79)         torrentfile_links = result.xpath(torrent_xpath)
+52d243f7 (Adam Tauber       2015-03-29 21:05:43 +0200 80)         if torrentfile_links:
+52d243f7 (Adam Tauber       2015-03-29 21:05:43 +0200 81)             torrentfile_link = torrentfile_links[0].attrib.get('href')
+52d243f7 (Adam Tauber       2015-03-29 21:05:43 +0200 82)         else:
+52d243f7 (Adam Tauber       2015-03-29 21:05:43 +0200 83)             torrentfile_link = None
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 84) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 85)         # append result
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 86)         results.append({'url': href,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 87)                         'title': title,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 88)                         'content': content,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 89)                         'seed': seed,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 90)                         'leech': leech,
+5a160774 (Cqoicebordel      2015-02-01 15:23:26 +0100 91)                         'magnetlink': magnetlink.attrib.get('href'),
+52d243f7 (Adam Tauber       2015-03-29 21:05:43 +0200 92)                         'torrentfile': torrentfile_link,
+b0a44042 (rhapsodhy         2014-01-11 03:33:41 +0000 93)                         'template': 'torrent.html'})
+6725112e (rhapsodhy         2014-05-14 19:30:32 +0100 94) 
+dae88d86 (Thomas Pointhuber 2014-09-02 17:56:32 +0200 95)     # return results sorted by seeder
+7e946a36 (Adam Tauber       2014-05-16 16:49:42 +0200 96)     return sorted(results, key=itemgetter('seed'), reverse=True)

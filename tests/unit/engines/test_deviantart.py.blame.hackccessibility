@@ -1,0 +1,96 @@
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  1) from collections import defaultdict
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  2) import mock
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  3) from searx.engines import deviantart
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  4) from searx.testing import SearxTestCase
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  5) 
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  6) 
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  7) class TestDeviantartEngine(SearxTestCase):
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  8) 
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100  9)     @little_documented
+def test_request(self):
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 10)         dicto = defaultdict(dict)
+b0343568 tests/unit/engines/test_deviantart.py  (Noémi Ványi       2016-12-11 16:41:14 +0100 11)         query = 'test_query'
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 12)         dicto['pageno'] = 0
+350a8452 tests/unit/engines/test_deviantart.py  (Adam Tauber       2016-07-26 00:22:05 +0200 13)         dicto['time_range'] = ''
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 14)         params = deviantart.request(query, dicto)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 15)         self.assertTrue('url' in params)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 16)         self.assertTrue(query in params['url'])
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 17)         self.assertTrue('deviantart.com' in params['url'])
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 18) 
+b0343568 tests/unit/engines/test_deviantart.py  (Noémi Ványi       2016-12-11 16:41:14 +0100 19)     def test_no_url_in_request_year_time_range(self):
+b0343568 tests/unit/engines/test_deviantart.py  (Noémi Ványi       2016-12-11 16:41:14 +0100 20)         dicto = defaultdict(dict)
+b0343568 tests/unit/engines/test_deviantart.py  (Noémi Ványi       2016-12-11 16:41:14 +0100 21)         query = 'test_query'
+b0343568 tests/unit/engines/test_deviantart.py  (Noémi Ványi       2016-12-11 16:41:14 +0100 22)         dicto['time_range'] = 'year'
+b0343568 tests/unit/engines/test_deviantart.py  (Noémi Ványi       2016-12-11 16:41:14 +0100 23)         params = deviantart.request(query, dicto)
+b0343568 tests/unit/engines/test_deviantart.py  (Noémi Ványi       2016-12-11 16:41:14 +0100 24)         self.assertEqual({}, params['url'])
+b0343568 tests/unit/engines/test_deviantart.py  (Noémi Ványi       2016-12-11 16:41:14 +0100 25) 
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 26)     def test_response(self):
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 27)         self.assertRaises(AttributeError, deviantart.response, None)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 28)         self.assertRaises(AttributeError, deviantart.response, [])
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 29)         self.assertRaises(AttributeError, deviantart.response, '')
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 30)         self.assertRaises(AttributeError, deviantart.response, '[]')
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 31) 
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 32)         response = mock.Mock(text='<html></html>')
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 33)         self.assertEqual(deviantart.response(response), [])
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 34) 
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 35)         response = mock.Mock(status_code=302)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 36)         self.assertEqual(deviantart.response(response), [])
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 37) 
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 38)         html = """
+ba590de7 tests/unit/engines/test_deviantart.py  (Noemi Vanyi       2016-07-19 09:37:02 +0200 39)         <div id="page-1-results" class="page-results results-page-thumb torpedo-container">
+ba590de7 tests/unit/engines/test_deviantart.py  (Noemi Vanyi       2016-07-19 09:37:02 +0200 40)         <span class="thumb wide" href="http://amai911.deviantart.com/art/Horse-195212845"
+ba590de7 tests/unit/engines/test_deviantart.py  (Noemi Vanyi       2016-07-19 09:37:02 +0200 41)         data-super-full-width="900" data-super-full-height="600">
+ba590de7 tests/unit/engines/test_deviantart.py  (Noemi Vanyi       2016-07-19 09:37:02 +0200 42)             <a class="torpedo-thumb-link" href="https://url.of.image">
+ba590de7 tests/unit/engines/test_deviantart.py  (Noemi Vanyi       2016-07-19 09:37:02 +0200 43)                 <img data-sigil="torpedo-img" src="https://url.of.thumbnail" />
+ba590de7 tests/unit/engines/test_deviantart.py  (Noemi Vanyi       2016-07-19 09:37:02 +0200 44)             </a>
+ba590de7 tests/unit/engines/test_deviantart.py  (Noemi Vanyi       2016-07-19 09:37:02 +0200 45)         <span class="info"><span class="title-wrap"><span class="title">Title of image</span></span>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 46)         </div>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 47)         """
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 48)         response = mock.Mock(text=html)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 49)         results = deviantart.response(response)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 50)         self.assertEqual(type(results), list)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 51)         self.assertEqual(len(results), 1)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 52)         self.assertEqual(results[0]['title'], 'Title of image')
+ba590de7 tests/unit/engines/test_deviantart.py  (Noemi Vanyi       2016-07-19 09:37:02 +0200 53)         self.assertEqual(results[0]['url'], 'https://url.of.image')
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 54)         self.assertNotIn('content', results[0])
+78edc16e searx/tests/engines/test_deviantart.py (Alexandre Flament 2015-05-02 11:43:12 +0200 55)         self.assertEqual(results[0]['thumbnail_src'], 'https://url.of.thumbnail')
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 56) 
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 57)         html = """
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 58)         <span class="tt-fh-tc" style="width: 202px;">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 59)             <span class="tt-bb" style="width: 202px;">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 60)             </span>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 61)             <span class="shadow">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 62)                 <a class="thumb" href="http://url.of.result/2nd.part.of.url"
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 63)                     title="Behoimi BE Animation Test by test-0, Jan 4,
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 64)                     2010 in Digital Art &gt; Animation"> <i></i>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 65)                     <img width="200" height="200" alt="Test"
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 66)                         src="http://url.of.thumbnail" data-src="http://th08.deviantart.net/test.jpg">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 67)                 </a>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 68)             </span>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 69)             <!-- ^TTT -->
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 70)         </span>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 71)         <span class="details">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 72)             <a href="http://test-0.deviantart.com/art/Test" class="t"
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 73)                 title="Behoimi BE Animation Test by test-0, Jan 4, 2010">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 74)                 <span class="tt-fh-oe">Title of image</span> </a>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 75)             <small>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 76)             <span class="category">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 77)                 <span class="age">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 78)                     5 years ago
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 79)                 </span>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 80)                 in <a title="Behoimi BE Animation Test by test-0, Jan 4, 2010"
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 81)                     href="http://www.deviantart.com/browse/all/digitalart/animation/">Animation</a>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 82)             </span>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 83)             <div class="commentcount">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 84)                 <a href="http://test-0.deviantart.com/art/Test#comments">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 85)                 <span class="iconcommentsstats"></span>9 Comments</a>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 86)             </div>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 87)             <a class="mlt-link" href="http://www.deviantart.com/morelikethis/149167425">
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 88)             <span class="mlt-icon"></span> <span class="mlt-text">More Like This</span> </a>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 89)         </span>
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 90)         </small> <!-- TTT$ -->
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 91)         """
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 92)         response = mock.Mock(text=html)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 93)         results = deviantart.response(response)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 94)         self.assertEqual(type(results), list)
+d4957045 searx/tests/engines/test_deviantart.py (Cqoicebordel      2015-01-29 01:13:33 +0100 95)         self.assertEqual(len(results), 0)

@@ -1,0 +1,107 @@
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200   1) # -*- coding: utf-8 -*-
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200   2) import mock
+52e615de tests/unit/test_utils.py  (Adam Tauber  2016-11-30 18:43:03 +0100   3) import sys
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200   4) from searx.testing import SearxTestCase
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200   5) from searx import utils
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200   6) 
+52e615de tests/unit/test_utils.py  (Adam Tauber  2016-11-30 18:43:03 +0100   7) if sys.version_info[0] == 3:
+52e615de tests/unit/test_utils.py  (Adam Tauber  2016-11-30 18:43:03 +0100   8)     unicode = str
+52e615de tests/unit/test_utils.py  (Adam Tauber  2016-11-30 18:43:03 +0100   9) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  10) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  11) class TestUtils(SearxTestCase):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  12) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  13)     @little_documented
+def test_gen_useragent(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  14)         self.assertIsInstance(utils.gen_useragent(), str)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  15)         self.assertIsNotNone(utils.gen_useragent())
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  16)         self.assertTrue(utils.gen_useragent().startswith('Mozilla'))
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  17) 
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  18)     def test_searx_useragent(self):
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  19)         self.assertIsInstance(utils.searx_useragent(), str)
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  20)         self.assertIsNotNone(utils.searx_useragent())
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  21)         self.assertTrue(utils.searx_useragent().startswith('searx'))
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  22) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  23)     def test_highlight_content(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  24)         self.assertEqual(utils.highlight_content(0, None), None)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  25)         self.assertEqual(utils.highlight_content(None, None), None)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  26)         self.assertEqual(utils.highlight_content('', None), None)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  27)         self.assertEqual(utils.highlight_content(False, None), None)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  28) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  29)         contents = [
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  30)             '<html></html>'
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  31)             'not<'
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  32)         ]
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  33)         for content in contents:
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  34)             self.assertEqual(utils.highlight_content(content, None), content)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  35) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  36)         content = 'a'
+52e615de tests/unit/test_utils.py  (Adam Tauber  2016-11-30 18:43:03 +0100  37)         query = b'test'
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  38)         self.assertEqual(utils.highlight_content(content, query), content)
+52e615de tests/unit/test_utils.py  (Adam Tauber  2016-11-30 18:43:03 +0100  39)         query = b'a test'
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  40)         self.assertEqual(utils.highlight_content(content, query), content)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  41) 
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  42)     def test_html_to_text(self):
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  43)         html = """
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  44)         <a href="/testlink" class="link_access_account">
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  45)             <span class="toto">
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  46)                 <span>
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  47)                     <img src="test.jpg" />
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  48)                 </span>
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  49)             </span>
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  50)             <span class="titi">
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  51)                             Test text
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  52)             </span>
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  53)         </a>
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  54)         """
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  55)         self.assertIsInstance(utils.html_to_text(html), unicode)
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  56)         self.assertIsNotNone(utils.html_to_text(html))
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  57)         self.assertEqual(utils.html_to_text(html), "Test text")
+cfe81d74 searx/tests/test_utils.py (Cqoicebordel 2015-01-27 20:03:33 +0100  58) 
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  59)     @little_documented
+def test_prettify_url(self):
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  60)         data = (('https://searx.me/', 'https://searx.me/'),
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  61)                 (u'https://searx.me/ű', u'https://searx.me/ű'),
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  62)                 ('https://searx.me/' + (100 * 'a'), 'https://searx.me/[...]aaaaaaaaaaaaaaaaa'),
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  63)                 (u'https://searx.me/' + (100 * u'ű'), u'https://searx.me/[...]űűűűűűűűűűűűűűűűű'))
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  64) 
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  65)         for test_url, expected in data:
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  66)             self.assertEqual(utils.prettify_url(test_url, max_length=32), expected)
+7580852b searx/tests/test_utils.py (Adam Tauber  2015-09-07 19:22:01 +0200  67) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  68) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  69) class TestHTMLTextExtractor(SearxTestCase):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  70) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  71)     def setUp(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  72)         self.html_text_extractor = utils.HTMLTextExtractor()
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  73) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  74)     def test__init__(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  75)         self.assertEqual(self.html_text_extractor.result, [])
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  76) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  77)     def test_handle_charref(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  78)         self.html_text_extractor.handle_charref('xF')
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  79)         self.assertIn(u'\x0f', self.html_text_extractor.result)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  80)         self.html_text_extractor.handle_charref('XF')
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  81)         self.assertIn(u'\x0f', self.html_text_extractor.result)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  82) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  83)         self.html_text_extractor.handle_charref('97')
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  84)         self.assertIn(u'a', self.html_text_extractor.result)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  85) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  86)     def test_handle_entityref(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  87)         entity = 'test'
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  88)         self.html_text_extractor.handle_entityref(entity)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  89)         self.assertIn(entity, self.html_text_extractor.result)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  90) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  91) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  92) class TestUnicodeWriter(SearxTestCase):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  93) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  94)     def setUp(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  95)         self.unicode_writer = utils.UnicodeWriter(mock.MagicMock())
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  96) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  97)     def test_write_row(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  98)         row = [1, 2, 3]
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200  99)         self.assertEqual(self.unicode_writer.writerow(row), None)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200 100) 
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200 101)     def test_write_rows(self):
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200 102)         self.unicode_writer.writerow = mock.MagicMock()
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200 103)         rows = [1, 2, 3]
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200 104)         self.unicode_writer.writerows(rows)
+88102730 searx/tests/test_utils.py (Gabor Nagy   2014-07-12 15:46:55 +0200 105)         self.assertEqual(self.unicode_writer.writerow.call_count, len(rows))

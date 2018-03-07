@@ -1,0 +1,121 @@
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   1) #!/usr/bin/env python
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   2) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   3) """
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   4)  BASE (Scholar publications)
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   5) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   6)  @website     https://base-search.net
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   7)  @provide-api yes with authorization (https://api.base-search.net/)
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   8) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200   9)  @using-api   yes
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  10)  @results     XML
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  11)  @stable      ?
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  12)  @parse       url, title, publishedDate, content
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  13)  More info on api: http://base-search.net/about/download/base_interface.pdf
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  14) """
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  15) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  16) from lxml import etree
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  17) from datetime import datetime
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  18) import re
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100  19) from searx.url_utils import urlencode
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100  20) from searx.utils import searx_useragent
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  21) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  22) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  23) categories = ['science']
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  24) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  25) base_url = 'https://api.base-search.net/cgi-bin/BaseHttpSearchInterface.fcgi'\
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  26)            + '?func=PerformSearch&{query}&boost=oa&hits={hits}&offset={offset}'
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  27) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  28) # engine dependent config
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  29) paging = True
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  30) number_of_results = 10
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  31) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  32) # shortcuts for advanced search
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  33) shorcut_dict = {
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  34)     # user-friendly keywords
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  35)     'format:': 'dcformat:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  36)     'author:': 'dccreator:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  37)     'collection:': 'dccollection:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  38)     'hdate:': 'dchdate:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  39)     'contributor:': 'dccontributor:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  40)     'coverage:': 'dccoverage:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  41)     'date:': 'dcdate:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  42)     'abstract:': 'dcdescription:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  43)     'urls:': 'dcidentifier:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  44)     'language:': 'dclanguage:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  45)     'publisher:': 'dcpublisher:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  46)     'relation:': 'dcrelation:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  47)     'rights:': 'dcrights:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  48)     'source:': 'dcsource:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  49)     'subject:': 'dcsubject:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  50)     'title:': 'dctitle:',
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  51)     'type:': 'dcdctype:'
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  52) }
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  53) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  54) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  55) def request(query, params):
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  56)     # replace shortcuts with API advanced search keywords
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  57)     for key in shorcut_dict.keys():
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  58)         query = re.sub(str(key), str(shorcut_dict[key]), query)
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  59) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  60)     # basic search
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  61)     offset = (params['pageno'] - 1) * number_of_results
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  62) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  63)     string_args = dict(query=urlencode({'query': query}),
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  64)                        offset=offset,
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  65)                        hits=number_of_results)
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  66) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  67)     params['url'] = base_url.format(**string_args)
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  68) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  69)     params['headers']['User-Agent'] = searx_useragent()
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  70)     return params
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  71) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  72) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  73) def response(resp):
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  74)     results = []
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  75) 
+5954a8e1 (NoÃ©mi VÃ¡nyi 2017-11-01 16:50:27 +0100  76)     search_results = etree.XML(resp.content)
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  77) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  78)     for entry in search_results.xpath('./result/doc'):
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  79)         content = "No description available"
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  80) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  81)         date = datetime.now()  # needed in case no dcdate is available for an item
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  82)         for item in entry:
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  83)             if item.attrib["name"] == "dchdate":
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  84)                 harvestDate = item.text
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  85) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  86)             elif item.attrib["name"] == "dcdate":
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  87)                 date = item.text
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  88) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  89)             elif item.attrib["name"] == "dctitle":
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  90)                 title = item.text
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  91) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  92)             elif item.attrib["name"] == "dclink":
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  93)                 url = item.text
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  94) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  95)             elif item.attrib["name"] == "dcdescription":
+16bdc0ba (Adam Tauber   2016-12-09 11:44:24 +0100  96)                 content = item.text[:300]
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  97)                 if len(item.text) > 300:
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  98)                     content += "..."
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200  99) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 100) # dates returned by the BASE API are not several formats
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 101)         publishedDate = None
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 102)         for date_format in ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d', '%Y-%m', '%Y']:
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 103)             try:
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 104)                 publishedDate = datetime.strptime(date, date_format)
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 105)                 break
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 106)             except:
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 107)                 pass
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 108) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 109)         if publishedDate is not None:
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 110)             res_dict = {'url': url,
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 111)                         'title': title,
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 112)                         'publishedDate': publishedDate,
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 113)                         'content': content}
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 114)         else:
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 115)             res_dict = {'url': url,
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 116)                         'title': title,
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 117)                         'content': content}
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 118) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 119)         results.append(res_dict)
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 120) 
+092e15cc (jibe-b        2016-03-29 11:59:16 +0200 121)     return results

@@ -1,0 +1,50 @@
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  1) import mock
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  2) from collections import defaultdict
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  3) from searx.engines import fdroid
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  4) from searx.testing import SearxTestCase
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  5) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  6) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  7) class TestFdroidEngine(SearxTestCase):
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  8) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  9)     @little_documented
+def test_request(self):
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 10)         query = 'test_query'
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 11)         dic = defaultdict(dict)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 12)         dic['pageno'] = 1
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 13)         params = fdroid.request(query, dic)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 14)         self.assertTrue('url' in params)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 15)         self.assertTrue(query in params['url'])
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 16)         self.assertTrue('f-droid.org' in params['url'])
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 17) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 18)     def test_response(self):
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 19)         resp = mock.Mock(text='<html></html>')
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 20)         self.assertEqual(fdroid.response(resp), [])
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 21) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 22)         html = """
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 23)         <a href="https://google.com/qwerty">
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 24)           <div id="appheader">
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 25)             <div style="float:left;padding-right:10px;">
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 26)               <img src="http://example.com/image.png"
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 27)                    style="width:48px;border:none;">
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 28)             </div>
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 29)             <div style="float:right;">
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 30)               <p>Details...</p>
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 31)             </div>
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 32)             <p style="color:#000000;">
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 33)               <span style="font-size:20px;">Sample title</span>
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 34)               <br>
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 35)               Sample content
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 36)             </p>
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 37)           </div>
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 38)         </a>
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 39)         """
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 40) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 41)         resp = mock.Mock(text=html)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 42)         results = fdroid.response(resp)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 43) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 44)         self.assertEqual(type(results), list)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 45)         self.assertEqual(len(results), 1)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 46)         self.assertEqual(results[0]['url'], 'https://google.com/qwerty')
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 47)         self.assertEqual(results[0]['title'], 'Sample title')
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 48)         self.assertEqual(results[0]['content'], 'Sample content')
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 49)         self.assertEqual(results[0]['img_src'], 'http://example.com/image.png')

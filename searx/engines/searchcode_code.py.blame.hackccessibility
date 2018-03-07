@@ -1,0 +1,70 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Searchcode (It)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://searchcode.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (https://searchcode.com/api/)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 12) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 13) from json import loads
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 14) from searx.url_utils import urlencode
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 15) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 16) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 17) # engine dependent config
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 18) categories = ['it']
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 19) paging = True
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 20) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 21) # search-url
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 22) url = 'https://searchcode.com/'
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 23) search_url = url + 'api/codesearch_I/?{query}&p={pageno}'
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 24) 
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 25) # special code-endings which are not recognised by the file ending
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 26) code_endings = {'cs': 'c#',
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 27)                 'h': 'c',
+6503fdf2 (Adam Tauber       2015-01-15 18:40:19 +0100 28)                 'hpp': 'cpp',
+6503fdf2 (Adam Tauber       2015-01-15 18:40:19 +0100 29)                 'cxx': 'cpp'}
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 30) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 31) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 32) # do search-request
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 33) @little_documented
+def request(query, params):
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 34)     params['url'] = search_url.format(query=urlencode({'q': query}), pageno=params['pageno'] - 1)
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 35) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 36)     return params
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 37) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 38) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 39) # get response from search-request
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 40) def response(resp):
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 41)     results = []
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 42) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 43)     search_results = loads(resp.text)
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 44) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 45)     # parse results
+3282e62f (Cqoicebordel      2015-01-27 22:39:25 +0100 46)     for result in search_results.get('results', []):
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 47)         href = result['url']
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 48)         title = "" + result['name'] + " - " + result['filename']
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 49)         repo = result['repo']
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 50) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 51)         lines = dict()
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 52)         for line, code in result['lines'].items():
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 53)             lines[int(line)] = code
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 54) 
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 55)         code_language = code_endings.get(
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 56)             result['filename'].split('.')[-1].lower(),
+af8dac93 (Thomas Pointhuber 2014-12-22 16:26:45 +0100 57)             result['filename'].split('.')[-1].lower())
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 58) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 59)         # append result
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 60)         results.append({'url': href,
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 61)                         'title': title,
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 62)                         'content': '',
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 63)                         'repository': repo,
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 64)                         'codelines': sorted(lines.items()),
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 65)                         'code_language': code_language,
+7adb1745 (Thomas Pointhuber 2014-12-20 23:33:03 +0100 66)                         'template': 'code.html'})
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 67) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 68)     # return results
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 69)     return results

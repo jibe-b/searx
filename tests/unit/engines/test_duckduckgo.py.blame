@@ -1,0 +1,100 @@
+4184cece searx/tests/engines/test_duckduckgo.py (Adam Tauber  2015-09-07 23:13:04 +0200   1) # -*- coding: utf-8 -*-
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100   2) from collections import defaultdict
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100   3) import mock
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100   4) from searx.engines import duckduckgo
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100   5) from searx.testing import SearxTestCase
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100   6) 
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100   7) 
+1ea5bc63 searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 18:39:50 +0100   8) class TestDuckduckgoEngine(SearxTestCase):
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100   9) 
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  10)     def test_request(self):
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  11)         query = 'test_query'
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  12)         dicto = defaultdict(dict)
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  13)         dicto['pageno'] = 1
+a11948c7 tests/unit/engines/test_duckduckgo.py  (marc         2016-10-29 21:04:01 -0500  14)         dicto['language'] = 'de-CH'
+350a8452 tests/unit/engines/test_duckduckgo.py  (Adam Tauber  2016-07-26 00:22:05 +0200  15)         dicto['time_range'] = ''
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  16)         params = duckduckgo.request(query, dicto)
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  17)         self.assertIn('url', params)
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  18)         self.assertIn(query, params['url'])
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  19)         self.assertIn('duckduckgo.com', params['url'])
+8fc4b815 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-06-03 00:14:23 -0500  20)         self.assertIn('ch-de', params['url'])
+3b950929 tests/unit/engines/test_duckduckgo.py  (marc         2017-05-27 20:55:23 -0500  21)         self.assertIn('s=0', params['url'])
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  22) 
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  23)         # when ddg uses non standard code
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  24)         dicto['language'] = 'en-GB'
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  25)         params = duckduckgo.request(query, dicto)
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  26)         self.assertIn('uk-en', params['url'])
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  27) 
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  28)         # no country given
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  29)         duckduckgo.supported_languages = ['de-CH', 'en-US']
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  30)         dicto['language'] = 'de'
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  31)         params = duckduckgo.request(query, dicto)
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  32)         self.assertIn('ch-de', params['url'])
+e0c270bd tests/unit/engines/test_duckduckgo.py  (marc         2016-12-13 23:51:15 -0600  33) 
+b0343568 tests/unit/engines/test_duckduckgo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  34)     def test_no_url_in_request_year_time_range(self):
+b0343568 tests/unit/engines/test_duckduckgo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  35)         dicto = defaultdict(dict)
+b0343568 tests/unit/engines/test_duckduckgo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  36)         query = 'test_query'
+b0343568 tests/unit/engines/test_duckduckgo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  37)         dicto['time_range'] = 'year'
+b0343568 tests/unit/engines/test_duckduckgo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  38)         params = duckduckgo.request(query, dicto)
+b0343568 tests/unit/engines/test_duckduckgo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  39)         self.assertEqual({}, params['url'])
+b0343568 tests/unit/engines/test_duckduckgo.py  (Noémi Ványi  2016-12-11 16:41:14 +0100  40) 
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  41)     def test_response(self):
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  42)         self.assertRaises(AttributeError, duckduckgo.response, None)
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  43)         self.assertRaises(AttributeError, duckduckgo.response, [])
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  44)         self.assertRaises(AttributeError, duckduckgo.response, '')
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  45)         self.assertRaises(AttributeError, duckduckgo.response, '[]')
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  46) 
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  47)         response = mock.Mock(text='<html></html>')
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  48)         self.assertEqual(duckduckgo.response(response), [])
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  49) 
+4184cece searx/tests/engines/test_duckduckgo.py (Adam Tauber  2015-09-07 23:13:04 +0200  50)         html = u"""
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  51)         <div class="result results_links results_links_deep web-result result--no-result">
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  52)             <div class="links_main links_deep result__body">
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  53)                 <h2 class="result__title">
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  54)                 </h2>
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  55)                 <div class="no-results">No results</div>
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  56)                 <div class="result__extras">
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  57)                 </div>
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  58)             </div>
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  59)         </div>
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  60)         """
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  61)         response = mock.Mock(text=html)
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  62)         results = duckduckgo.response(response)
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  63)         self.assertEqual(duckduckgo.response(response), [])
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  64) 
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  65)         html = u"""
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  66)         <div class="result results_links results_links_deep web-result ">
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  67)             <div class="links_main links_deep result__body">
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  68)                 <h2 class="result__title">
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  69)                     <a rel="nofollow" class="result__a" href="http://this.should.be.the.link/ű">
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  70)                         This <b>is</b> <b>the</b> title
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  71)                     </a>
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  72)                 </h2>
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  73)                 <a class="result__snippet" href="http://this.should.be.the.link/ű">
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  74)                     <b>This</b> should be the content.
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  75)                 </a>
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  76)                 <div class="result__extras">
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  77)                 </div>
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  78)             </div>
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  79)         </div>
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  80)         """
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  81)         response = mock.Mock(text=html)
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  82)         results = duckduckgo.response(response)
+efe6dead searx/tests/engines/test_duckduckgo.py (Cqoicebordel 2015-02-02 17:55:39 +0100  83)         self.assertEqual(type(results), list)
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  84)         self.assertEqual(len(results), 1)
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  85)         self.assertEqual(results[0]['title'], 'This is the title')
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  86)         self.assertEqual(results[0]['url'], u'http://this.should.be.the.link/ű')
+751c9a34 tests/unit/engines/test_duckduckgo.py  (a01200356    2016-03-21 20:19:13 -0600  87)         self.assertEqual(results[0]['content'], 'This should be the content.')
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  88) 
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  89)     def test_fetch_supported_languages(self):
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  90)         js = """some code...regions:{
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  91)         "wt-wt":"All Results","ar-es":"Argentina","au-en":"Australia","at-de":"Austria","be-fr":"Belgium (fr)"
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  92)         }some more code..."""
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  93)         response = mock.Mock(text=js)
+52e615de tests/unit/engines/test_duckduckgo.py  (Adam Tauber  2016-11-30 18:43:03 +0100  94)         languages = list(duckduckgo._fetch_supported_languages(response))
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  95)         self.assertEqual(len(languages), 5)
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  96)         self.assertIn('wt-WT', languages)
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  97)         self.assertIn('es-AR', languages)
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  98)         self.assertIn('en-AU', languages)
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600  99)         self.assertIn('de-AT', languages)
+af35eee1 tests/unit/engines/test_duckduckgo.py  (marc         2016-12-15 00:34:43 -0600 100)         self.assertIn('fr-BE', languages)

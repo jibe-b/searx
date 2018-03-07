@@ -1,0 +1,40 @@
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100  1) from lxml import html
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100  2) from searx.engines.xpath import extract_text
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100  3) from searx.utils import get_torrent_size
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  4) from searx.url_utils import quote, urljoin
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100  5) 
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100  6) url = 'https://1337x.to/'
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100  7) search_url = url + 'search/{search_term}/{pageno}/'
+4776abd1 (jcherqui    2017-01-15 15:08:43 +0100  8) categories = ['videos']
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100  9) paging = True
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 10) 
+a320328d (jcherqui    2017-01-15 14:50:29 +0100 11) 
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 12) @little_documented
+def request(query, params):
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 13)     params['url'] = search_url.format(search_term=quote(query), pageno=params['pageno'])
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 14) 
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 15)     return params
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 16) 
+a320328d (jcherqui    2017-01-15 14:50:29 +0100 17) 
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 18) def response(resp):
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 19)     results = []
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 20) 
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 21)     dom = html.fromstring(resp.text)
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 22) 
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 23)     for result in dom.xpath('//table[contains(@class, "table-list")]/tbody//tr'):
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 24)         href = urljoin(url, result.xpath('./td[contains(@class, "name")]/a[2]/@href')[0])
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 25)         title = extract_text(result.xpath('./td[contains(@class, "name")]/a[2]'))
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 26)         seed = extract_text(result.xpath('.//td[contains(@class, "seeds")]'))
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 27)         leech = extract_text(result.xpath('.//td[contains(@class, "leeches")]'))
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 28)         filesize_info = extract_text(result.xpath('.//td[contains(@class, "size")]/text()'))
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 29)         filesize, filesize_multiplier = filesize_info.split()
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 30)         filesize = get_torrent_size(filesize, filesize_multiplier)
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 31) 
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 32)         results.append({'url': href,
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 33)                         'title': title,
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 34)                         'seed': seed,
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 35)                         'leech': leech,
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 36)                         'filesize': filesize,
+39a97825 (jcherqui    2017-01-15 15:29:01 +0100 37)                         'template': 'torrent.html'})
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 38) 
+0549fb40 (jcherqui    2017-01-15 14:24:19 +0100 39)     return results

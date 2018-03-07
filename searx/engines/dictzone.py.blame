@@ -1,0 +1,68 @@
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  1) """
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  2)  Dictzone
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  3) 
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  4)  @website     https://dictzone.com/
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  5)  @provide-api no
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  6)  @using-api   no
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  7)  @results     HTML (using search portal)
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  8)  @stable      no (HTML can change)
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200  9)  @parse       url, title, content
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200 10) """
+b7d578ae searx/engines/dictzone.py   (potato      2016-09-06 16:36:04 +0200 11) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 12) import re
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 13) from lxml import html
+983415bc searx/engines/dictzone.py   (potato      2016-09-06 16:43:48 +0200 14) from searx.utils import is_valid_lang
+52e615de searx/engines/dictzone.py   (Adam Tauber 2016-11-30 18:43:03 +0100 15) from searx.url_utils import urljoin
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 16) 
+3f4cc214 searx/engines/dictionary.py (potato      2016-09-06 12:34:20 +0200 17) categories = ['general']
+3144ec1d searx/engines/dictzone.py   (Adam Tauber 2016-09-06 17:17:42 +0200 18) url = u'http://dictzone.com/{from_lang}-{to_lang}-dictionary/{query}'
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 19) weight = 100
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 20) 
+52e615de searx/engines/dictzone.py   (Adam Tauber 2016-11-30 18:43:03 +0100 21) parser_re = re.compile(b'.*?([a-z]+)-([a-z]+) ([^ ]+)$', re.I)
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 22) results_xpath = './/table[@id="r"]/tr'
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 23) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 24) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 25) def request(query, params):
+52e615de searx/engines/dictzone.py   (Adam Tauber 2016-11-30 18:43:03 +0100 26)     m = parser_re.match(query)
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 27)     if not m:
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 28)         return params
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 29) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 30)     from_lang, to_lang, query = m.groups()
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 31) 
+bc806bfa searx/engines/dictzone.py   (potato      2016-09-06 14:12:46 +0200 32)     from_lang = is_valid_lang(from_lang)
+bc806bfa searx/engines/dictzone.py   (potato      2016-09-06 14:12:46 +0200 33)     to_lang = is_valid_lang(to_lang)
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 34) 
+bc806bfa searx/engines/dictzone.py   (potato      2016-09-06 14:12:46 +0200 35)     if not from_lang or not to_lang:
+84ff6e28 searx/engines/dictionary.py (potato      2016-09-06 12:46:18 +0200 36)         return params
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 37) 
+983415bc searx/engines/dictzone.py   (potato      2016-09-06 16:43:48 +0200 38)     params['url'] = url.format(from_lang=from_lang[2],
+983415bc searx/engines/dictzone.py   (potato      2016-09-06 16:43:48 +0200 39)                                to_lang=to_lang[2],
+9b82cb19 searx/engines/dictzone.py   (potato      2017-06-15 10:51:09 +0200 40)                                query=query.decode('utf-8'))
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 41) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 42)     return params
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 43) 
+7bf1013c searx/engines/dictzone.py   (potato      2016-09-06 14:24:08 +0200 44) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 45) def response(resp):
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 46)     results = []
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 47) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 48)     dom = html.fromstring(resp.text)
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 49) 
+b808a2e2 searx/engines/dictionary.py (potato      2016-09-06 12:37:26 +0200 50)     for k, result in enumerate(dom.xpath(results_xpath)[1:]):
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 51)         try:
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 52)             from_result, to_results_raw = result.xpath('./td')
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 53)         except:
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 54)             continue
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 55) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 56)         to_results = []
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 57)         for to_result in to_results_raw.xpath('./p/a'):
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 58)             t = to_result.text_content()
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 59)             if t.strip():
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 60)                 to_results.append(to_result.text_content())
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 61) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 62)         results.append({
+b808a2e2 searx/engines/dictionary.py (potato      2016-09-06 12:37:26 +0200 63)             'url': urljoin(resp.url, '?%d' % k),
+16bdc0ba searx/engines/dictzone.py   (Adam Tauber 2016-12-09 11:44:24 +0100 64)             'title': from_result.text_content(),
+16bdc0ba searx/engines/dictzone.py   (Adam Tauber 2016-12-09 11:44:24 +0100 65)             'content': '; '.join(to_results)
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 66)         })
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 67) 
+f4525880 searx/engines/dictionary.py (potato      2016-09-06 11:47:27 +0200 68)     return results

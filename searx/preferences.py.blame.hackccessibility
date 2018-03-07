@@ -1,0 +1,357 @@
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200   1) from base64 import urlsafe_b64encode, urlsafe_b64decode
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200   2) from zlib import compress, decompress
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200   3) from sys import version
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200   4) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200   5) from searx import settings, autocomplete
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200   6) from searx.languages import language_codes as languages
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200   7) from searx.url_utils import parse_qs, urlencode
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200   8) 
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200   9) if version[0] == '3':
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200  10)     unicode = str
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  11) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  12) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  13) COOKIE_MAX_AGE = 60 * 60 * 24 * 365 * 5  # 5 years
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  14) LANGUAGE_CODES = [l[0] for l in languages]
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  15) DISABLED = 0
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  16) ENABLED = 1
+1b10abfc (Noémi Ványi 2017-11-01 13:58:48 +0100  17) DOI_RESOLVERS = list(settings['doi_resolvers'])
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  18) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  19) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  20) class MissingArgumentException(Exception):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  21)     pass
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  22) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  23) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  24) class ValidationException(Exception):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  25)     pass
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  26) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  27) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  28) class Setting(object):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  29)     """Base class of user settings"""
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  30) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  31)     @little_documented
+def __init__(self, default_value, **kwargs):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  32)         super(Setting, self).__init__()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  33)         self.value = default_value
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  34)         for key, value in kwargs.items():
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  35)             setattr(self, key, value)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  36) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  37)         self._post_init()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  38) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  39)     def _post_init(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  40)         pass
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  41) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  42)     def parse(self, data):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  43)         self.value = data
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  44) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  45)     def get_value(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  46)         return self.value
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  47) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  48)     def save(self, name, resp):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  49)         resp.set_cookie(name, self.value, max_age=COOKIE_MAX_AGE)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  50) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  51) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  52) class StringSetting(Setting):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  53)     """Setting of plain string values"""
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  54)     pass
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  55) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  56) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  57) class EnumStringSetting(Setting):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  58)     """Setting of a value which can only come from the given choices"""
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  59) 
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  60)     @little_documented
+def _validate_selection(self, selection):
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  61)         if selection not in self.choices:
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  62)             raise ValidationException('Invalid value: "{0}"'.format(selection))
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  63) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  64)     @little_documented
+def _post_init(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  65)         if not hasattr(self, 'choices'):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  66)             raise MissingArgumentException('Missing argument: choices')
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  67)         self._validate_selection(self.value)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  68) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  69)     def parse(self, data):
+93233c78 (marc        2016-12-13 20:55:56 -0600  70)         self._validate_selection(data)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  71)         self.value = data
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  72) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  73) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  74) class MultipleChoiceSetting(EnumStringSetting):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  75)     """Setting of values which can only come from the given choices"""
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  76) 
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  77)     @little_documented
+def _validate_selections(self, selections):
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  78)         for item in selections:
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  79)             if item not in self.choices:
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  80)                 raise ValidationException('Invalid value: "{0}"'.format(selections))
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  81) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  82)     @little_documented
+def _post_init(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  83)         if not hasattr(self, 'choices'):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  84)             raise MissingArgumentException('Missing argument: choices')
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  85)         self._validate_selections(self.value)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  86) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  87)     def parse(self, data):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  88)         if data == '':
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  89)             self.value = []
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  90)             return
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  91) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  92)         elements = data.split(',')
+12c369e8 (Noémi Ványi 2016-11-14 22:24:40 +0100  93)         self._validate_selections(elements)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  94)         self.value = elements
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  95) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  96)     def parse_form(self, data):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  97)         self.value = []
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  98)         for choice in data:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200  99)             if choice in self.choices and choice not in self.value:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 100)                 self.value.append(choice)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 101) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 102)     def save(self, name, resp):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 103)         resp.set_cookie(name, ','.join(self.value), max_age=COOKIE_MAX_AGE)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 104) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 105) 
+93233c78 (marc        2016-12-13 20:55:56 -0600 106) class SearchLanguageSetting(EnumStringSetting):
+93233c78 (marc        2016-12-13 20:55:56 -0600 107)     """Available choices may change, so user's value may not be in choices anymore"""
+93233c78 (marc        2016-12-13 20:55:56 -0600 108) 
+93233c78 (marc        2016-12-13 20:55:56 -0600 109)     @little_documented
+def parse(self, data):
+93233c78 (marc        2016-12-13 20:55:56 -0600 110)         if data not in self.choices and data != self.value:
+93233c78 (marc        2016-12-13 20:55:56 -0600 111)             # hack to give some backwards compatibility with old language cookies
+93233c78 (marc        2016-12-13 20:55:56 -0600 112)             data = str(data).replace('_', '-')
+93233c78 (marc        2016-12-13 20:55:56 -0600 113)             lang = data.split('-')[0]
+93233c78 (marc        2016-12-13 20:55:56 -0600 114)             if data in self.choices:
+93233c78 (marc        2016-12-13 20:55:56 -0600 115)                 pass
+93233c78 (marc        2016-12-13 20:55:56 -0600 116)             elif lang in self.choices:
+93233c78 (marc        2016-12-13 20:55:56 -0600 117)                 data = lang
+fd65c129 (marc        2017-03-01 17:11:51 -0600 118)             elif data == 'nb-NO':
+fd65c129 (marc        2017-03-01 17:11:51 -0600 119)                 data = 'no-NO'
+93233c78 (marc        2016-12-13 20:55:56 -0600 120)             elif data == 'ar-XA':
+93233c78 (marc        2016-12-13 20:55:56 -0600 121)                 data = 'ar-SA'
+93233c78 (marc        2016-12-13 20:55:56 -0600 122)             else:
+e0c270bd (marc        2016-12-13 23:51:15 -0600 123)                 data = self.value
+93233c78 (marc        2016-12-13 20:55:56 -0600 124)         self.value = data
+93233c78 (marc        2016-12-13 20:55:56 -0600 125) 
+93233c78 (marc        2016-12-13 20:55:56 -0600 126) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 127) class MapSetting(Setting):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 128)     """Setting of a value that has to be translated in order to be storable"""
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 129) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 130)     @little_documented
+def _post_init(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 131)         if not hasattr(self, 'map'):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 132)             raise MissingArgumentException('missing argument: map')
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 133)         if self.value not in self.map.values():
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 134)             raise ValidationException('Invalid default value')
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 135) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 136)     def parse(self, data):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 137)         if data not in self.map:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 138)             raise ValidationException('Invalid choice: {0}'.format(data))
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 139)         self.value = self.map[data]
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 140)         self.key = data
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 141) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 142)     def save(self, name, resp):
+fa26afaf (Adam Tauber 2017-01-21 20:08:08 +0100 143)         if hasattr(self, 'key'):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 144)             resp.set_cookie(name, self.key, max_age=COOKIE_MAX_AGE)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 145) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 146) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 147) class SwitchableSetting(Setting):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 148)     """ Base class for settings that can be turned on && off"""
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 149) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 150)     @little_documented
+def _post_init(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 151)         self.disabled = set()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 152)         self.enabled = set()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 153)         if not hasattr(self, 'choices'):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 154)             raise MissingArgumentException('missing argument: choices')
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 155) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 156)     def transform_form_items(self, items):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 157)         return items
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 158) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 159)     def transform_values(self, values):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 160)         return values
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 161) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 162)     def parse_cookie(self, data):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 163)         if data[DISABLED] != '':
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 164)             self.disabled = set(data[DISABLED].split(','))
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 165)         if data[ENABLED] != '':
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 166)             self.enabled = set(data[ENABLED].split(','))
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 167) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 168)     def parse_form(self, items):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 169)         items = self.transform_form_items(items)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 170) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 171)         self.disabled = set()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 172)         self.enabled = set()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 173)         for choice in self.choices:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 174)             if choice['default_on']:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 175)                 if choice['id'] in items:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 176)                     self.disabled.add(choice['id'])
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 177)             else:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 178)                 if choice['id'] not in items:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 179)                     self.enabled.add(choice['id'])
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 180) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 181)     def save(self, resp):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 182)         resp.set_cookie('disabled_{0}'.format(self.value), ','.join(self.disabled), max_age=COOKIE_MAX_AGE)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 183)         resp.set_cookie('enabled_{0}'.format(self.value), ','.join(self.enabled), max_age=COOKIE_MAX_AGE)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 184) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 185)     def get_disabled(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 186)         disabled = self.disabled
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 187)         for choice in self.choices:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 188)             if not choice['default_on'] and choice['id'] not in self.enabled:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 189)                 disabled.add(choice['id'])
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 190)         return self.transform_values(disabled)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 191) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 192)     def get_enabled(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 193)         enabled = self.enabled
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 194)         for choice in self.choices:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 195)             if choice['default_on'] and choice['id'] not in self.disabled:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 196)                 enabled.add(choice['id'])
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 197)         return self.transform_values(enabled)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 198) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 199) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 200) class EnginesSetting(SwitchableSetting):
+cd9b494c (stepshal    2016-07-10 21:44:27 +0700 201) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 202)     def _post_init(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 203)         super(EnginesSetting, self)._post_init()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 204)         transformed_choices = []
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 205)         for engine_name, engine in self.choices.items():
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 206)             for category in engine.categories:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 207)                 transformed_choice = dict()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 208)                 transformed_choice['default_on'] = not engine.disabled
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 209)                 transformed_choice['id'] = '{}__{}'.format(engine_name, category)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 210)                 transformed_choices.append(transformed_choice)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 211)         self.choices = transformed_choices
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 212) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 213)     def transform_form_items(self, items):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 214)         return [item[len('engine_'):].replace('_', ' ').replace('  ', '__') for item in items]
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 215) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 216)     def transform_values(self, values):
+7364455d (YuLun Shih  2016-05-04 22:14:04 +0800 217)         if len(values) == 1 and next(iter(values)) == '':
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 218)             return list()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 219)         transformed_values = []
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 220)         for value in values:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 221)             engine, category = value.split('__')
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 222)             transformed_values.append((engine, category))
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 223)         return transformed_values
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 224) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 225) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 226) class PluginsSetting(SwitchableSetting):
+cd9b494c (stepshal    2016-07-10 21:44:27 +0700 227) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 228)     def _post_init(self):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 229)         super(PluginsSetting, self)._post_init()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 230)         transformed_choices = []
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 231)         for plugin in self.choices:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 232)             transformed_choice = dict()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 233)             transformed_choice['default_on'] = plugin.default_on
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 234)             transformed_choice['id'] = plugin.id
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 235)             transformed_choices.append(transformed_choice)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 236)         self.choices = transformed_choices
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 237) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 238)     def transform_form_items(self, items):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 239)         return [item[len('plugin_'):] for item in items]
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 240) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 241) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 242) class Preferences(object):
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 243)     """Validates and saves preferences to cookies"""
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 244) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 245)     @little_documented
+def __init__(self, themes, categories, engines, plugins):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 246)         super(Preferences, self).__init__()
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 247) 
+128eb766 (Adam Tauber 2017-11-21 13:39:07 +0100 248)         self.key_value_settings = {'categories': MultipleChoiceSetting(['general'], choices=categories + ['none']),
+93233c78 (marc        2016-12-13 20:55:56 -0600 249)                                    'language': SearchLanguageSetting(settings['search']['language'],
+93233c78 (marc        2016-12-13 20:55:56 -0600 250)                                                                      choices=LANGUAGE_CODES),
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 251)                                    'locale': EnumStringSetting(settings['ui']['default_locale'],
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 252)                                                                choices=list(settings['locales'].keys()) + ['']),
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 253)                                    'autocomplete': EnumStringSetting(settings['search']['autocomplete'],
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 254)                                                                      choices=list(autocomplete.backends.keys()) + ['']),
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 255)                                    'image_proxy': MapSetting(settings['server']['image_proxy'],
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 256)                                                              map={'': settings['server']['image_proxy'],
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 257)                                                                   '0': False,
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 258)                                                                   '1': True,
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 259)                                                                   'True': True,
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 260)                                                                   'False': False}),
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 261)                                    'method': EnumStringSetting('POST', choices=('GET', 'POST')),
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 262)                                    'safesearch': MapSetting(settings['search']['safe_search'], map={'0': 0,
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 263)                                                                                                     '1': 1,
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 264)                                                                                                     '2': 2}),
+b4b02316 (Adam Tauber 2016-09-04 15:56:46 +0200 265)                                    'theme': EnumStringSetting(settings['ui']['default_theme'], choices=themes),
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 266)                                    'results_on_new_tab': MapSetting(False, map={'0': False,
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 267)                                                                                 '1': True,
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 268)                                                                                 'False': False,
+575159b1 (jibe-b      2017-09-22 23:43:05 +0200 269)                                                                                 'True': True}),
+575159b1 (jibe-b      2017-09-22 23:43:05 +0200 270)                                    'doi_resolver': MultipleChoiceSetting(['oadoi.org'], choices=DOI_RESOLVERS),
+575159b1 (jibe-b      2017-09-22 23:43:05 +0200 271)                                    }
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 272) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 273)         self.engines = EnginesSetting('engines', choices=engines)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 274)         self.plugins = PluginsSetting('plugins', choices=plugins)
+237d251d (Adam Tauber 2016-06-26 01:44:42 +0200 275)         self.unknown_params = {}
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 276) 
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 277)     def get_as_url_params(self):
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 278)         settings_kv = {}
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 279)         for k, v in self.key_value_settings.items():
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 280)             if isinstance(v, MultipleChoiceSetting):
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 281)                 settings_kv[k] = ','.join(v.get_value())
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 282)             else:
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 283)                 settings_kv[k] = v.get_value()
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 284) 
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 285)         settings_kv['disabled_engines'] = ','.join(self.engines.disabled)
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 286)         settings_kv['enabled_engines'] = ','.join(self.engines.enabled)
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 287) 
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 288)         settings_kv['disabled_plugins'] = ','.join(self.plugins.disabled)
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 289)         settings_kv['enabled_plugins'] = ','.join(self.plugins.enabled)
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 290) 
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200 291)         return urlsafe_b64encode(compress(urlencode(settings_kv).encode('utf-8'))).decode('utf-8')
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200 292) 
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200 293)     def parse_encoded_data(self, input_data):
+5f758b2d (Adam Tauber 2017-10-25 23:56:37 +0200 294)         decoded_data = decompress(urlsafe_b64decode(input_data.encode('utf-8')))
+8901b7bd (Adam Tauber 2017-10-26 00:10:57 +0200 295)         self.parse_dict({x: y[0] for x, y in parse_qs(unicode(decoded_data)).items()})
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 296) 
+38d6ba40 (Adam Tauber 2017-07-10 12:47:25 +0200 297)     def parse_dict(self, input_data):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 298)         for user_setting_name, user_setting in input_data.items():
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 299)             if user_setting_name in self.key_value_settings:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 300)                 self.key_value_settings[user_setting_name].parse(user_setting)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 301)             elif user_setting_name == 'disabled_engines':
+bb6dae1e (Adam Tauber 2016-04-09 17:43:00 +0200 302)                 self.engines.parse_cookie((input_data.get('disabled_engines', ''),
+bb6dae1e (Adam Tauber 2016-04-09 17:43:00 +0200 303)                                            input_data.get('enabled_engines', '')))
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 304)             elif user_setting_name == 'disabled_plugins':
+bb6dae1e (Adam Tauber 2016-04-09 17:43:00 +0200 305)                 self.plugins.parse_cookie((input_data.get('disabled_plugins', ''),
+bb6dae1e (Adam Tauber 2016-04-09 17:43:00 +0200 306)                                            input_data.get('enabled_plugins', '')))
+2dc02f50 (Adam Tauber 2017-12-11 00:20:28 +0100 307)             elif not any(user_setting_name.startswith(x) for x in [
+2dc02f50 (Adam Tauber 2017-12-11 00:20:28 +0100 308)                     'enabled_',
+2dc02f50 (Adam Tauber 2017-12-11 00:20:28 +0100 309)                     'disabled_',
+2dc02f50 (Adam Tauber 2017-12-11 00:20:28 +0100 310)                     'engine_',
+2dc02f50 (Adam Tauber 2017-12-11 00:20:28 +0100 311)                     'category_',
+2dc02f50 (Adam Tauber 2017-12-11 00:20:28 +0100 312)                     'plugin_']):
+e060aedc (Adam Tauber 2017-12-05 22:30:20 +0100 313)                 self.unknown_params[user_setting_name] = user_setting
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 314) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 315)     def parse_form(self, input_data):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 316)         disabled_engines = []
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 317)         enabled_categories = []
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 318)         disabled_plugins = []
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 319)         for user_setting_name, user_setting in input_data.items():
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 320)             if user_setting_name in self.key_value_settings:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 321)                 self.key_value_settings[user_setting_name].parse(user_setting)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 322)             elif user_setting_name.startswith('engine_'):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 323)                 disabled_engines.append(user_setting_name)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 324)             elif user_setting_name.startswith('category_'):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 325)                 enabled_categories.append(user_setting_name[len('category_'):])
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 326)             elif user_setting_name.startswith('plugin_'):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 327)                 disabled_plugins.append(user_setting_name)
+237d251d (Adam Tauber 2016-06-26 01:44:42 +0200 328)             else:
+237d251d (Adam Tauber 2016-06-26 01:44:42 +0200 329)                 self.unknown_params[user_setting_name] = user_setting
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 330)         self.key_value_settings['categories'].parse_form(enabled_categories)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 331)         self.engines.parse_form(disabled_engines)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 332)         self.plugins.parse_form(disabled_plugins)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 333) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 334)     # cannot be used in case of engines or plugins
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 335)     def get_value(self, user_setting_name):
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 336)         if user_setting_name in self.key_value_settings:
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 337)             return self.key_value_settings[user_setting_name].get_value()
+e060aedc (Adam Tauber 2017-12-05 22:30:20 +0100 338)         if user_setting_name in self.unknown_params:
+e060aedc (Adam Tauber 2017-12-05 22:30:20 +0100 339)             return self.unknown_params[user_setting_name]
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 340) 
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 341)     def save(self, resp):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 342)         for user_setting_name, user_setting in self.key_value_settings.items():
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 343)             user_setting.save(user_setting_name, resp)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 344)         self.engines.save(resp)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 345)         self.plugins.save(resp)
+237d251d (Adam Tauber 2016-06-26 01:44:42 +0200 346)         for k, v in self.unknown_params.items():
+237d251d (Adam Tauber 2016-06-26 01:44:42 +0200 347)             resp.set_cookie(k, v, max_age=COOKIE_MAX_AGE)
+fe691a09 (Noemi Vanyi 2016-04-08 16:38:05 +0200 348)         return resp

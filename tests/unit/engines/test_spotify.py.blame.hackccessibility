@@ -1,0 +1,125 @@
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   1) from collections import defaultdict
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   2) import mock
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   3) from searx.engines import spotify
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   4) from searx.testing import SearxTestCase
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   5) 
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   6) 
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   7) class TestSpotifyEngine(SearxTestCase):
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   8) 
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100   9)     @little_documented
+def test_request(self):
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  10)         query = 'test_query'
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  11)         dicto = defaultdict(dict)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  12)         dicto['pageno'] = 0
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  13)         params = spotify.request(query, dicto)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  14)         self.assertIn('url', params)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  15)         self.assertIn(query, params['url'])
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  16)         self.assertIn('spotify.com', params['url'])
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  17) 
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  18)     def test_response(self):
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  19)         self.assertRaises(AttributeError, spotify.response, None)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  20)         self.assertRaises(AttributeError, spotify.response, [])
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  21)         self.assertRaises(AttributeError, spotify.response, '')
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  22)         self.assertRaises(AttributeError, spotify.response, '[]')
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  23) 
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  24)         response = mock.Mock(text='{}')
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  25)         self.assertEqual(spotify.response(response), [])
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  26) 
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  27)         response = mock.Mock(text='{"data": []}')
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  28)         self.assertEqual(spotify.response(response), [])
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  29) 
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  30)         json = """
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  31)         {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  32)           "tracks": {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  33)             "href": "https://api.spotify.com/v1/search?query=nosfell&offset=0&limit=20&type=track",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  34)             "items": [
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  35)               {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  36)                 "album": {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  37)                   "album_type": "album",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  38)                   "external_urls": {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  39)                     "spotify": "https://open.spotify.com/album/5c9ap1PBkSGLxT3J73toxA"
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  40)                   },
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  41)                   "href": "https://api.spotify.com/v1/albums/5c9ap1PBkSGLxT3J73toxA",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  42)                   "id": "5c9ap1PBkSGLxT3J73toxA",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  43)                   "name": "Album Title",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  44)                   "type": "album",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  45)                   "uri": "spotify:album:5c9ap1PBkSGLxT3J73toxA"
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  46)                 },
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  47)                 "artists": [
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  48)                   {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  49)                     "external_urls": {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  50)                       "spotify": "https://open.spotify.com/artist/0bMc6b75FfZEpQHG1jifKu"
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  51)                     },
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  52)                     "href": "https://api.spotify.com/v1/artists/0bMc6b75FfZEpQHG1jifKu",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  53)                     "id": "0bMc6b75FfZEpQHG1jifKu",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  54)                     "name": "Artist Name",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  55)                     "type": "artist",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  56)                     "uri": "spotify:artist:0bMc6b75FfZEpQHG1jifKu"
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  57)                   }
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  58)                 ],
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  59)                 "disc_number": 1,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  60)                 "duration_ms": 202386,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  61)                 "explicit": false,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  62)                 "external_ids": {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  63)                   "isrc": "FRV640600067"
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  64)                 },
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  65)                 "external_urls": {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  66)                   "spotify": "https://open.spotify.com/track/2GzvFiedqW8hgqUpWcASZa"
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  67)                 },
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  68)                 "href": "https://api.spotify.com/v1/tracks/2GzvFiedqW8hgqUpWcASZa",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  69)                 "id": "1000",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  70)                 "is_playable": true,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  71)                 "name": "Title of track",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  72)                 "popularity": 6,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  73)                 "preview_url": "https://p.scdn.co/mp3-preview/7b8ecda580965a066b768c2647f877e43f7b1a0a",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  74)                 "track_number": 3,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  75)                 "type": "track",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  76)                 "uri": "spotify:track:2GzvFiedqW8hgqUpWcASZa"
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  77)               }
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  78)             ],
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  79)             "limit": 20,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  80)             "next": "https://api.spotify.com/v1/search?query=nosfell&offset=20&limit=20&type=track",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  81)             "offset": 0,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  82)             "previous": null,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  83)             "total": 107
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  84)           }
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  85)         }
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  86)         """
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  87)         response = mock.Mock(text=json)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  88)         results = spotify.response(response)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  89)         self.assertEqual(type(results), list)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  90)         self.assertEqual(len(results), 1)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  91)         self.assertEqual(results[0]['title'], 'Title of track')
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  92)         self.assertEqual(results[0]['url'], 'https://open.spotify.com/track/2GzvFiedqW8hgqUpWcASZa')
+fdf63940 tests/unit/engines/test_spotify.py  (Adam Tauber  2016-12-09 19:10:57 +0100  93)         self.assertEqual(results[0]['content'], 'Artist Name - Album Title - Title of track')
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  94)         self.assertIn('1000', results[0]['embedded'])
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  95) 
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  96)         json = """
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  97)         {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  98)           "tracks": {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100  99)             "href": "https://api.spotify.com/v1/search?query=nosfell&offset=0&limit=20&type=track",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 100)             "items": [
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 101)               {
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 102)                 "href": "https://api.spotify.com/v1/tracks/2GzvFiedqW8hgqUpWcASZa",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 103)                 "id": "1000",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 104)                 "is_playable": true,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 105)                 "name": "Title of track",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 106)                 "popularity": 6,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 107)                 "preview_url": "https://p.scdn.co/mp3-preview/7b8ecda580965a066b768c2647f877e43f7b1a0a",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 108)                 "track_number": 3,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 109)                 "type": "album",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 110)                 "uri": "spotify:track:2GzvFiedqW8hgqUpWcASZa"
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 111)               }
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 112)             ],
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 113)             "limit": 20,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 114)             "next": "https://api.spotify.com/v1/search?query=nosfell&offset=20&limit=20&type=track",
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 115)             "offset": 0,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 116)             "previous": null,
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 117)             "total": 107
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 118)           }
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 119)         }
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 120)         """
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 121)         response = mock.Mock(text=json)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 122)         results = spotify.response(response)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 123)         self.assertEqual(type(results), list)
+a2a8fbf6 searx/tests/engines/test_spotify.py (Cqoicebordel 2015-02-20 18:47:56 +0100 124)         self.assertEqual(len(results), 0)

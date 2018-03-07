@@ -1,0 +1,87 @@
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  1) import mock
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  2) from collections import defaultdict
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  3) from searx.engines import torrentz
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  4) from searx.testing import SearxTestCase
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  5) from datetime import datetime
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  6) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  7) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  8) class TestTorrentzEngine(SearxTestCase):
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  9) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 10)     def test_request(self):
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 11)         query = 'test_query'
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 12)         dic = defaultdict(dict)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 13)         dic['pageno'] = 1
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 14)         params = torrentz.request(query, dic)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 15)         self.assertTrue('url' in params)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 16)         self.assertTrue(query in params['url'])
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 17)         self.assertTrue('torrentz2.eu' in params['url'])
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 18) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 19)     def test_response(self):
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 20)         resp = mock.Mock(text='<html></html>')
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 21)         self.assertEqual(torrentz.response(resp), [])
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 22) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 23)         html = """
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 24)         <div class="results">
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 25)           <dl>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 26)             <dt>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 27)               <a href="/4362e08b1d80e1820fb2550b752f9f3126fe76d6">
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 28)                 Completely valid info
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 29)               </a>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 30)               books ebooks
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 31)             </dt>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 32)             <dd>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 33)               <span>1</span>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 34)               <span title="1503595924">5 hours</span>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 35)               <span>30 MB</span>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 36)               <span>14</span>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 37)               <span>1</span>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 38)             </dd>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 39)           </dl>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 40) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 41)           <dl>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 42)             <dt>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 43)               <a href="/poaskdpokaspod">
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 44)                 Invalid hash and date and filesize
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 45)               </a>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 46)               books ebooks
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 47)             </dt>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 48)             <dd>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 49)               <span>1</span>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 50)               <span title="1503595924 aaa">5 hours</span>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 51)               <span>30MB</span>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 52)               <span>5,555</span>
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 53)               <span>1,234,567</span>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 54)             </dd>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 55)           </dl>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 56)         </div>
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 57)         """
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 58) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 59)         resp = mock.Mock(text=html)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 60)         results = torrentz.response(resp)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 61) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 62)         self.assertEqual(type(results), list)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 63)         self.assertEqual(len(results), 2)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 64) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 65)         # testing against the first result
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 66)         r = results[0]
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 67)         self.assertEqual(r['url'], 'https://torrentz2.eu/4362e08b1d80e1820fb2550b752f9f3126fe76d6')
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 68)         self.assertEqual(r['title'], 'Completely valid info books ebooks')
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 69)         # 22 Nov 2015 03:01:42
+bf3f9a91 (misnyo        2017-08-29 17:54:41 +0200 70)         self.assertEqual(r['publishedDate'], datetime.fromtimestamp(1503595924))
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 71)         self.assertEqual(r['seed'], 14)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 72)         self.assertEqual(r['leech'], 1)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 73)         self.assertEqual(r['filesize'], 30 * 1024 * 1024)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 74)         self.assertEqual(r['magnetlink'], 'magnet:?xt=urn:btih:4362e08b1d80e1820fb2550b752f9f3126fe76d6')
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 75) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 76)         # testing against the second result
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 77)         r = results[1]
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 78)         self.assertEqual(r['url'], 'https://torrentz2.eu/poaskdpokaspod')
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 79)         self.assertEqual(r['title'], 'Invalid hash and date and filesize books ebooks')
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 80)         self.assertEqual(r['seed'], 5555)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 81)         self.assertEqual(r['leech'], 1234567)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 82) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 83)         # in the second result we have invalid hash, creation date & torrent size,
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 84)         # so these tests should fail
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 85)         self.assertFalse('magnetlink' in r)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 86)         self.assertFalse('filesize' in r)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 87)         self.assertFalse('publishedDate' in r)

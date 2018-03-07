@@ -1,0 +1,132 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   2)  Photon (Map)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   4)  @website     https://photon.komoot.de
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   5)  @provide-api yes (https://photon.komoot.de/)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  10)  @parse       url, title
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  11) """
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  12) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  13) from json import loads
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  14) from searx.utils import searx_useragent
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  15) from searx.url_utils import urlencode
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  16) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  17) # engine dependent config
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  18) categories = ['map']
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  19) paging = False
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  20) language_support = True
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  21) number_of_results = 10
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  22) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  23) # search-url
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  24) base_url = 'https://photon.komoot.de/'
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  25) search_string = 'api/?{query}&limit={limit}'
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  26) result_base_url = 'https://openstreetmap.org/{osm_type}/{osm_id}'
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  27) 
+533e6287 (Thomas Pointhuber 2014-12-20 10:25:53 +0100  28) # list of supported languages
+149802c5 (marc              2016-08-05 23:34:56 -0500  29) supported_languages = ['de', 'en', 'fr', 'it']
+533e6287 (Thomas Pointhuber 2014-12-20 10:25:53 +0100  30) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  31) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  32) # do search-request
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  33) @little_documented
+def request(query, params):
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  34)     params['url'] = base_url +\
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  35)         search_string.format(query=urlencode({'q': query}),
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  36)                              limit=number_of_results)
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  37) 
+4d177039 (marc              2017-07-20 15:47:20 -0500  38)     language = params['language'].split('-')[0]
+4d177039 (marc              2017-07-20 15:47:20 -0500  39)     if language in supported_languages:
+4d177039 (marc              2017-07-20 15:47:20 -0500  40)         params['url'] = params['url'] + "&lang=" + language
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  41) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  42)     # using searx User-Agent
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  43)     params['headers']['User-Agent'] = searx_useragent()
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  44) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  45)     return params
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  46) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  47) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  48) # get response from search-request
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  49) @little_documented
+def response(resp):
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  50)     results = []
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  51)     json = loads(resp.text)
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  52) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  53)     # parse results
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  54)     for r in json.get('features', {}):
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  55) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  56)         properties = r.get('properties')
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  57) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  58)         if not properties:
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  59)             continue
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  60) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  61)         # get title
+f703a77f (Cqoicebordel      2015-02-10 18:44:49 +0100  62)         title = properties.get('name')
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  63) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  64)         # get osm-type
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  65)         if properties.get('osm_type') == 'N':
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  66)             osm_type = 'node'
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  67)         elif properties.get('osm_type') == 'W':
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  68)             osm_type = 'way'
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  69)         elif properties.get('osm_type') == 'R':
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  70)             osm_type = 'relation'
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  71)         else:
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  72)             # continue if invalide osm-type
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  73)             continue
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  74) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  75)         url = result_base_url.format(osm_type=osm_type,
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  76)                                      osm_id=properties.get('osm_id'))
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  77) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  78)         osm = {'type': osm_type,
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  79)                'id': properties.get('osm_id')}
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  80) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  81)         geojson = r.get('geometry')
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  82) 
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  83)         if properties.get('extent'):
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  84)             boundingbox = [properties.get('extent')[3],
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  85)                            properties.get('extent')[1],
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  86)                            properties.get('extent')[0],
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  87)                            properties.get('extent')[2]]
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  88)         else:
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  89)             # TODO: better boundingbox calculation
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  90)             boundingbox = [geojson['coordinates'][1],
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  91)                            geojson['coordinates'][1],
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  92)                            geojson['coordinates'][0],
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  93)                            geojson['coordinates'][0]]
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  94) 
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100  95)         # address calculation
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  96)         address = {}
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  97) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  98)         # get name
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100  99)         if properties.get('osm_key') == 'amenity' or\
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 100)            properties.get('osm_key') == 'shop' or\
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 101)            properties.get('osm_key') == 'tourism' or\
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 102)            properties.get('osm_key') == 'leisure':
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 103)             address = {'name': properties.get('name')}
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100 104) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 105)         # add rest of adressdata, if something is already found
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 106)         if address.get('name'):
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 107)             address.update({'house_number': properties.get('housenumber'),
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 108)                            'road': properties.get('street'),
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 109)                            'locality': properties.get('city',
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100 110)                                        properties.get('town',           # noqa
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100 111)                                        properties.get('village'))),     # noqa
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 112)                            'postcode': properties.get('postcode'),
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 113)                            'country': properties.get('country')})
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 114)         else:
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 115)             address = None
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 116) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 117)         # append result
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 118)         results.append({'template': 'map.html',
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 119)                         'title': title,
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 120)                         'content': '',
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 121)                         'longitude': geojson['coordinates'][0],
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 122)                         'latitude': geojson['coordinates'][1],
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 123)                         'boundingbox': boundingbox,
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 124)                         'geojson': geojson,
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 125)                         'address': address,
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 126)                         'osm': osm,
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 127)                         'url': url})
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 128) 
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 129)     # return results
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 130)     return results

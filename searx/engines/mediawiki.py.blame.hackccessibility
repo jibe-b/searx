@@ -1,0 +1,88 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  general mediawiki-engine (Web)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     websites built on mediawiki (https://www.mediawiki.org)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (http://www.mediawiki.org/wiki/API:Search)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 12)  @todo        content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 13) """
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 14) 
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 15) from json import loads
+cb8acbd2 (Adam Tauber       2014-09-04 21:19:11 +0200 16) from string import Formatter
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 17) from searx.url_utils import urlencode, quote
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 18) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 19) # engine dependent config
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 20) categories = ['general']
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 21) language_support = True
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 22) paging = True
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 23) number_of_results = 1
+a4f7046b (Adam Tauber       2017-05-18 22:19:44 +0200 24) search_type = 'nearmatch'  # possible values: title, text, nearmatch
+cb8acbd2 (Adam Tauber       2014-09-04 21:19:11 +0200 25) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 26) # search-url
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 27) base_url = 'https://{language}.wikipedia.org/'
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 28) search_postfix = 'w/api.php?action=query'\
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 29)     '&list=search'\
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 30)     '&{query}'\
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 31)     '&format=json'\
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 32)     '&sroffset={offset}'\
+b5061b5f (Adam Tauber       2016-02-09 21:21:59 +0100 33)     '&srlimit={limit}'\
+2a9339f4 (Noémi Ványi       2017-05-18 22:04:31 +0200 34)     '&srwhat={searchtype}'
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 35) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 36) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 37) # do search-request
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 38) @little_documented
+def request(query, params):
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 39)     offset = (params['pageno'] - 1) * number_of_results
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100 40) 
+cb8acbd2 (Adam Tauber       2014-09-04 21:19:11 +0200 41)     string_args = dict(query=urlencode({'srsearch': query}),
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100 42)                        offset=offset,
+2db80736 (Noémi Ványi       2017-05-18 21:34:54 +0200 43)                        limit=number_of_results,
+2db80736 (Noémi Ványi       2017-05-18 21:34:54 +0200 44)                        searchtype=search_type)
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100 45) 
+35ddbecd (Adam Tauber       2014-09-04 23:53:13 +0200 46)     format_strings = list(Formatter().parse(base_url))
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 47) 
+4d177039 (marc              2017-07-20 15:47:20 -0500 48)     language = params['language'].split('-')[0]
+cb8acbd2 (Adam Tauber       2014-09-04 21:19:11 +0200 49) 
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 50)     # format_string [('https://', 'language', '', None), ('.wikipedia.org/', None, None, None)]
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 51)     if any(x[1] == 'language' for x in format_strings):
+cb8acbd2 (Adam Tauber       2014-09-04 21:19:11 +0200 52)         string_args['language'] = language
+cb8acbd2 (Adam Tauber       2014-09-04 21:19:11 +0200 53) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 54)     # write search-language back to params, required in response
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 55)     params['language'] = language
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 56) 
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 57)     search_url = base_url + search_postfix
+909424e1 (Adam Tauber       2016-02-08 21:51:47 +0100 58) 
+cb8acbd2 (Adam Tauber       2014-09-04 21:19:11 +0200 59)     params['url'] = search_url.format(**string_args)
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 60) 
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 61)     return params
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 62) 
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 63) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 64) # get response from search-request
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 65) def response(resp):
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 66)     results = []
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 67) 
+75a2a6fb (asciimoo          2013-10-23 23:53:27 +0200 68)     search_results = loads(resp.text)
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 69) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 70)     # return empty array if there are no results
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 71)     if not search_results.get('query', {}).get('search'):
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 72)         return []
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 73) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 74)     # parse results
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 75)     for result in search_results['query']['search']:
+b5061b5f (Adam Tauber       2016-02-09 21:21:59 +0100 76)         if result.get('snippet', '').startswith('#REDIRECT'):
+b5061b5f (Adam Tauber       2016-02-09 21:21:59 +0100 77)             continue
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100 78)         url = base_url.format(language=resp.search_params['language']) +\
+91f99732 (Thomas Pointhuber 2014-12-16 17:10:20 +0100 79)             'wiki/' + quote(result['title'].replace(' ', '_').encode('utf-8'))
+cb8acbd2 (Adam Tauber       2014-09-04 21:19:11 +0200 80) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 81)         # append result
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 82)         results.append({'url': url,
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 83)                         'title': result['title'],
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 84)                         'content': ''})
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 85) 
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 86)     # return results
+52ad49cc (Thomas Pointhuber 2014-09-03 11:40:29 +0200 87)     return results

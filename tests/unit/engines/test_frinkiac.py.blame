@@ -1,0 +1,50 @@
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  1) # -*- coding: utf-8 -*-
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  2) from collections import defaultdict
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  3) import mock
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  4) from searx.engines import frinkiac
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  5) from searx.testing import SearxTestCase
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  6) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  7) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  8) class TestFrinkiacEngine(SearxTestCase):
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100  9) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 10)     def test_request(self):
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 11)         query = 'test_query'
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 12)         request_dict = defaultdict(dict)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 13)         params = frinkiac.request(query, request_dict)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 14)         self.assertTrue('url' in params)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 15) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 16)     def test_response(self):
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 17)         self.assertRaises(AttributeError, frinkiac.response, None)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 18)         self.assertRaises(AttributeError, frinkiac.response, [])
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 19)         self.assertRaises(AttributeError, frinkiac.response, '')
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 20)         self.assertRaises(AttributeError, frinkiac.response, '[]')
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 21) 
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 22)         text = """
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 23) [{"Id":770931,
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 24)   "Episode":"S06E18",
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 25)   "Timestamp":534616,
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 26)   "Filename":""},
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 27)  {"Id":1657080,
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 28)   "Episode":"S12E14",
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 29)   "Timestamp":910868,
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 30)   "Filename":""},
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 31)  {"Id":1943753,
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 32)   "Episode":"S14E21",
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 33)   "Timestamp":773439,
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 34)   "Filename":""},
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 35)  {"Id":107835,
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 36)   "Episode":"S02E03",
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 37)   "Timestamp":531709,
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 38)   "Filename":""}]
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 39)         """
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 40) 
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 41)         response = mock.Mock(text=text)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 42)         results = frinkiac.response(response)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 43)         self.assertEqual(type(results), list)
+33fa3da2 (Noemi Vanyi 2016-02-04 20:27:36 +0100 44)         self.assertEqual(len(results), 4)
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 45)         self.assertEqual(results[0]['title'], u'S06E18')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 46)         self.assertIn('p=caption', results[0]['url'])
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 47)         self.assertIn('e=S06E18', results[0]['url'])
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 48)         self.assertIn('t=534616', results[0]['url'])
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 49)         self.assertEqual(results[0]['thumbnail_src'], 'https://frinkiac.com/img/S06E18/534616/medium.jpg')
+baf16b88 (Noemi Vanyi 2016-02-04 22:39:47 +0100 50)         self.assertEqual(results[0]['img_src'], 'https://frinkiac.com/img/S06E18/534616.jpg')

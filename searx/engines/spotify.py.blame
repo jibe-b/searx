@@ -1,0 +1,62 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Spotify (Music)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://spotify.com
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (https://developer.spotify.com/web-api/search-item/)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content, embedded
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 12) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 13) from json import loads
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 14) from searx.url_utils import urlencode
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 15) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 16) # engine dependent config
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 17) categories = ['music']
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 18) paging = True
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 19) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 20) # search-url
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 21) url = 'https://api.spotify.com/'
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 22) search_url = url + 'v1/search?{query}&type=track&offset={offset}'
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 23) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 24) embedded_url = '<iframe data-src="https://embed.spotify.com/?uri=spotify:track:{audioid}"\
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 25)      width="300" height="80" frameborder="0" allowtransparency="true"></iframe>'
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 26) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 27) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 28) # do search-request
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 29) def request(query, params):
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 30)     offset = (params['pageno'] - 1) * 20
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 31) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 32)     params['url'] = search_url.format(query=urlencode({'q': query}), offset=offset)
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 33) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 34)     return params
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 35) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 36) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 37) # get response from search-request
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 38) def response(resp):
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 39)     results = []
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 40) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 41)     search_res = loads(resp.text)
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 42) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 43)     # parse results
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 44)     for result in search_res.get('tracks', {}).get('items', {}):
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 45)         if result['type'] == 'track':
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 46)             title = result['name']
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 47)             url = result['external_urls']['spotify']
+e12a137a (Adam Tauber       2016-12-10 00:30:34 +0100 48)             content = u'{} - {} - {}'.format(
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 49)                 result['artists'][0]['name'],
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 50)                 result['album']['name'],
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 51)                 result['name'])
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 52) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 53)             embedded = embedded_url.format(audioid=result['id'])
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 54) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 55)             # append result
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 56)             results.append({'url': url,
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 57)                             'title': title,
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 58)                             'embedded': embedded,
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 59)                             'content': content})
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 60) 
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 61)     # return results
+a2a8fbf6 (Cqoicebordel      2015-02-20 18:47:56 +0100 62)     return results

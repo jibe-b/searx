@@ -1,0 +1,88 @@
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  1) from searx.url_utils import urlencode
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  2) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  3) try:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  4)     from HTMLParser import HTMLParser
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  5) except:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  6)     from html.parser import HTMLParser
+b71bddad (pw3t        2013-12-29 16:21:20 +0100  7) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100  8) url = 'http://www.filecrop.com/'
+012c8517 (asciimoo    2014-01-30 01:14:08 +0100  9) search_url = url + '/search.php?{query}&size_i=0&size_f=100000000&engine_r=1&engine_d=1&engine_e=1&engine_4=1&engine_m=1&pos={index}'  # noqa
+012c8517 (asciimoo    2014-01-30 01:14:08 +0100 10) 
+012c8517 (asciimoo    2014-01-30 01:14:08 +0100 11) paging = True
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 12) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 13) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 14) class FilecropResultParser(HTMLParser):
+cd9b494c (stepshal    2016-07-10 21:44:27 +0700 15) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 16)     def __init__(self):
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 17)         HTMLParser.__init__(self)
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 18)         self.__start_processing = False
+d13c5aa3 (asciimoo    2014-01-05 00:46:42 +0100 19) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 20)         self.results = []
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 21)         self.result = {}
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 22) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 23)         self.tr_counter = 0
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 24)         self.data_counter = 0
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 25) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 26)     def handle_starttag(self, tag, attrs):
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 27) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 28)         if tag == 'tr':
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 29)             if ('bgcolor', '#edeff5') in attrs or\
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 30)                ('bgcolor', '#ffffff') in attrs:
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 31)                 self.__start_processing = True
+d13c5aa3 (asciimoo    2014-01-05 00:46:42 +0100 32) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 33)         if not self.__start_processing:
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 34)             return
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 35) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 36)         if tag == 'label':
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 37)             self.result['title'] = [attr[1] for attr in attrs
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 38)                                     if attr[0] == 'title'][0]
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 39)         elif tag == 'a' and ('rel', 'nofollow') in attrs\
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 40)                 and ('class', 'sourcelink') in attrs:
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 41)             if 'content' in self.result:
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 42)                 self.result['content'] += [attr[1] for attr in attrs
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 43)                                            if attr[0] == 'title'][0]
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 44)             else:
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 45)                 self.result['content'] = [attr[1] for attr in attrs
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 46)                                           if attr[0] == 'title'][0]
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 47)             self.result['content'] += ' '
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 48)         elif tag == 'a':
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 49)             self.result['url'] = url + [attr[1] for attr in attrs
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 50)                                         if attr[0] == 'href'][0]
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 51) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 52)     def handle_endtag(self, tag):
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 53)         if self.__start_processing is False:
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 54)             return
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 55) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 56)         if tag == 'tr':
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 57)             self.tr_counter += 1
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 58) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 59)             if self.tr_counter == 2:
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 60)                 self.__start_processing = False
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 61)                 self.tr_counter = 0
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 62)                 self.data_counter = 0
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 63)                 self.results.append(self.result)
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 64)                 self.result = {}
+d13c5aa3 (asciimoo    2014-01-05 00:46:42 +0100 65) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 66)     def handle_data(self, data):
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 67)         if not self.__start_processing:
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 68)             return
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 69) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 70)         if 'content' in self.result:
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 71)             self.result['content'] += data + ' '
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 72)         else:
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 73)             self.result['content'] = data + ' '
+d13c5aa3 (asciimoo    2014-01-05 00:46:42 +0100 74) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 75)         self.data_counter += 1
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 76) 
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 77) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 78) def request(query, params):
+012c8517 (asciimoo    2014-01-30 01:14:08 +0100 79)     index = 1 + (params['pageno'] - 1) * 30
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 80)     params['url'] = search_url.format(query=urlencode({'w': query}), index=index)
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 81)     return params
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 82) 
+b2492c94 (asciimoo    2014-01-20 02:31:20 +0100 83) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 84) def response(resp):
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 85)     parser = FilecropResultParser()
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 86)     parser.feed(resp.text)
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 87) 
+b71bddad (pw3t        2013-12-29 16:21:20 +0100 88)     return parser.results

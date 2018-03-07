@@ -1,0 +1,92 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  BTDigg (Videos, Music, Files)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://btdigg.org
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (on demand)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML (using search portal)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content, seed, leech, magnetlink
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 12) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 13) from lxml import html
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 14) from operator import itemgetter
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 15) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 16) from searx.url_utils import quote, urljoin
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 17) from searx.utils import get_torrent_size
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 18) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 19) # engine dependent config
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 20) categories = ['videos', 'music', 'files']
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 21) paging = True
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 22) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 23) # search-url
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 24) url = 'https://btdigg.org'
+7716806c (Thomas Pointhuber 2015-01-25 10:21:44 +0100 25) search_url = url + '/search?q={search_term}&p={pageno}'
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 26) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 27) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 28) # do search-request
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 29) def request(query, params):
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 30)     params['url'] = search_url.format(search_term=quote(query),
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 31)                                       pageno=params['pageno'] - 1)
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 32) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 33)     return params
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 34) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 35) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 36) # get response from search-request
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 37) def response(resp):
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 38)     results = []
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 39) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 40)     dom = html.fromstring(resp.text)
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 41) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 42)     search_res = dom.xpath('//div[@id="search_res"]/table/tr')
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 43) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 44)     # return empty array if nothing is found
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 45)     if not search_res:
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 46)         return []
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 47) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 48)     # parse results
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 49)     for result in search_res:
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 50)         link = result.xpath('.//td[@class="torrent_name"]//a')[0]
+a3d444ab (Cqoicebordel      2015-01-30 19:52:44 +0100 51)         href = urljoin(url, link.attrib.get('href'))
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 52)         title = extract_text(link)
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 53)         content = extract_text(result.xpath('.//pre[@class="snippet"]')[0])
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 54)         content = "<br />".join(content.split("\n"))
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 55) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 56)         filesize = result.xpath('.//span[@class="attr_val"]/text()')[0].split()[0]
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 57)         filesize_multiplier = result.xpath('.//span[@class="attr_val"]/text()')[0].split()[1]
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 58)         files = result.xpath('.//span[@class="attr_val"]/text()')[1]
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 59)         seed = result.xpath('.//span[@class="attr_val"]/text()')[2]
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 60) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 61)         # convert seed to int if possible
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 62)         if seed.isdigit():
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 63)             seed = int(seed)
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 64)         else:
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 65)             seed = 0
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 66) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 67)         leech = 0
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 68) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 69)         # convert filesize to byte if possible
+3a1c5876 (Noemi Vanyi       2016-08-13 14:55:47 +0200 70)         filesize = get_torrent_size(filesize, filesize_multiplier)
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 71) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 72)         # convert files to int if possible
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 73)         if files.isdigit():
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 74)             files = int(files)
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 75)         else:
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 76)             files = None
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 77) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 78)         magnetlink = result.xpath('.//td[@class="ttth"]//a')[0].attrib['href']
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 79) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 80)         # append result
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 81)         results.append({'url': href,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 82)                         'title': title,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 83)                         'content': content,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 84)                         'seed': seed,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 85)                         'leech': leech,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 86)                         'filesize': filesize,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 87)                         'files': files,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 88)                         'magnetlink': magnetlink,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 89)                         'template': 'torrent.html'})
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 90) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 91)     # return results sorted by seeder
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 92)     return sorted(results, key=itemgetter('seed'), reverse=True)

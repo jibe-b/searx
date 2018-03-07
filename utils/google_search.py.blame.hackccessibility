@@ -1,0 +1,35 @@
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  1) from sys import argv, exit
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  2) 
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  3) if not len(argv) > 1:
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  4)     print('search query required')
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  5)     exit(1)
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  6) 
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  7) import requests
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  8) from json import dumps
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200  9) from searx.engines import google
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 10) from searx.search import default_request_params
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 11) 
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 12) request_params = default_request_params()
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 13) # Possible params
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 14) # request_params['headers']['User-Agent'] = ''
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 15) # request_params['category'] = ''
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 16) request_params['pageno'] = 1
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 17) request_params['language'] = 'en_us'
+7bcdc27a utils/standalone_search.py (Alexandre Flament 2017-01-03 19:15:55 +0100 18) request_params['time_range'] = ''
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 19) 
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 20) params = google.request(argv[1], request_params)
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 21) 
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 22) request_args = dict(
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 23)     headers=request_params['headers'],
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 24)     cookies=request_params['cookies'],
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 25) )
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 26) 
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 27) if request_params['method'] == 'GET':
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 28)     req = requests.get
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 29) else:
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 30)     req = requests.post
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 31)     request_args['data'] = request_params['data']
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 32) 
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 33) resp = req(request_params['url'], **request_args)
+7bcdc27a utils/standalone_search.py (Alexandre Flament 2017-01-03 19:15:55 +0100 34) resp.search_params = request_params
+ea414c65 utils/standalone_search.py (Adam Tauber       2014-07-21 18:07:04 +0200 35) print(dumps(google.response(resp)))

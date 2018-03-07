@@ -1,0 +1,78 @@
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  1) """
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  2)  ScanR Structures (Science)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  3) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  4)  @website     https://scanr.enseignementsup-recherche.gouv.fr
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  5)  @provide-api yes (https://scanr.enseignementsup-recherche.gouv.fr/api/swagger-ui.html)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  6) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  7)  @using-api   yes
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  8)  @results     JSON
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200  9)  @stable      yes
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 10)  @parse       url, title, content, img_src
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 11) """
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 12) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 13) from json import loads, dumps
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 14) from searx.utils import html_to_text
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 15) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 16) # engine dependent config
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 17) categories = ['science']
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 18) paging = True
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 19) page_size = 20
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 20) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 21) # search-url
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 22) url = 'https://scanr.enseignementsup-recherche.gouv.fr/'
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 23) search_url = url + 'api/structures/search'
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 24) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 25) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 26) # do search-request
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 27) @little_documented
+def request(query, params):
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 28) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 29)     params['url'] = search_url
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 30)     params['method'] = 'POST'
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 31)     params['headers']['Content-type'] = "application/json"
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 32)     params['data'] = dumps({"query": query,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 33)                             "searchField": "ALL",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 34)                             "sortDirection": "ASC",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 35)                             "sortOrder": "RELEVANCY",
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 36)                             "page": params['pageno'],
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 37)                             "pageSize": page_size})
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 38) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 39)     return params
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 40) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 41) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 42) # get response from search-request
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 43) @little_documented
+def response(resp):
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 44)     results = []
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 45) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 46)     search_res = loads(resp.text)
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 47) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 48)     # return empty array if there are no results
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 49)     if search_res.get('total', 0) < 1:
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 50)         return []
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 51) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 52)     # parse results
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 53)     for result in search_res['results']:
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 54)         if 'id' not in result:
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 55)             continue
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 56) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 57)         # is it thumbnail or img_src??
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 58)         thumbnail = None
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 59)         if 'logo' in result:
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 60)             thumbnail = result['logo']
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 61)             if thumbnail[0] == '/':
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 62)                 thumbnail = url + thumbnail
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 63) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 64)         content = None
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 65)         if 'highlights' in result:
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 66)             content = result['highlights'][0]['value']
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 67) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 68)         # append result
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 69)         results.append({'url': url + 'structure/' + result['id'],
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 70)                         'title': result['label'],
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 71)                         # 'thumbnail': thumbnail,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 72)                         'img_src': thumbnail,
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 73)                         'content': html_to_text(content)})
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 74) 
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 75)     # return results
+1dba6dcb (François Revol 2016-07-09 20:41:57 +0200 76)     return results

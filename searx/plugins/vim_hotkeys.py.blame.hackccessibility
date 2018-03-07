@@ -1,0 +1,10 @@
+257e5295 (Adam Tauber   2016-07-04 22:46:43 +0200  1) from flask_babel import gettext
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600  2) 
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600  3) name = gettext('Vim-like hotkeys')
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600  4) description = gettext('Navigate search results with Vim-like hotkeys '
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600  5)                       '(JavaScript required). '
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600  6)                       'Press "h" key on main or result page to get help.')
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600  7) default_on = False
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600  8) 
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600  9) js_dependencies = ('plugins/js/vim_hotkeys.js',)
+3246541b (Kirill Isakov 2016-04-23 22:26:02 +0600 10) css_dependencies = ('plugins/css/vim_hotkeys.css',)

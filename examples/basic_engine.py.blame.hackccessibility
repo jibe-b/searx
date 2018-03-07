@@ -1,0 +1,26 @@
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200  1) 
+d9231d17 (stepshal 2016-07-11 18:52:37 +0700  2) categories = ['general']  # optional
+d2d0fddc (asciimoo 2013-10-19 20:54:21 +0200  3) 
+cd9b494c (stepshal 2016-07-10 21:44:27 +0700  4) 
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200  5) @little_documented
+def request(query, params):
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200  6)     '''pre-request callback
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200  7)     params<dict>:
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200  8)       method  : POST/GET
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200  9)       headers : {}
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 10)       data    : {} # if method == POST
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 11)       url     : ''
+a6df9c82 (asciimoo 2014-01-29 21:16:55 +0100 12)       category: 'search category'
+a6df9c82 (asciimoo 2014-01-29 21:16:55 +0100 13)       pageno  : 1 # number of the requested page
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 14)     '''
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 15) 
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 16)     params['url'] = 'https://host/%s' % query
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 17) 
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 18)     return params
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 19) 
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 20) 
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 21) def response(resp):
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 22)     '''post-response callback
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 23)     resp: requests response object
+26c9c0e8 (asciimoo 2013-10-15 00:19:25 +0200 24)     '''
+d793c273 (asciimoo 2013-10-15 19:11:43 +0200 25)     return [{'url': '', 'title': '', 'content': ''}]

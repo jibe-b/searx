@@ -1,0 +1,197 @@
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   1) '''
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   2) searx is free software: you can redistribute it and/or modify
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   3) it under the terms of the GNU Affero General Public License as published by
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   4) the Free Software Foundation, either version 3 of the License, or
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   5) (at your option) any later version.
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   6) 
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   7) searx is distributed in the hope that it will be useful,
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   8) but WITHOUT ANY WARRANTY; without even the implied warranty of
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200   9) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  10) GNU Affero General Public License for more details.
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  11) 
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  12) You should have received a copy of the GNU Affero General Public License
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  13) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  14) 
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  15) (C) 2013- by Adam Tauber, <asciimoo@gmail.com>
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  16) '''
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  17) 
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200  18) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100  19) from lxml import etree
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100  20) from json import loads
+9d11b36b (Adam Tauber       2015-04-10 00:59:25 +0200  21) from searx import settings
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  22) from searx.languages import language_codes
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  23) from searx.engines import (
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  24)     categories, engines, engine_shortcuts
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  25) )
+9d11b36b (Adam Tauber       2015-04-10 00:59:25 +0200  26) from searx.poolrequests import get as http_get
+36af8f9d (Adam Tauber       2017-07-10 11:42:44 +0200  27) from searx.url_utils import urlencode
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  28) 
+9d11b36b (Adam Tauber       2015-04-10 00:59:25 +0200  29) 
+9d11b36b (Adam Tauber       2015-04-10 00:59:25 +0200  30) def get(*args, **kwargs):
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  31)     if 'timeout' not in kwargs:
+1fcf066a (Adam Tauber       2015-08-02 19:38:27 +0200  32)         kwargs['timeout'] = settings['outgoing']['request_timeout']
+9d11b36b (Adam Tauber       2015-04-10 00:59:25 +0200  33) 
+9d11b36b (Adam Tauber       2015-04-10 00:59:25 +0200  34)     return http_get(*args, **kwargs)
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  35) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  36) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  37) def searx_bang(full_query):
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  38)     '''check if the searchQuery contain a bang, and create fitting autocompleter results'''
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  39)     # check if there is a query which can be parsed
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  40)     if len(full_query.getSearchQuery()) == 0:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  41)         return []
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  42) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  43)     results = []
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  44) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  45)     # check if current query stats with !bang
+bc2d5bf8 (Cqoicebordel      2015-01-19 19:47:32 +0100  46)     first_char = full_query.getSearchQuery()[0]
+bc2d5bf8 (Cqoicebordel      2015-01-19 19:47:32 +0100  47)     if first_char == '!' or first_char == '?':
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  48)         if len(full_query.getSearchQuery()) == 1:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  49)             # show some example queries
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  50)             # TODO, check if engine is not avaliable
+bc2d5bf8 (Cqoicebordel      2015-01-19 19:47:32 +0100  51)             results.append(first_char + "images")
+bc2d5bf8 (Cqoicebordel      2015-01-19 19:47:32 +0100  52)             results.append(first_char + "wikipedia")
+bc2d5bf8 (Cqoicebordel      2015-01-19 19:47:32 +0100  53)             results.append(first_char + "osm")
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  54)         else:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  55)             engine_query = full_query.getSearchQuery()[1:]
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  56) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  57)             # check if query starts with categorie name
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  58)             for categorie in categories:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  59)                 if categorie.startswith(engine_query):
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200  60)                     results.append(first_char + '{categorie}'.format(categorie=categorie))
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  61) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  62)             # check if query starts with engine name
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  63)             for engine in engines:
+c19b0899 (Thomas Pointhuber 2015-01-10 19:55:21 +0100  64)                 if engine.startswith(engine_query.replace('_', ' ')):
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200  65)                     results.append(first_char + '{engine}'.format(engine=engine.replace(' ', '_')))
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  66) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  67)             # check if query starts with engine shortcut
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  68)             for engine_shortcut in engine_shortcuts:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  69)                 if engine_shortcut.startswith(engine_query):
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200  70)                     results.append(first_char + '{engine_shortcut}'.format(engine_shortcut=engine_shortcut))
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  71) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  72)     # check if current query stats with :bang
+bc2d5bf8 (Cqoicebordel      2015-01-19 19:47:32 +0100  73)     elif first_char == ':':
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  74)         if len(full_query.getSearchQuery()) == 1:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  75)             # show some example queries
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  76)             results.append(":en")
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  77)             results.append(":en_us")
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  78)             results.append(":english")
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  79)             results.append(":united_kingdom")
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  80)         else:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  81)             engine_query = full_query.getSearchQuery()[1:]
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  82) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  83)             for lc in language_codes:
+7b1daf25 (Adam Tauber       2017-01-03 13:11:38 +0100  84)                 lang_id, lang_name, country, english_name = map(unicode.lower, lc)
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  85) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  86)                 # check if query starts with language-id
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  87)                 if lang_id.startswith(engine_query):
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  88)                     if len(engine_query) <= 2:
+7b1daf25 (Adam Tauber       2017-01-03 13:11:38 +0100  89)                         results.append(u':{lang_id}'.format(lang_id=lang_id.split('-')[0]))
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  90)                     else:
+7b1daf25 (Adam Tauber       2017-01-03 13:11:38 +0100  91)                         results.append(u':{lang_id}'.format(lang_id=lang_id))
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  92) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  93)                 # check if query starts with language name
+149802c5 (marc              2016-08-05 23:34:56 -0500  94)                 if lang_name.startswith(engine_query) or english_name.startswith(engine_query):
+7b1daf25 (Adam Tauber       2017-01-03 13:11:38 +0100  95)                     results.append(u':{lang_name}'.format(lang_name=lang_name))
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  96) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100  97)                 # check if query starts with country
+c19b0899 (Thomas Pointhuber 2015-01-10 19:55:21 +0100  98)                 if country.startswith(engine_query.replace('_', ' ')):
+7b1daf25 (Adam Tauber       2017-01-03 13:11:38 +0100  99)                     results.append(u':{country}'.format(country=country.replace(' ', '_')))
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 100) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 101)     # remove duplicates
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 102)     result_set = set(results)
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 103) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 104)     # remove results which are already contained in the query
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 105)     for query_part in full_query.query_parts:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 106)         if query_part in result_set:
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 107)             result_set.remove(query_part)
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 108) 
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 109)     # convert result_set back to list
+4e2dae30 (Thomas Pointhuber 2015-01-10 16:42:57 +0100 110)     return list(result_set)
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 111) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 112) 
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 113) def dbpedia(query, lang):
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 114)     # dbpedia autocompleter, no HTTPS
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 115)     autocomplete_url = 'http://lookup.dbpedia.org/api/search.asmx/KeywordSearch?'
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 116) 
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 117)     response = get(autocomplete_url + urlencode(dict(QueryString=query)))
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 118) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 119)     results = []
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 120) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 121)     if response.ok:
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 122)         dom = etree.fromstring(response.content)
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 123)         results = dom.xpath('//a:Result/a:Label//text()',
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 124)                             namespaces={'a': 'http://lookup.dbpedia.org/'})
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 125) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 126)     return results
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 127) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 128) 
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 129) def duckduckgo(query, lang):
+53dc92b0 (Thomas Pointhuber 2014-09-13 18:47:28 +0200 130)     # duckduckgo autocompleter
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 131)     url = 'https://ac.duckduckgo.com/ac/?{0}&type=list'
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 132) 
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 133)     resp = loads(get(url.format(urlencode(dict(q=query)))).text)
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 134)     if len(resp) > 1:
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 135)         return resp[1]
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 136)     return []
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 137) 
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 138) 
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 139) def google(query, lang):
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 140)     # google autocompleter
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 141)     autocomplete_url = 'https://suggestqueries.google.com/complete/search?client=toolbar&'
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 142) 
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 143)     response = get(autocomplete_url + urlencode(dict(hl=lang, q=query)))
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 144) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 145)     results = []
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 146) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 147)     if response.ok:
+8e2d996e (Adam Tauber       2014-03-29 17:04:33 +0100 148)         dom = etree.fromstring(response.text)
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 149)         results = dom.xpath('//suggestion/@data')
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 150) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 151)     return results
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 152) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 153) 
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 154) def startpage(query, lang):
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 155)     # startpage autocompleter
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 156)     url = 'https://startpage.com/do/suggest?{query}'
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 157) 
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 158)     resp = get(url.format(query=urlencode({'query': query}))).text.split('\n')
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 159)     if len(resp) > 1:
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 160)         return resp
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 161)     return []
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 162) 
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 163) 
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 164) def qwant(query, lang):
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 165)     # qwant autocompleter (additional parameter : lang=en_en&count=xxx )
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 166)     url = 'https://api.qwant.com/api/suggest?{query}'
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 167) 
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 168)     resp = get(url.format(query=urlencode({'q': query, 'lang': lang})))
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 169) 
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 170)     results = []
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 171) 
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 172)     if resp.ok:
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 173)         data = loads(resp.text)
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 174)         if data['status'] == 'success':
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 175)             for item in data['data']['items']:
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 176)                 results.append(item['value'])
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 177) 
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 178)     return results
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 179) 
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 180) 
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 181) def wikipedia(query, lang):
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 182)     # wikipedia autocompleter
+94cb3a7f (a01200356         2016-03-29 18:53:31 -0600 183)     url = 'https://' + lang + '.wikipedia.org/w/api.php?action=opensearch&{0}&limit=10&namespace=0&format=json'
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 184) 
+b422788e (Adam Tauber       2014-11-04 19:53:42 +0100 185)     resp = loads(get(url.format(urlencode(dict(search=query)))).text)
+d2f89f04 (Adam Tauber       2014-03-29 17:15:59 +0100 186)     if len(resp) > 1:
+d2f89f04 (Adam Tauber       2014-03-29 17:15:59 +0100 187)         return resp[1]
+d2f89f04 (Adam Tauber       2014-03-29 17:15:59 +0100 188)     return []
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 189) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 190) 
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 191) backends = {'dbpedia': dbpedia,
+cd3a52e1 (Adam Tauber       2014-09-07 23:56:06 +0200 192)             'duckduckgo': duckduckgo,
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 193)             'google': google,
+633c7b6a (Cqoicebordel      2015-06-01 20:45:18 +0200 194)             'startpage': startpage,
+6ab91515 (Alexandre Flament 2016-03-02 19:54:06 +0800 195)             'qwant': qwant,
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 196)             'wikipedia': wikipedia
+fd730ebc (Adam Tauber       2014-03-29 16:30:49 +0100 197)             }

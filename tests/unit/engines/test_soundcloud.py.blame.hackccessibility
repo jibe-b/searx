@@ -1,0 +1,193 @@
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100   1) from collections import defaultdict
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100   2) import mock
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100   3) from searx.engines import soundcloud
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100   4) from searx.testing import SearxTestCase
+52e615de tests/unit/engines/test_soundcloud.py  (Adam Tauber  2016-11-30 18:43:03 +0100   5) from searx.url_utils import quote_plus
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100   6) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100   7) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100   8) class TestSoundcloudEngine(SearxTestCase):
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100   9) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  10)     @little_documented
+def test_request(self):
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  11)         query = 'test_query'
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  12)         dicto = defaultdict(dict)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  13)         dicto['pageno'] = 1
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  14)         params = soundcloud.request(query, dicto)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  15)         self.assertIn('url', params)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  16)         self.assertIn(query, params['url'])
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  17)         self.assertIn('soundcloud.com', params['url'])
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  18) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  19)     def test_response(self):
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  20)         self.assertRaises(AttributeError, soundcloud.response, None)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  21)         self.assertRaises(AttributeError, soundcloud.response, [])
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  22)         self.assertRaises(AttributeError, soundcloud.response, '')
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  23)         self.assertRaises(AttributeError, soundcloud.response, '[]')
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  24) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  25)         response = mock.Mock(text='{}')
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  26)         self.assertEqual(soundcloud.response(response), [])
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  27) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  28)         response = mock.Mock(text='{"data": []}')
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  29)         self.assertEqual(soundcloud.response(response), [])
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  30) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  31)         json = """
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  32)         {
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  33)         "collection": [
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  34)             {
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  35)             "kind": "track",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  36)             "id": 159723640,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  37)             "created_at": "2014/07/22 00:51:21 +0000",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  38)             "user_id": 2976616,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  39)             "duration": 303780,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  40)             "commentable": true,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  41)             "state": "finished",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  42)             "original_content_size": 13236349,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  43)             "last_modified": "2015/01/31 15:14:50 +0000",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  44)             "sharing": "public",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  45)             "tag_list": "seekae flume",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  46)             "permalink": "seekae-test-recognise-flume-re-work",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  47)             "streamable": true,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  48)             "embeddable_by": "all",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  49)             "downloadable": true,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  50)             "purchase_url": "http://www.facebook.com/seekaemusic",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  51)             "label_id": null,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  52)             "purchase_title": "Seekae",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  53)             "genre": "freedownload",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  54)             "title": "This is the title",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  55)             "description": "This is the content",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  56)             "label_name": "Future Classic",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  57)             "release": "",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  58)             "track_type": "remix",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  59)             "key_signature": "",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  60)             "isrc": "",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  61)             "video_url": null,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  62)             "bpm": null,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  63)             "release_year": 2014,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  64)             "release_month": 7,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  65)             "release_day": 22,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  66)             "original_format": "mp3",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  67)             "license": "all-rights-reserved",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  68)             "uri": "https://api.soundcloud.com/tracks/159723640",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  69)             "user": {
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  70)                 "id": 2976616,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  71)                 "kind": "user",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  72)                 "permalink": "flume",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  73)                 "username": "Flume",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  74)                 "last_modified": "2014/11/24 19:21:29 +0000",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  75)                 "uri": "https://api.soundcloud.com/users/2976616",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  76)                 "permalink_url": "http://soundcloud.com/flume",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  77)                 "avatar_url": "https://i1.sndcdn.com/avatars-000044475439-4zi7ii-large.jpg"
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  78)             },
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  79)             "permalink_url": "http://soundcloud.com/this.is.the.url",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  80)             "artwork_url": "https://i1.sndcdn.com/artworks-000085857162-xdxy5c-large.jpg",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  81)             "waveform_url": "https://w1.sndcdn.com/DWrL1lAN8BkP_m.png",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  82)             "stream_url": "https://api.soundcloud.com/tracks/159723640/stream",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  83)             "download_url": "https://api.soundcloud.com/tracks/159723640/download",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  84)             "playback_count": 2190687,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  85)             "download_count": 54856,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  86)             "favoritings_count": 49061,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  87)             "comment_count": 826,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  88)             "likes_count": 49061,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  89)             "reposts_count": 15910,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  90)             "attachments_uri": "https://api.soundcloud.com/tracks/159723640/attachments",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  91)             "policy": "ALLOW"
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  92)             }
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  93)         ],
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  94)         "total_results": 375750,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  95)         "next_href": "https://api.soundcloud.com/search?&q=test",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  96)         "tx_id": ""
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  97)         }
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  98)         """
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100  99)         response = mock.Mock(text=json)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 100)         results = soundcloud.response(response)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 101)         self.assertEqual(type(results), list)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 102)         self.assertEqual(len(results), 1)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 103)         self.assertEqual(results[0]['title'], 'This is the title')
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 104)         self.assertEqual(results[0]['url'], 'http://soundcloud.com/this.is.the.url')
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 105)         self.assertEqual(results[0]['content'], 'This is the content')
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 106)         self.assertIn(quote_plus('https://api.soundcloud.com/tracks/159723640'), results[0]['embedded'])
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 107) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 108)         json = """
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 109)         {
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 110)         "collection": [
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 111)             {
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 112)             "kind": "user",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 113)             "id": 159723640,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 114)             "created_at": "2014/07/22 00:51:21 +0000",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 115)             "user_id": 2976616,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 116)             "duration": 303780,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 117)             "commentable": true,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 118)             "state": "finished",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 119)             "original_content_size": 13236349,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 120)             "last_modified": "2015/01/31 15:14:50 +0000",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 121)             "sharing": "public",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 122)             "tag_list": "seekae flume",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 123)             "permalink": "seekae-test-recognise-flume-re-work",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 124)             "streamable": true,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 125)             "embeddable_by": "all",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 126)             "downloadable": true,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 127)             "purchase_url": "http://www.facebook.com/seekaemusic",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 128)             "label_id": null,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 129)             "purchase_title": "Seekae",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 130)             "genre": "freedownload",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 131)             "title": "This is the title",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 132)             "description": "This is the content",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 133)             "label_name": "Future Classic",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 134)             "release": "",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 135)             "track_type": "remix",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 136)             "key_signature": "",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 137)             "isrc": "",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 138)             "video_url": null,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 139)             "bpm": null,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 140)             "release_year": 2014,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 141)             "release_month": 7,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 142)             "release_day": 22,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 143)             "original_format": "mp3",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 144)             "license": "all-rights-reserved",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 145)             "uri": "https://api.soundcloud.com/tracks/159723640",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 146)             "user": {
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 147)                 "id": 2976616,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 148)                 "kind": "user",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 149)                 "permalink": "flume",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 150)                 "username": "Flume",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 151)                 "last_modified": "2014/11/24 19:21:29 +0000",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 152)                 "uri": "https://api.soundcloud.com/users/2976616",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 153)                 "permalink_url": "http://soundcloud.com/flume",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 154)                 "avatar_url": "https://i1.sndcdn.com/avatars-000044475439-4zi7ii-large.jpg"
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 155)             },
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 156)             "permalink_url": "http://soundcloud.com/this.is.the.url",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 157)             "artwork_url": "https://i1.sndcdn.com/artworks-000085857162-xdxy5c-large.jpg",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 158)             "waveform_url": "https://w1.sndcdn.com/DWrL1lAN8BkP_m.png",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 159)             "stream_url": "https://api.soundcloud.com/tracks/159723640/stream",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 160)             "download_url": "https://api.soundcloud.com/tracks/159723640/download",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 161)             "playback_count": 2190687,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 162)             "download_count": 54856,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 163)             "favoritings_count": 49061,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 164)             "comment_count": 826,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 165)             "likes_count": 49061,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 166)             "reposts_count": 15910,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 167)             "attachments_uri": "https://api.soundcloud.com/tracks/159723640/attachments",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 168)             "policy": "ALLOW"
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 169)             }
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 170)         ],
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 171)         "total_results": 375750,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 172)         "next_href": "https://api.soundcloud.com/search?&q=test",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 173)         "tx_id": ""
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 174)         }
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 175)         """
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 176)         response = mock.Mock(text=json)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 177)         results = soundcloud.response(response)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 178)         self.assertEqual(type(results), list)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 179)         self.assertEqual(len(results), 0)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 180) 
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 181)         json = """
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 182)         {
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 183)         "collection": [],
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 184)         "total_results": 375750,
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 185)         "next_href": "https://api.soundcloud.com/search?&q=test",
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 186)         "tx_id": ""
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 187)         }
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 188)         """
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 189)         response = mock.Mock(text=json)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 190)         results = soundcloud.response(response)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 191)         self.assertEqual(type(results), list)
+787fee6a searx/tests/engines/test_soundcloud.py (Cqoicebordel 2015-01-31 17:10:37 +0100 192)         self.assertEqual(len(results), 0)

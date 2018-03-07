@@ -1,0 +1,76 @@
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  1) #!/usr/bin/env python
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  2) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  3) """
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  4)  ArXiV (Scientific preprints)
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100  5)  @website     https://arxiv.org
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  6)  @provide-api yes (export.arxiv.org/api/query)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  7)  @using-api   yes
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  8)  @results     XML-RSS
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  9)  @stable      yes
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 10)  @parse       url, title, publishedDate, content
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 11)  More info on api: https://arxiv.org/help/api/user-manual
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 12) """
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 13) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 14) from lxml import html
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 15) from datetime import datetime
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 16) from searx.url_utils import urlencode
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 17) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 18) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 19) categories = ['science']
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 20) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 21) base_url = 'http://export.arxiv.org/api/query?search_query=all:'\
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 22)            + '{query}&start={offset}&max_results={number_of_results}'
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 23) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 24) # engine dependent config
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 25) number_of_results = 10
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 26) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 27) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 28) def request(query, params):
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 29)     # basic search
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 30)     offset = (params['pageno'] - 1) * number_of_results
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 31) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 32)     string_args = dict(query=query,
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 33)                        offset=offset,
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 34)                        number_of_results=number_of_results)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 35) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 36)     params['url'] = base_url.format(**string_args)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 37) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 38)     return params
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 39) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 40) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 41) def response(resp):
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 42)     results = []
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 43) 
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100 44)     dom = html.fromstring(resp.content)
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100 45)     search_results = dom.xpath('//entry')
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 46) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 47)     for entry in search_results:
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 48)         title = entry.xpath('.//title')[0].text
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 49) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 50)         url = entry.xpath('.//id')[0].text
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 51) 
+5278fa66 (jibe-b      2017-09-27 16:01:31 +0200 52)         content_string = '{doi_content}{abstract_content}'
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100 53) 
+5278fa66 (jibe-b      2017-09-27 16:01:31 +0200 54)         abstract = entry.xpath('.//summary')[0].text
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 55) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 56)         #  If a doi is available, add it to the snipppet
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 57)         try:
+5278fa66 (jibe-b      2017-09-27 16:01:31 +0200 58)             doi_content = entry.xpath('.//link[@title="doi"]')[0].text
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100 59)             content = content_string.format(doi_content=doi_content, abstract_content=abstract)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 60)         except:
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100 61)             content = content_string.format(doi_content="", abstract_content=abstract)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 62) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 63)         if len(content) > 300:
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 64)                     content = content[0:300] + "..."
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 65)         # TODO: center snippet on query term
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 66) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 67)         publishedDate = datetime.strptime(entry.xpath('.//published')[0].text, '%Y-%m-%dT%H:%M:%SZ')
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 68) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 69)         res_dict = {'url': url,
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 70)                     'title': title,
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 71)                     'publishedDate': publishedDate,
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 72)                     'content': content}
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 73) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 74)         results.append(res_dict)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 75) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 76)     return results

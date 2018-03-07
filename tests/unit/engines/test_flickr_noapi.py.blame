@@ -1,0 +1,329 @@
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   1) from collections import defaultdict
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   2) import mock
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   3) from searx.engines import flickr_noapi
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   4) from searx.testing import SearxTestCase
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   5) 
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   6) 
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   7) class TestFlickrNoapiEngine(SearxTestCase):
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   8) 
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100   9)     def test_build_flickr_url(self):
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  10)         url = flickr_noapi.build_flickr_url("uid", "pid")
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  11)         self.assertIn("uid", url)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  12)         self.assertIn("pid", url)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  13) 
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  14)     def test_request(self):
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  15)         query = 'test_query'
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  16)         dicto = defaultdict(dict)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  17)         dicto['pageno'] = 1
+1490d6bc tests/unit/engines/test_flickr_noapi.py  (Noémi Ványi       2016-10-30 21:20:40 +0100  18)         dicto['time_range'] = ''
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  19)         params = flickr_noapi.request(query, dicto)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  20)         self.assertIn('url', params)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  21)         self.assertIn(query, params['url'])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  22)         self.assertIn('flickr.com', params['url'])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  23) 
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  24)     def test_response(self):
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  25)         self.assertRaises(AttributeError, flickr_noapi.response, None)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  26)         self.assertRaises(AttributeError, flickr_noapi.response, [])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  27)         self.assertRaises(AttributeError, flickr_noapi.response, '')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  28)         self.assertRaises(AttributeError, flickr_noapi.response, '[]')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  29) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  30)         response = mock.Mock(text='"search-photos-lite-models","photos":{},"totalItems":')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  31)         self.assertEqual(flickr_noapi.response(response), [])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  32) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  33)         response = mock.Mock(text='search-photos-lite-models","photos":{"data": []},"totalItems":')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  34)         self.assertEqual(flickr_noapi.response(response), [])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  35) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  36)         # everthing is ok test
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  37)         json = """
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  38)         "search-photos-lite-models","photos":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  39)         {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  40)           "_data": [
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  41)             {
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  42)               "_flickrModelRegistry": "photo-lite-models",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  43)               "title": "This is the title",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  44)               "username": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  45)               "pathAlias": "klink692",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  46)               "realname": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  47)               "license": 0,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  48)               "ownerNsid": "59729010@N00",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  49)               "canComment": false,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  50)               "commentCount": 14,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  51)               "faveCount": 21,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  52)               "id": "14001294434",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  53)               "sizes": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  54)                 "c": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  55)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_c.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  56)                   "width": 541,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  57)                   "height": 800,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  58)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_c.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  59)                   "key": "c"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  60)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  61)                 "h": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  62)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_761d32237a_h.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  63)                   "width": 1081,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  64)                   "height": 1600,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  65)                   "url": "//c4.staticflickr.com/8/7246/14001294434_761d32237a_h.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  66)                   "key": "h"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  67)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  68)                 "k": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  69)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_f145a2c11a_k.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  70)                   "width": 1383,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  71)                   "height": 2048,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  72)                   "url": "//c4.staticflickr.com/8/7246/14001294434_f145a2c11a_k.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  73)                   "key": "k"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  74)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  75)                 "l": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  76)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_b.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  77)                   "width": 692,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  78)                   "height": 1024,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  79)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_b.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  80)                   "key": "l"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  81)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  82)                 "m": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  83)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  84)                   "width": 338,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  85)                   "height": 500,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  86)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  87)                   "key": "m"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  88)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  89)                 "n": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  90)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_n.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  91)                   "width": 216,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  92)                   "height": 320,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  93)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_n.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  94)                   "key": "n"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  95)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  96)                 "q": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  97)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_q.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  98)                   "width": 150,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100  99)                   "height": 150,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 100)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_q.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 101)                   "key": "q"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 102)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 103)                 "s": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 104)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_m.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 105)                   "width": 162,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 106)                   "height": 240,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 107)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_m.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 108)                   "key": "s"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 109)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 110)                 "sq": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 111)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_s.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 112)                   "width": 75,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 113)                   "height": 75,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 114)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_s.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 115)                   "key": "sq"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 116)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 117)                 "t": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 118)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_t.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 119)                   "width": 68,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 120)                   "height": 100,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 121)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_t.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 122)                   "key": "t"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 123)                 },
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 124)                 "z": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 125)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_z.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 126)                   "width": 433,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 127)                   "height": 640,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 128)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_z.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 129)                   "key": "z"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 130)                 }
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 131)               }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 132)             }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 133)           ],
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 134)           "fetchedStart": true,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 135)           "fetchedEnd": false,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 136)           "totalItems": "4386039"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 137)         },"totalItems":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 138)         """
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 139)         json = json.replace('\r\n', '').replace('\n', '').replace('\r', '')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 140)         response = mock.Mock(text=json)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 141)         results = flickr_noapi.response(response)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 142)         self.assertEqual(type(results), list)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 143)         self.assertEqual(len(results), 1)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 144)         self.assertEqual(results[0]['title'], 'This is the title')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 145)         self.assertEqual(results[0]['url'], 'https://www.flickr.com/photos/59729010@N00/14001294434')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 146)         self.assertIn('k.jpg', results[0]['img_src'])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 147)         self.assertIn('n.jpg', results[0]['thumbnail_src'])
+fdf63940 tests/unit/engines/test_flickr_noapi.py  (Adam Tauber       2016-12-09 19:10:57 +0100 148)         self.assertIn('Owner', results[0]['author'])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 149) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 150)         # no n size, only the z size
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 151)         json = """
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 152)         "search-photos-lite-models","photos":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 153)         {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 154)           "_data": [
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 155)             {
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 156)               "_flickrModelRegistry": "photo-lite-models",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 157)               "title": "This is the title",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 158)               "username": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 159)               "pathAlias": "klink692",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 160)               "realname": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 161)               "license": 0,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 162)               "ownerNsid": "59729010@N00",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 163)               "canComment": false,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 164)               "commentCount": 14,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 165)               "faveCount": 21,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 166)               "id": "14001294434",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 167)               "sizes": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 168)                 "z": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 169)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_z.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 170)                   "width": 433,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 171)                   "height": 640,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 172)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_z.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 173)                   "key": "z"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 174)                 }
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 175)               }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 176)             }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 177)           ],
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 178)           "fetchedStart": true,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 179)           "fetchedEnd": false,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 180)           "totalItems": "4386039"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 181)         },"totalItems":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 182)         """
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 183)         response = mock.Mock(text=json)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 184)         results = flickr_noapi.response(response)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 185)         self.assertEqual(type(results), list)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 186)         self.assertEqual(len(results), 1)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 187)         self.assertEqual(results[0]['title'], 'This is the title')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 188)         self.assertEqual(results[0]['url'], 'https://www.flickr.com/photos/59729010@N00/14001294434')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 189)         self.assertIn('z.jpg', results[0]['img_src'])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 190)         self.assertIn('z.jpg', results[0]['thumbnail_src'])
+fdf63940 tests/unit/engines/test_flickr_noapi.py  (Adam Tauber       2016-12-09 19:10:57 +0100 191)         self.assertIn('Owner', results[0]['author'])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 192) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 193)         # no z or n size
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 194)         json = """
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 195)         "search-photos-lite-models","photos":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 196)         {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 197)           "_data": [
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 198)             {
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 199)               "_flickrModelRegistry": "photo-lite-models",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 200)               "title": "This is the title",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 201)               "username": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 202)               "pathAlias": "klink692",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 203)               "realname": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 204)               "license": 0,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 205)               "ownerNsid": "59729010@N00",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 206)               "canComment": false,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 207)               "commentCount": 14,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 208)               "faveCount": 21,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 209)               "id": "14001294434",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 210)               "sizes": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 211)                 "o": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 212)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_o.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 213)                   "width": 433,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 214)                   "height": 640,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 215)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_o.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 216)                   "key": "o"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 217)                 }
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 218)               }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 219)             }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 220)           ],
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 221)           "fetchedStart": true,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 222)           "fetchedEnd": false,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 223)           "totalItems": "4386039"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 224)         },"totalItems":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 225)         """
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 226)         response = mock.Mock(text=json)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 227)         results = flickr_noapi.response(response)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 228)         self.assertEqual(type(results), list)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 229)         self.assertEqual(len(results), 1)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 230)         self.assertEqual(results[0]['title'], 'This is the title')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 231)         self.assertEqual(results[0]['url'], 'https://www.flickr.com/photos/59729010@N00/14001294434')
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 232)         self.assertIn('o.jpg', results[0]['img_src'])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 233)         self.assertIn('o.jpg', results[0]['thumbnail_src'])
+fdf63940 tests/unit/engines/test_flickr_noapi.py  (Adam Tauber       2016-12-09 19:10:57 +0100 234)         self.assertIn('Owner', results[0]['author'])
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 235) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 236)         # no image test
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 237)         json = """
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 238)         "search-photos-lite-models","photos":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 239)         {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 240)           "_data": [
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 241)             {
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 242)               "_flickrModelRegistry": "photo-lite-models",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 243)               "title": "This is the title",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 244)               "username": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 245)               "pathAlias": "klink692",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 246)               "realname": "Owner",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 247)               "license": 0,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 248)               "ownerNsid": "59729010@N00",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 249)               "canComment": false,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 250)               "commentCount": 14,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 251)               "faveCount": 21,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 252)               "id": "14001294434",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 253)               "sizes": {
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 254)               }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 255)             }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 256)           ],
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 257)           "fetchedStart": true,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 258)           "fetchedEnd": false,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 259)           "totalItems": "4386039"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 260)         },"totalItems":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 261)         """
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 262)         response = mock.Mock(text=json)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 263)         results = flickr_noapi.response(response)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 264)         self.assertEqual(type(results), list)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 265)         self.assertEqual(len(results), 0)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 266) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 267)         # null test
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 268)         json = """
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 269)         "search-photos-models","photos":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 270)         {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 271)           "_data": [null],
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 272)           "fetchedStart": true,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 273)           "fetchedEnd": false,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 274)           "totalItems": "4386039"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 275)         },"totalItems":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 276)         """
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 277)         response = mock.Mock(text=json)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 278)         results = flickr_noapi.response(response)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 279)         self.assertEqual(type(results), list)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 280)         self.assertEqual(len(results), 0)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 281) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 282)         # no ownerNsid test
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 283)         json = """
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 284)         "search-photos-lite-models","photos":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 285)         {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 286)           "_data": [
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 287)             {
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 288)               "_flickrModelRegistry": "photo-lite-models",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 289)               "title": "This is the title",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 290)               "username": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 291)               "pathAlias": "klink692",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 292)               "realname": "Owner",
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 293)               "license": 0,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 294)               "canComment": false,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 295)               "commentCount": 14,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 296)               "faveCount": 21,
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 297)               "id": "14001294434",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 298)               "sizes": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 299)                 "o": {
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 300)                   "displayUrl": "//farm8.staticflickr.com/7246/14001294434_410f653777_o.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 301)                   "width": 433,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 302)                   "height": 640,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 303)                   "url": "//c4.staticflickr.com/8/7246/14001294434_410f653777_o.jpg",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 304)                   "key": "o"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 305)                 }
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 306)               }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 307)             }
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 308)           ],
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 309)           "fetchedStart": true,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 310)           "fetchedEnd": false,
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 311)           "totalItems": "4386039"
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 312)         },"totalItems":
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 313)         """
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 314)         response = mock.Mock(text=json)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 315)         results = flickr_noapi.response(response)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 316)         self.assertEqual(type(results), list)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 317)         self.assertEqual(len(results), 0)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 318) 
+7afd02c9 searx/tests/engines/test_flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 319)         # garbage test
+b3ab221b tests/unit/engines/test_flickr_noapi.py  (stepshal          2016-07-11 20:29:47 +0700 320)         json = r"""
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 321)         {"toto":[
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 322)             {"id":200,"name":"Artist Name",
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 323)             "link":"http:\/\/www.flickr.com\/artist\/1217","type":"artist"}
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 324)         ]}
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 325)         """
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 326)         response = mock.Mock(text=json)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 327)         results = flickr_noapi.response(response)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 328)         self.assertEqual(type(results), list)
+c6535dd6 searx/tests/engines/test_flickr_noapi.py (Cqoicebordel      2015-02-01 14:31:04 +0100 329)         self.assertEqual(len(results), 0)

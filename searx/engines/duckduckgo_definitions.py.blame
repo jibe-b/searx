@@ -1,0 +1,157 @@
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200   1) import json
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200   2) from lxml import html
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100   3) from re import compile
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200   4) from searx.engines.xpath import extract_text
+af35eee1 (marc         2016-12-15 00:34:43 -0600   5) from searx.engines.duckduckgo import _fetch_supported_languages, supported_languages_url
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100   6) from searx.url_utils import urlencode
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100   7) from searx.utils import html_to_text
+74b6be39 (asciimoo     2013-10-23 23:55:37 +0200   8) 
+ffcec383 (dalf         2014-12-07 16:36:20 +0100   9) url = 'https://api.duckduckgo.com/'\
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  10)     + '?{query}&format=json&pretty=0&no_redirect=1&d=1'
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  11) 
+a44faa77 (a01200356    2016-04-18 10:52:16 -0500  12) http_regex = compile(r'^http:')
+a44faa77 (a01200356    2016-04-18 10:52:16 -0500  13) 
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200  14) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  15) def result_to_text(url, text, htmlResult):
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  16)     # TODO : remove result ending with "Meaning" or "Category"
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  17)     dom = html.fromstring(htmlResult)
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  18)     a = dom.xpath('//a')
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  19)     if len(a) >= 1:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  20)         return extract_text(a[0])
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  21)     else:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  22)         return text
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  23) 
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  24) 
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200  25) def request(query, params):
+b2492c94 (asciimoo     2014-01-20 02:31:20 +0100  26)     params['url'] = url.format(query=urlencode({'q': query}))
+149802c5 (marc         2016-08-05 23:34:56 -0500  27)     params['headers']['Accept-Language'] = params['language'].split('-')[0]
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200  28)     return params
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200  29) 
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200  30) 
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200  31) def response(resp):
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200  32)     results = []
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  33) 
+8c2a5f04 (Cqoicebordel 2015-02-09 18:28:08 +0100  34)     search_res = json.loads(resp.text)
+8c2a5f04 (Cqoicebordel 2015-02-09 18:28:08 +0100  35) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  36)     content = ''
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  37)     heading = search_res.get('Heading', '')
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  38)     attributes = []
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  39)     urls = []
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  40)     infobox_id = None
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  41)     relatedTopics = []
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  42) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  43)     # add answer if there is one
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  44)     answer = search_res.get('Answer', '')
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  45)     if answer != '':
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  46)         results.append({'answer': html_to_text(answer)})
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  47) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  48)     # add infobox
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200  49)     if 'Definition' in search_res:
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  50)         content = content + search_res.get('Definition', '')
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  51) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  52)     if 'Abstract' in search_res:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  53)         content = content + search_res.get('Abstract', '')
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  54) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  55)     # image
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  56)     image = search_res.get('Image', '')
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  57)     image = None if image == '' else image
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  58) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  59)     # attributes
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  60)     if 'Infobox' in search_res:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  61)         infobox = search_res.get('Infobox', None)
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  62)         if 'content' in infobox:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  63)             for info in infobox.get('content'):
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  64)                 attributes.append({'label': info.get('label'),
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  65)                                   'value': info.get('value')})
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  66) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  67)     # urls
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  68)     for ddg_result in search_res.get('Results', []):
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  69)         if 'FirstURL' in ddg_result:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  70)             firstURL = ddg_result.get('FirstURL', '')
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  71)             text = ddg_result.get('Text', '')
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  72)             urls.append({'title': text, 'url': firstURL})
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  73)             results.append({'title': heading, 'url': firstURL})
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  74) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  75)     # related topics
+8c2a5f04 (Cqoicebordel 2015-02-09 18:28:08 +0100  76)     for ddg_result in search_res.get('RelatedTopics', []):
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  77)         if 'FirstURL' in ddg_result:
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  78)             suggestion = result_to_text(ddg_result.get('FirstURL', None),
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  79)                                         ddg_result.get('Text', None),
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  80)                                         ddg_result.get('Result', None))
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  81)             if suggestion != heading:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  82)                 results.append({'suggestion': suggestion})
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  83)         elif 'Topics' in ddg_result:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  84)             suggestions = []
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  85)             relatedTopics.append({'name': ddg_result.get('Name', ''),
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  86)                                  'suggestions': suggestions})
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  87)             for topic_result in ddg_result.get('Topics', []):
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  88)                 suggestion = result_to_text(topic_result.get('FirstURL', None),
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  89)                                             topic_result.get('Text', None),
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  90)                                             topic_result.get('Result', None))
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  91)                 if suggestion != heading:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  92)                     suggestions.append(suggestion)
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  93) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  94)     # abstract
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  95)     abstractURL = search_res.get('AbstractURL', '')
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  96)     if abstractURL != '':
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  97)         # add as result ? problem always in english
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200  98)         infobox_id = abstractURL
+ffcec383 (dalf         2014-12-07 16:36:20 +0100  99)         urls.append({'title': search_res.get('AbstractSource'),
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 100)                     'url': abstractURL})
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 101) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 102)     # definition
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 103)     definitionURL = search_res.get('DefinitionURL', '')
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 104)     if definitionURL != '':
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 105)         # add as result ? as answer ? problem always in english
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 106)         infobox_id = definitionURL
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 107)         urls.append({'title': search_res.get('DefinitionSource'),
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 108)                     'url': definitionURL})
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 109) 
+6dca14e9 (a01200356    2016-04-17 16:21:44 -0500 110)     # to merge with wikidata's infobox
+6dca14e9 (a01200356    2016-04-17 16:21:44 -0500 111)     if infobox_id:
+a44faa77 (a01200356    2016-04-18 10:52:16 -0500 112)         infobox_id = http_regex.sub('https:', infobox_id)
+6dca14e9 (a01200356    2016-04-17 16:21:44 -0500 113) 
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 114)     # entity
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 115)     entity = search_res.get('Entity', None)
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 116)     # TODO continent / country / department / location / waterfall /
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 117)     #      mountain range :
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 118)     #      link to map search, get weather, near by locations
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 119)     # TODO musician : link to music search
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 120)     # TODO concert tour : ??
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 121)     # TODO film / actor / television  / media franchise :
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 122)     #      links to IMDB / rottentomatoes (or scrap result)
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 123)     # TODO music : link tu musicbrainz / last.fm
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 124)     # TODO book : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 125)     # TODO artist / playwright : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 126)     # TODO compagny : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 127)     # TODO software / os : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 128)     # TODO software engineer : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 129)     # TODO prepared food : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 130)     # TODO website : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 131)     # TODO performing art : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 132)     # TODO prepared food : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 133)     # TODO programming language : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 134)     # TODO file format : ??
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 135) 
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 136)     if len(heading) > 0:
+6bfd5663 (Dalf         2014-09-28 16:51:41 +0200 137)         # TODO get infobox.meta.value where .label='article_title'
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 138)         if image is None and len(attributes) == 0 and len(urls) == 1 and\
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 139)            len(relatedTopics) == 0 and len(content) == 0:
+cac1761a (dalf         2014-10-11 15:49:50 +0200 140)             results.append({
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 141)                            'url': urls[0]['url'],
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 142)                            'title': heading,
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 143)                            'content': content
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 144)                            })
+cac1761a (dalf         2014-10-11 15:49:50 +0200 145)         else:
+cac1761a (dalf         2014-10-11 15:49:50 +0200 146)             results.append({
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 147)                            'infobox': heading,
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 148)                            'id': infobox_id,
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 149)                            'entity': entity,
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 150)                            'content': content,
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 151)                            'img_src': image,
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 152)                            'attributes': attributes,
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 153)                            'urls': urls,
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 154)                            'relatedTopics': relatedTopics
+ffcec383 (dalf         2014-12-07 16:36:20 +0100 155)                            })
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200 156) 
+e91e4e7f (asciimoo     2013-10-14 23:54:33 +0200 157)     return results

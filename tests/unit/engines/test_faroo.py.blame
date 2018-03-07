@@ -1,0 +1,109 @@
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   1) # -*- coding: utf-8 -*-
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   2) from collections import defaultdict
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   3) import mock
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   4) from searx.engines import faroo
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   5) from searx.testing import SearxTestCase
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   6) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   7) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   8) class TestFarooEngine(SearxTestCase):
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100   9) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  10)     def test_request(self):
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  11)         query = 'test_query'
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  12)         dicto = defaultdict(dict)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  13)         dicto['pageno'] = 1
+4d177039 tests/unit/engines/test_faroo.py  (marc         2017-07-20 15:47:20 -0500  14)         dicto['language'] = 'fr-FR'
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  15)         dicto['category'] = 'general'
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  16)         params = faroo.request(query, dicto)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  17)         self.assertIn('url', params)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  18)         self.assertIn(query, params['url'])
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  19)         self.assertIn('faroo.com', params['url'])
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  20)         self.assertIn('en', params['url'])
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  21)         self.assertIn('web', params['url'])
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  22) 
+4d177039 tests/unit/engines/test_faroo.py  (marc         2017-07-20 15:47:20 -0500  23)         dicto['language'] = 'de-DE'
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  24)         params = faroo.request(query, dicto)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  25)         self.assertIn('de', params['url'])
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  26) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  27)     def test_response(self):
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  28)         self.assertRaises(AttributeError, faroo.response, None)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  29)         self.assertRaises(AttributeError, faroo.response, [])
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  30)         self.assertRaises(AttributeError, faroo.response, '')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  31)         self.assertRaises(AttributeError, faroo.response, '[]')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  32) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  33)         response = mock.Mock(text='{}')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  34)         self.assertEqual(faroo.response(response), [])
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  35) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  36)         response = mock.Mock(text='{"data": []}')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  37)         self.assertEqual(faroo.response(response), [])
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  38) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  39)         response = mock.Mock(text='{"data": []}', status_code=429)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  40)         self.assertRaises(Exception, faroo.response, response)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  41) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  42)         json = """
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  43)         {
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  44)           "results": [
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  45)             {
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  46)               "title": "This is the title",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  47)               "kwic": "This is the content",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  48)               "content": "",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  49)               "url": "http://this.is.the.url/",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  50)               "iurl": "",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  51)               "domain": "css3test.com",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  52)               "author": "Jim Dalrymple",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  53)               "news": true,
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  54)               "votes": "10",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  55)               "date": 1360622563000,
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  56)               "related": []
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  57)             },
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  58)             {
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  59)               "title": "This is the title2",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  60)               "kwic": "This is the content2",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  61)               "content": "",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  62)               "url": "http://this.is.the.url2/",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  63)               "iurl": "",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  64)               "domain": "css3test.com",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  65)               "author": "Jim Dalrymple",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  66)               "news": false,
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  67)               "votes": "10",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  68)               "related": []
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  69)             },
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  70)             {
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  71)               "title": "This is the title3",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  72)               "kwic": "This is the content3",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  73)               "content": "",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  74)               "url": "http://this.is.the.url3/",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  75)               "iurl": "http://upload.wikimedia.org/optimized.jpg",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  76)               "domain": "css3test.com",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  77)               "author": "Jim Dalrymple",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  78)               "news": false,
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  79)               "votes": "10",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  80)               "related": []
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  81)             }
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  82)           ],
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  83)           "query": "test",
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  84)           "suggestions": [],
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  85)           "count": 100,
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  86)           "start": 1,
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  87)           "length": 10,
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  88)           "time": "15"
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  89)         }
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  90)         """
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  91)         response = mock.Mock(text=json)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  92)         results = faroo.response(response)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  93)         self.assertEqual(type(results), list)
+0607b167 tests/unit/engines/test_faroo.py  (misnyo       2017-08-30 18:53:00 +0200  94)         self.assertEqual(len(results), 3)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  95)         self.assertEqual(results[0]['title'], 'This is the title')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  96)         self.assertEqual(results[0]['url'], 'http://this.is.the.url/')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  97)         self.assertEqual(results[0]['content'], 'This is the content')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  98)         self.assertEqual(results[1]['title'], 'This is the title2')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100  99)         self.assertEqual(results[1]['url'], 'http://this.is.the.url2/')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 100)         self.assertEqual(results[1]['content'], 'This is the content2')
+0607b167 tests/unit/engines/test_faroo.py  (misnyo       2017-08-30 18:53:00 +0200 101)         self.assertEqual(results[2]['thumbnail'], 'http://upload.wikimedia.org/optimized.jpg')
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 102) 
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 103)         json = """
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 104)         {}
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 105)         """
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 106)         response = mock.Mock(text=json)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 107)         results = faroo.response(response)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 108)         self.assertEqual(type(results), list)
+fb04f766 searx/tests/engines/test_faroo.py (Cqoicebordel 2015-02-07 15:35:12 +0100 109)         self.assertEqual(len(results), 0)

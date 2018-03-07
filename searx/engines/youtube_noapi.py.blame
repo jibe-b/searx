@@ -1,0 +1,89 @@
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  1) # Youtube (Videos)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  2) #
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  3) # @website     https://www.youtube.com/
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  4) # @provide-api yes (https://developers.google.com/apis-explorer/#p/youtube/v3/youtube.search.list)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  5) #
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  6) # @using-api   no
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  7) # @results     HTML
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  8) # @stable      no
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200  9) # @parse       url, title, content, publishedDate, thumbnail, embedded
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 10) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 11) from lxml import html
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 12) from searx.engines.xpath import extract_text
+dafedbfc (Dalf         2015-06-04 18:34:44 +0200 13) from searx.utils import list_get
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 14) from searx.url_utils import quote_plus
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 15) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 16) # engine dependent config
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 17) categories = ['videos', 'music']
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 18) paging = True
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 19) language_support = False
+d2e0cbaf (Noémi Ványi  2016-10-30 20:26:38 +0100 20) time_range_support = True
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 21) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 22) # search-url
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 23) base_url = 'https://www.youtube.com/results'
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 24) search_url = base_url + '?search_query={query}&page={page}'
+d2e0cbaf (Noémi Ványi  2016-10-30 20:26:38 +0100 25) time_range_url = '&sp=EgII{time_range}%253D%253D'
+d2e0cbaf (Noémi Ványi  2016-10-30 20:26:38 +0100 26) time_range_dict = {'day': 'Ag',
+d2e0cbaf (Noémi Ványi  2016-10-30 20:26:38 +0100 27)                    'week': 'Aw',
+b0343568 (Noémi Ványi  2016-12-11 16:41:14 +0100 28)                    'month': 'BA',
+b0343568 (Noémi Ványi  2016-12-11 16:41:14 +0100 29)                    'year': 'BQ'}
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 30) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 31) embedded_url = '<iframe width="540" height="304" ' +\
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 32)     'data-src="//www.youtube-nocookie.com/embed/{videoid}" ' +\
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 33)     'frameborder="0" allowfullscreen></iframe>'
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 34) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 35) base_youtube_url = 'https://www.youtube.com/watch?v='
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 36) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 37) # specific xpath variables
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 38) results_xpath = "//ol/li/div[contains(@class, 'yt-lockup yt-lockup-tile yt-lockup-video vve-check')]"
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 39) url_xpath = './/h3/a/@href'
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 40) title_xpath = './/div[@class="yt-lockup-content"]/h3/a'
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 41) content_xpath = './/div[@class="yt-lockup-content"]/div[@class="yt-lockup-description yt-ui-ellipsis yt-ui-ellipsis-2"]'
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 42) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 43) 
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 44) # returns extract_text on the first result selected by the xpath or None
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 45) def extract_text_from_dom(result, xpath):
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 46)     r = result.xpath(xpath)
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 47)     if len(r) > 0:
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 48)         return extract_text(r[0])
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 49)     return None
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 50) 
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 51) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 52) # do search-request
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 53) def request(query, params):
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 54)     params['url'] = search_url.format(query=quote_plus(query),
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 55)                                       page=params['pageno'])
+d2e0cbaf (Noémi Ványi  2016-10-30 20:26:38 +0100 56)     if params['time_range'] in time_range_dict:
+d2e0cbaf (Noémi Ványi  2016-10-30 20:26:38 +0100 57)         params['url'] += time_range_url.format(time_range=time_range_dict[params['time_range']])
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 58) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 59)     return params
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 60) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 61) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 62) # get response from search-request
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 63) def response(resp):
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 64)     results = []
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 65) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 66)     dom = html.fromstring(resp.text)
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 67) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 68)     # parse results
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 69)     for result in dom.xpath(results_xpath):
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 70)         videoid = list_get(result.xpath('@data-context-item-id'), 0)
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 71)         if videoid is not None:
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 72)             url = base_youtube_url + videoid
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 73)             thumbnail = 'https://i.ytimg.com/vi/' + videoid + '/hqdefault.jpg'
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 74) 
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 75)             title = extract_text_from_dom(result, title_xpath) or videoid
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 76)             content = extract_text_from_dom(result, content_xpath)
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 77) 
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 78)             embedded = embedded_url.format(videoid=videoid)
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 79) 
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 80)             # append result
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 81)             results.append({'url': url,
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 82)                             'title': title,
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 83)                             'content': content,
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 84)                             'template': 'videos.html',
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 85)                             'embedded': embedded,
+4e0f079a (Dalf         2015-06-03 10:12:30 +0200 86)                             'thumbnail': thumbnail})
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 87) 
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 88)     # return results
+f965c978 (Cqoicebordel 2015-05-31 00:25:59 +0200 89)     return results

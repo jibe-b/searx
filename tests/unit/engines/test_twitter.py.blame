@@ -1,0 +1,496 @@
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   1) # -*- coding: utf-8 -*-
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   2) from collections import defaultdict
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   3) import mock
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   4) from searx.engines import twitter
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   5) from searx.testing import SearxTestCase
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   6) 
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   7) 
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   8) class TestTwitterEngine(SearxTestCase):
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100   9) 
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  10)     def test_request(self):
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  11)         query = 'test_query'
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  12)         dicto = defaultdict(dict)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  13)         dicto['pageno'] = 0
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  14)         dicto['language'] = 'fr_FR'
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  15)         params = twitter.request(query, dicto)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  16)         self.assertIn('url', params)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  17)         self.assertIn(query, params['url'])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  18)         self.assertIn('twitter.com', params['url'])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  19)         self.assertIn('cookies', params)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  20)         self.assertIn('lang', params['cookies'])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  21)         self.assertIn('fr', params['cookies']['lang'])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  22) 
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  23)     def test_response(self):
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  24)         self.assertRaises(AttributeError, twitter.response, None)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  25)         self.assertRaises(AttributeError, twitter.response, [])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  26)         self.assertRaises(AttributeError, twitter.response, '')
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  27)         self.assertRaises(AttributeError, twitter.response, '[]')
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  28) 
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  29)         response = mock.Mock(text='<html></html>')
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  30)         self.assertEqual(twitter.response(response), [])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  31) 
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  32)         html = """
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  33)         <li class="js-stream-item stream-item stream-item expanding-stream-item" data-item-id="563005573290287105"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  34)             id="stream-item-tweet-563005573290287105" data-item-type="tweet">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  35)             <div class="tweet original-tweet js-stream-tweet js-actionable-tweet js-profile-popup-actionable
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  36)                 js-original-tweet has-cards has-native-media" data-tweet-id="563005573290287105" data-disclosure-type=""
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  37)                 data-item-id="563005573290287105" data-screen-name="Jalopnik" data-name="Jalopnik"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  38)                 data-user-id="3060631" data-has-native-media="true" data-has-cards="true" data-card-type="photo"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  39)                 data-expanded-footer="&lt;div class=&quot;js-tweet-details-fixer
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  40)                 tweet-details-fixer&quot;&gt;&#10;&#10;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  41)                 &lt;div class=&quot;cards-media-container js-media-container&quot;&gt;&lt;div
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  42)                 data-card-url=&quot;//twitter.com/Jalopnik/status/563005573290287105/photo/1&quot; data-card-type=&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  43)                 photo&quot; class=&quot;cards-base cards-multimedia&quot; data-element-context=&quot;platform_photo_card
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  44)                 &quot;&gt;&#10;&#10;&#10;  &lt;a class=&quot;media media-thumbnail twitter-timeline-link is-preview
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  45)                 &quot; data-url=&quot;https://pbs.twimg.com/media/B9Aylf5IMAAuziP.jpg:large&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  46)                 data-resolved-url-large=&quot;https://pbs.twimg.com/media/B9Aylf5IMAAuziP.jpg:large&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  47)                 href=&quot;//twitter.com/Jalopnik/status/563005573290287105/photo/1&quot;&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  48)                 &lt;div class=&quot;&quot;&gt;&#10; &lt;img src=&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  49)                 https://pbs.twimg.com/media/B9Aylf5IMAAuziP.jpg&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  50)                 alt=&quot;Embedded image permalink&quot; width=&quot;636&quot; height=&quot;309&quot;&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  51)                 &lt;/div&gt;&#10;&#10;  &lt;/a&gt;&#10;&#10;  &lt;div class=&quot;cards-content&quot;&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  52)                 &lt;div class=&quot;byline&quot;&gt;&#10;      &#10;    &lt;/div&gt;&#10;    &#10;  &lt;/div&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  53)                 &#10;&lt;/div&gt;&#10;&#10;&#10;&#10;&#10;&lt;/div&gt;&#10;&#10;&#10;&#10;  &lt;div
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  54)                 class=&quot;js-machine-translated-tweet-container&quot;&gt;&lt;/div&gt;&#10;    &lt;div
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  55)                 class=&quot;js-tweet-stats-container tweet-stats-container &quot;&gt;&#10;    &lt;/div&gt;&#10;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  56)                 &lt;div class=&quot;client-and-actions&quot;&gt;&#10;  &lt;span class=&quot;metadata&quot;&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  57)                 &lt;span&gt;5:06 PM - 4 Feb 2015&lt;/span&gt;&#10;&#10;       &amp;middot; &lt;a
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  58)                 class=&quot;permalink-link js-permalink js-nav&quot; href=&quot;/Jalopnik/status/563005573290287105
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  59)                 &quot;tabindex=&quot;-1&quot;&gt;Details&lt;/a&gt;&#10;    &#10;&#10;        &#10;        &#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  60)                 &#10;&#10;  &lt;/span&gt;&#10;&lt;/div&gt;&#10;&#10;&#10;&lt;/div&gt;&#10;" data-you-follow="false"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  61)                 data-you-block="false">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  62)                 <div class="context">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  63)                 </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  64)                 <div class="content">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  65)                     <div class="stream-item-header">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  66)                         <a class="account-group js-account-group js-action-profile js-user-profile-link js-nav"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  67)                             href="/Jalopnik" data-user-id="3060631">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  68)                             <img class="avatar js-action-profile-avatar"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  69)                                 src="https://pbs.twimg.com/profile_images/2976430168/5cd4a59_bigger.jpeg" alt="">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  70)                             <strong class="fullname js-action-profile-name show-popup-with-id" data-aria-label-part>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  71)                                 Jalopnik
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  72)                             </strong>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  73)                             <span>&rlm;</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  74)                             <span class="username js-action-profile-name" data-aria-label-part>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  75)                             <s>@</s><b>TitleName</b>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  76)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  77)                         </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  78)                         <small class="time">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  79)                         <a href="/this.is.the.url"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  80)                             class="tweet-timestamp js-permalink js-nav js-tooltip" title="5:06 PM - 4 Feb 2015" >
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  81)                             <span class="u-hiddenVisually" data-aria-label-part="last">17 minutes ago</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  82)                         </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  83)                         </small>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  84)                     </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  85)                     <p class="js-tweet-text tweet-text" lang="en" data-aria-label-part="0">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  86)                         This is the content étude à€
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  87)                         <a href="http://t.co/nRWsqQAwBL" rel="nofollow" dir="ltr"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  88)                             data-expanded-url="http://jalo.ps/ReMENu4" class="twitter-timeline-link"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  89)                             target="_blank" title="http://jalo.ps/ReMENu4" >
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  90)                         <span class="tco-ellipsis">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  91)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  92)                         <span class="invisible">http://</span><span class="js-display-url">link.in.tweet</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  93)                         <span class="invisible"></span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  94)                         <span class="tco-ellipsis">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  95)                             <span class="invisible">&nbsp;</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  96)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  97)                     </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  98)                     <a href="http://t.co/rbFsfeE0l3" class="twitter-timeline-link u-hidden"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100  99)                         data-pre-embedded="true" dir="ltr">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 100)                         pic.twitter.com/rbFsfeE0l3
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 101)                     </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 102)                     </p>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 103)                     <div class="expanded-content js-tweet-details-dropdown">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 104)                     </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 105)                     <div class="stream-item-footer">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 106)                         <a class="details with-icn js-details" href="/Jalopnik/status/563005573290287105">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 107)                             <span class="Icon Icon--photo">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 108)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 109)                             <b>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 110)                                 <span class="expand-stream-item js-view-details">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 111)                                     View photo
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 112)                                 </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 113)                                 <span class="collapse-stream-item  js-hide-details">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 114)                                     Hide photo
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 115)                                 </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 116)                             </b>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 117)                         </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 118)                         <span class="ProfileTweet-action--reply u-hiddenVisually">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 119)                             <span class="ProfileTweet-actionCount" aria-hidden="true" data-tweet-stat-count="0">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 120)                                 <span class="ProfileTweet-actionCountForAria" >0 replies</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 121)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 122)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 123)                         <span class="ProfileTweet-action--retweet u-hiddenVisually">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 124)                             <span class="ProfileTweet-actionCount"  data-tweet-stat-count="8">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 125)                                 <span class="ProfileTweet-actionCountForAria" data-aria-label-part>8 retweets</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 126)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 127)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 128)                         <span class="ProfileTweet-action--favorite u-hiddenVisually">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 129)                             <span class="ProfileTweet-actionCount"  data-tweet-stat-count="14">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 130)                                 <span class="ProfileTweet-actionCountForAria" data-aria-label-part>14 favorites</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 131)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 132)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 133)                         <div role="group" aria-label="Tweet actions" class="ProfileTweet-actionList u-cf js-actions">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 134)                             <div class="ProfileTweet-action ProfileTweet-action--reply">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 135)                                 <button class="ProfileTweet-actionButton u-textUserColorHover js-actionButton
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 136)                                     js-actionReply" data-modal="ProfileTweet-reply" type="button" title="Reply">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 137)                                     <span class="Icon Icon--reply">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 138)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 139)                                     <span class="u-hiddenVisually">Reply</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 140)                                     <span class="ProfileTweet-actionCount u-textUserColorHover
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 141)                                         ProfileTweet-actionCount--isZero">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 142)                                         <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 143)                                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 144)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 145)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 146)                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 147)                             <div class="ProfileTweet-action ProfileTweet-action--retweet js-toggleState js-toggleRt">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 148)                                 <button class="ProfileTweet-actionButton  js-actionButton js-actionRetweet js-tooltip"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 149)                                     title="Retweet" data-modal="ProfileTweet-retweet" type="button">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 150)                                     <span class="Icon Icon--retweet">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 151)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 152)                                     <span class="u-hiddenVisually">Retweet</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 153)                                     <span class="ProfileTweet-actionCount">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 154)                                         <span class="ProfileTweet-actionCountForPresentation">8</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 155)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 156)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 157)                                 <button class="ProfileTweet-actionButtonUndo js-actionButton js-actionRetweet"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 158)                                     data-modal="ProfileTweet-retweet" title="Undo retweet" type="button">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 159)                                     <span class="Icon Icon--retweet">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 160)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 161)                                     <span class="u-hiddenVisually">Retweeted</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 162)                                     <span class="ProfileTweet-actionCount">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 163)                                         <span class="ProfileTweet-actionCountForPresentation">8</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 164)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 165)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 166)                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 167)                             <div class="ProfileTweet-action ProfileTweet-action--favorite js-toggleState">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 168)                                 <button class="ProfileTweet-actionButton js-actionButton js-actionFavorite js-tooltip"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 169)                                     title="Favorite" type="button">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 170)                                     <span class="Icon Icon--favorite">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 171)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 172)                                     <span class="u-hiddenVisually">Favorite</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 173)                                     <span class="ProfileTweet-actionCount">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 174)                                         <span class="ProfileTweet-actionCountForPresentation">14</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 175)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 176)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 177)                                 <button class="ProfileTweet-actionButtonUndo u-linkClean js-actionButton
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 178)                                     js-actionFavorite" title="Undo favorite" type="button">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 179)                                     <span class="Icon Icon--favorite">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 180)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 181)                                     <span class="u-hiddenVisually">Favorited</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 182)                                     <span class="ProfileTweet-actionCount">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 183)                                         <span class="ProfileTweet-actionCountForPresentation">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 184)                                             14
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 185)                                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 186)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 187)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 188)                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 189)                             <div class="ProfileTweet-action ProfileTweet-action--more js-more-ProfileTweet-actions">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 190)                                 <div class="dropdown">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 191)                                     <button class="ProfileTweet-actionButton u-textUserColorHover dropdown-toggle
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 192)                                         js-tooltip js-dropdown-toggle" type="button" title="More">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 193)                                         <span class="Icon Icon--dots">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 194)                                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 195)                                         <span class="u-hiddenVisually">More</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 196)                                     </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 197)                                     <div class="dropdown-menu">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 198)                                         <div class="dropdown-caret">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 199)                                             <div class="caret-outer">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 200)                                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 201)                                             <div class="caret-inner">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 202)                                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 203)                                         </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 204)                                         <ul>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 205)                                             <li class="share-via-dm js-actionShareViaDM" data-nav="share_tweet_dm">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 206)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 207)                                                     Share via Direct Message
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 208)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 209)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 210)                                             <li class="embed-link js-actionEmbedTweet" data-nav="embed_tweet">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 211)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 212)                                                     Embed Tweet
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 213)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 214)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 215)                                             <li class="mute-user-item pretty-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 216)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 217)                                                     Mute
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 218)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 219)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 220)                                             <li class="unmute-user-item pretty-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 221)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 222)                                                     Unmute
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 223)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 224)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 225)                                             <li class="block-or-report-link js-actionBlockOrReport"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 226)                                                 data-nav="block_or_report">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 227)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 228)                                                     Block or report
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 229)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 230)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 231)                                         </ul>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 232)                                     </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 233)                                 </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 234)                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 235)                         </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 236)                     </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 237)                 </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 238)             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 239)         </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 240)         """
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 241)         response = mock.Mock(text=html)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 242)         results = twitter.response(response)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 243)         self.assertEqual(type(results), list)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 244)         self.assertEqual(len(results), 1)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 245)         self.assertEqual(results[0]['title'], '@TitleName')
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 246)         self.assertEqual(results[0]['url'], 'https://twitter.com/this.is.the.url')
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 247)         self.assertIn(u'This is the content', results[0]['content'])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 248)         # self.assertIn(u'This is the content étude à€', results[0]['content'])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 249) 
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 250)         html = """
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 251)         <li class="js-stream-item stream-item stream-item expanding-stream-item" data-item-id="563005573290287105"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 252)             id="stream-item-tweet-563005573290287105" data-item-type="tweet">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 253)             <div class="tweet original-tweet js-stream-tweet js-actionable-tweet js-profile-popup-actionable
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 254)                 js-original-tweet has-cards has-native-media" data-tweet-id="563005573290287105" data-disclosure-type=""
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 255)                 data-item-id="563005573290287105" data-screen-name="Jalopnik" data-name="Jalopnik"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 256)                 data-user-id="3060631" data-has-native-media="true" data-has-cards="true" data-card-type="photo"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 257)                 data-expanded-footer="&lt;div class=&quot;js-tweet-details-fixer
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 258)                 tweet-details-fixer&quot;&gt;&#10;&#10;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 259)                 &lt;div class=&quot;cards-media-container js-media-container&quot;&gt;&lt;div
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 260)                 data-card-url=&quot;//twitter.com/Jalopnik/status/563005573290287105/photo/1&quot; data-card-type=&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 261)                 photo&quot; class=&quot;cards-base cards-multimedia&quot; data-element-context=&quot;platform_photo_card
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 262)                 &quot;&gt;&#10;&#10;&#10;  &lt;a class=&quot;media media-thumbnail twitter-timeline-link is-preview
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 263)                 &quot; data-url=&quot;https://pbs.twimg.com/media/B9Aylf5IMAAuziP.jpg:large&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 264)                 data-resolved-url-large=&quot;https://pbs.twimg.com/media/B9Aylf5IMAAuziP.jpg:large&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 265)                 href=&quot;//twitter.com/Jalopnik/status/563005573290287105/photo/1&quot;&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 266)                 &lt;div class=&quot;&quot;&gt;&#10; &lt;img src=&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 267)                 https://pbs.twimg.com/media/B9Aylf5IMAAuziP.jpg&quot;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 268)                 alt=&quot;Embedded image permalink&quot; width=&quot;636&quot; height=&quot;309&quot;&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 269)                 &lt;/div&gt;&#10;&#10;  &lt;/a&gt;&#10;&#10;  &lt;div class=&quot;cards-content&quot;&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 270)                 &lt;div class=&quot;byline&quot;&gt;&#10;      &#10;    &lt;/div&gt;&#10;    &#10;  &lt;/div&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 271)                 &#10;&lt;/div&gt;&#10;&#10;&#10;&#10;&#10;&lt;/div&gt;&#10;&#10;&#10;&#10;  &lt;div
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 272)                 class=&quot;js-machine-translated-tweet-container&quot;&gt;&lt;/div&gt;&#10;    &lt;div
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 273)                 class=&quot;js-tweet-stats-container tweet-stats-container &quot;&gt;&#10;    &lt;/div&gt;&#10;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 274)                 &lt;div class=&quot;client-and-actions&quot;&gt;&#10;  &lt;span class=&quot;metadata&quot;&gt;&#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 275)                 &lt;span&gt;5:06 PM - 4 Feb 2015&lt;/span&gt;&#10;&#10;       &amp;middot; &lt;a
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 276)                 class=&quot;permalink-link js-permalink js-nav&quot; href=&quot;/Jalopnik/status/563005573290287105
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 277)                 &quot;tabindex=&quot;-1&quot;&gt;Details&lt;/a&gt;&#10;    &#10;&#10;        &#10;        &#10;
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 278)                 &#10;&#10;  &lt;/span&gt;&#10;&lt;/div&gt;&#10;&#10;&#10;&lt;/div&gt;&#10;" data-you-follow="false"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 279)                 data-you-block="false">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 280)                 <div class="context">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 281)                 </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 282)                 <div class="content">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 283)                     <div class="stream-item-header">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 284)                         <a class="account-group js-account-group js-action-profile js-user-profile-link js-nav"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 285)                             href="/Jalopnik" data-user-id="3060631">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 286)                             <img class="avatar js-action-profile-avatar"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 287)                                 src="https://pbs.twimg.com/profile_images/2976430168/5cd4a59_bigger.jpeg" alt="">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 288)                             <strong class="fullname js-action-profile-name show-popup-with-id" data-aria-label-part>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 289)                                 Jalopnik
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 290)                             </strong>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 291)                             <span>&rlm;</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 292)                             <span class="username js-action-profile-name" data-aria-label-part>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 293)                             <s>@</s><b>TitleName</b>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 294)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 295)                         </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 296)                         <small class="time">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 297)                         <a href="/this.is.the.url"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 298)                             class="tweet-timestamp js-permalink js-nav js-tooltip" title="5:06 PM - 4 Feb 2015" >
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 299)                             <span class="_timestamp js-short-timestamp js-relative-timestamp"  data-time="1423065963"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 300)                                 data-time-ms="1423065963000" data-long-form="true" aria-hidden="true">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 301)                                 17m
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 302)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 303)                             <span class="u-hiddenVisually" data-aria-label-part="last">17 minutes ago</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 304)                         </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 305)                         </small>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 306)                     </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 307)                     <p class="js-tweet-text tweet-text" lang="en" data-aria-label-part="0">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 308)                         This is the content étude à€
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 309)                         <a href="http://t.co/nRWsqQAwBL" rel="nofollow" dir="ltr"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 310)                             data-expanded-url="http://jalo.ps/ReMENu4" class="twitter-timeline-link"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 311)                             target="_blank" title="http://jalo.ps/ReMENu4" >
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 312)                         <span class="tco-ellipsis">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 313)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 314)                         <span class="invisible">http://</span><span class="js-display-url">link.in.tweet</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 315)                         <span class="invisible"></span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 316)                         <span class="tco-ellipsis">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 317)                             <span class="invisible">&nbsp;</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 318)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 319)                     </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 320)                     <a href="http://t.co/rbFsfeE0l3" class="twitter-timeline-link u-hidden"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 321)                         data-pre-embedded="true" dir="ltr">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 322)                         pic.twitter.com/rbFsfeE0l3
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 323)                     </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 324)                     </p>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 325)                     <div class="expanded-content js-tweet-details-dropdown">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 326)                     </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 327)                     <div class="stream-item-footer">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 328)                         <a class="details with-icn js-details" href="/Jalopnik/status/563005573290287105">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 329)                             <span class="Icon Icon--photo">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 330)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 331)                             <b>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 332)                                 <span class="expand-stream-item js-view-details">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 333)                                     View photo
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 334)                                 </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 335)                                 <span class="collapse-stream-item  js-hide-details">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 336)                                     Hide photo
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 337)                                 </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 338)                             </b>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 339)                         </a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 340)                         <span class="ProfileTweet-action--reply u-hiddenVisually">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 341)                             <span class="ProfileTweet-actionCount" aria-hidden="true" data-tweet-stat-count="0">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 342)                                 <span class="ProfileTweet-actionCountForAria" >0 replies</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 343)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 344)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 345)                         <span class="ProfileTweet-action--retweet u-hiddenVisually">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 346)                             <span class="ProfileTweet-actionCount"  data-tweet-stat-count="8">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 347)                                 <span class="ProfileTweet-actionCountForAria" data-aria-label-part>8 retweets</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 348)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 349)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 350)                         <span class="ProfileTweet-action--favorite u-hiddenVisually">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 351)                             <span class="ProfileTweet-actionCount"  data-tweet-stat-count="14">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 352)                                 <span class="ProfileTweet-actionCountForAria" data-aria-label-part>14 favorites</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 353)                             </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 354)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 355)                         <div role="group" aria-label="Tweet actions" class="ProfileTweet-actionList u-cf js-actions">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 356)                             <div class="ProfileTweet-action ProfileTweet-action--reply">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 357)                                 <button class="ProfileTweet-actionButton u-textUserColorHover js-actionButton
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 358)                                     js-actionReply" data-modal="ProfileTweet-reply" type="button" title="Reply">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 359)                                     <span class="Icon Icon--reply">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 360)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 361)                                     <span class="u-hiddenVisually">Reply</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 362)                                     <span class="ProfileTweet-actionCount u-textUserColorHover
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 363)                                         ProfileTweet-actionCount--isZero">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 364)                                         <span class="ProfileTweet-actionCountForPresentation" aria-hidden="true">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 365)                                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 366)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 367)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 368)                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 369)                             <div class="ProfileTweet-action ProfileTweet-action--retweet js-toggleState js-toggleRt">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 370)                                 <button class="ProfileTweet-actionButton  js-actionButton js-actionRetweet js-tooltip"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 371)                                     title="Retweet" data-modal="ProfileTweet-retweet" type="button">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 372)                                     <span class="Icon Icon--retweet">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 373)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 374)                                     <span class="u-hiddenVisually">Retweet</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 375)                                     <span class="ProfileTweet-actionCount">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 376)                                         <span class="ProfileTweet-actionCountForPresentation">8</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 377)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 378)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 379)                                 <button class="ProfileTweet-actionButtonUndo js-actionButton js-actionRetweet"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 380)                                     data-modal="ProfileTweet-retweet" title="Undo retweet" type="button">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 381)                                     <span class="Icon Icon--retweet">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 382)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 383)                                     <span class="u-hiddenVisually">Retweeted</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 384)                                     <span class="ProfileTweet-actionCount">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 385)                                         <span class="ProfileTweet-actionCountForPresentation">8</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 386)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 387)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 388)                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 389)                             <div class="ProfileTweet-action ProfileTweet-action--favorite js-toggleState">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 390)                                 <button class="ProfileTweet-actionButton js-actionButton js-actionFavorite js-tooltip"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 391)                                     title="Favorite" type="button">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 392)                                     <span class="Icon Icon--favorite">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 393)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 394)                                     <span class="u-hiddenVisually">Favorite</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 395)                                     <span class="ProfileTweet-actionCount">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 396)                                         <span class="ProfileTweet-actionCountForPresentation">14</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 397)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 398)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 399)                                 <button class="ProfileTweet-actionButtonUndo u-linkClean js-actionButton
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 400)                                     js-actionFavorite" title="Undo favorite" type="button">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 401)                                     <span class="Icon Icon--favorite">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 402)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 403)                                     <span class="u-hiddenVisually">Favorited</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 404)                                     <span class="ProfileTweet-actionCount">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 405)                                         <span class="ProfileTweet-actionCountForPresentation">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 406)                                             14
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 407)                                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 408)                                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 409)                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 410)                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 411)                             <div class="ProfileTweet-action ProfileTweet-action--more js-more-ProfileTweet-actions">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 412)                                 <div class="dropdown">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 413)                                     <button class="ProfileTweet-actionButton u-textUserColorHover dropdown-toggle
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 414)                                         js-tooltip js-dropdown-toggle" type="button" title="More">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 415)                                         <span class="Icon Icon--dots">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 416)                                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 417)                                         <span class="u-hiddenVisually">More</span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 418)                                     </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 419)                                     <div class="dropdown-menu">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 420)                                         <div class="dropdown-caret">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 421)                                             <div class="caret-outer">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 422)                                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 423)                                             <div class="caret-inner">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 424)                                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 425)                                         </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 426)                                         <ul>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 427)                                             <li class="share-via-dm js-actionShareViaDM" data-nav="share_tweet_dm">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 428)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 429)                                                     Share via Direct Message
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 430)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 431)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 432)                                             <li class="embed-link js-actionEmbedTweet" data-nav="embed_tweet">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 433)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 434)                                                     Embed Tweet
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 435)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 436)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 437)                                             <li class="mute-user-item pretty-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 438)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 439)                                                     Mute
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 440)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 441)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 442)                                             <li class="unmute-user-item pretty-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 443)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 444)                                                     Unmute
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 445)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 446)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 447)                                             <li class="block-or-report-link js-actionBlockOrReport"
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 448)                                                 data-nav="block_or_report">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 449)                                                 <button type="button" class="dropdown-link">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 450)                                                     Block or report
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 451)                                                 </button>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 452)                                             </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 453)                                         </ul>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 454)                                     </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 455)                                 </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 456)                             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 457)                         </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 458)                     </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 459)                 </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 460)             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 461)         </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 462)         """
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 463)         response = mock.Mock(text=html)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 464)         results = twitter.response(response)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 465)         self.assertEqual(type(results), list)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 466)         self.assertEqual(len(results), 1)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 467)         self.assertEqual(results[0]['title'], '@TitleName')
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 468)         self.assertEqual(results[0]['url'], 'https://twitter.com/this.is.the.url')
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 469)         self.assertIn(u'This is the content', results[0]['content'])
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 470) 
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 471)         html = """
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 472)         <li class="b_algo" u="0|5109|4755453613245655|UAGjXgIrPH5yh-o5oNHRx_3Zta87f_QO">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 473)             <div Class="sa_mc">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 474)                 <div class="sb_tlst">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 475)                     <h2>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 476)                         <a href="http://this.should.be.the.link/" h="ID=SERP,5124.1">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 477)                         <strong>This</strong> should be the title</a>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 478)                     </h2>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 479)                 </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 480)                 <div class="sb_meta">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 481)                 <cite>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 482)                 <strong>this</strong>.meta.com</cite>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 483)                     <span class="c_tlbxTrg">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 484)                         <span class="c_tlbxH" H="BASE:CACHEDPAGEDEFAULT" K="SERP,5125.1">
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 485)                         </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 486)                     </span>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 487)                 </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 488)                 <p>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 489)                 <strong>This</strong> should be the content.</p>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 490)             </div>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 491)         </li>
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 492)         """
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 493)         response = mock.Mock(text=html)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 494)         results = twitter.response(response)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 495)         self.assertEqual(type(results), list)
+d6e511fc searx/tests/engines/test_twitter.py (Cqoicebordel 2015-02-04 19:39:31 +0100 496)         self.assertEqual(len(results), 0)

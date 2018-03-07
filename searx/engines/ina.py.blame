@@ -1,0 +1,87 @@
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  1) #  INA (Videos)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  2) #
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  3) # @website     https://www.ina.fr/
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  4) # @provide-api no
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  5) #
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  6) # @using-api   no
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  7) # @results     HTML (using search portal)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  8) # @stable      no (HTML can change)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  9) # @parse       url, title, content, publishedDate, thumbnail
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 10) #
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 11) # @todo        set content-parameter with correct data
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 12) # @todo        embedded (needs some md5 from video page)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 13) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 14) from json import loads
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 15) from lxml import html
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 16) from dateutil import parser
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 17) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 18) from searx.url_utils import urlencode
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 19) 
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 20) try:
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 21)     from HTMLParser import HTMLParser
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 22) except:
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 23)     from html.parser import HTMLParser
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 24) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 25) # engine dependent config
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 26) categories = ['videos']
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 27) paging = True
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 28) page_size = 48
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 29) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 30) # search-url
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 31) base_url = 'https://www.ina.fr'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 32) search_url = base_url + '/layout/set/ajax/recherche/result?autopromote=&hf={ps}&b={start}&type=Video&r=&{query}'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 33) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 34) # specific xpath variables
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 35) results_xpath = '//div[contains(@class,"search-results--list")]/div[@class="media"]'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 36) url_xpath = './/a/@href'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 37) title_xpath = './/h3[@class="h3--title media-heading"]'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 38) thumbnail_xpath = './/img/@src'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 39) publishedDate_xpath = './/span[@class="broadcast"]'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 40) content_xpath = './/p[@class="media-body__summary"]'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 41) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 42) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 43) # do search-request
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 44) def request(query, params):
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 45)     params['url'] = search_url.format(ps=page_size,
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 46)                                       start=params['pageno'] * page_size,
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 47)                                       query=urlencode({'q': query}))
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 48) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 49)     return params
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 50) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 51) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 52) # get response from search-request
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 53) def response(resp):
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 54)     results = []
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 55) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 56)     # we get html in a JSON container...
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 57)     response = loads(resp.text)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 58)     if "content" not in response:
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 59)         return []
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 60)     dom = html.fromstring(response["content"])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 61)     p = HTMLParser()
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 62) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 63)     # parse results
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 64)     for result in dom.xpath(results_xpath):
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 65)         videoid = result.xpath(url_xpath)[0]
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 66)         url = base_url + videoid
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 67)         title = p.unescape(extract_text(result.xpath(title_xpath)))
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 68)         thumbnail = extract_text(result.xpath(thumbnail_xpath)[0])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 69)         if thumbnail[0] == '/':
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 70)             thumbnail = base_url + thumbnail
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 71)         d = extract_text(result.xpath(publishedDate_xpath)[0])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 72)         d = d.split('/')
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 73)         # force ISO date to avoid wrong parsing
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 74)         d = "%s-%s-%s" % (d[2], d[1], d[0])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 75)         publishedDate = parser.parse(d)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 76)         content = extract_text(result.xpath(content_xpath))
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 77) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 78)         # append result
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 79)         results.append({'url': url,
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 80)                         'title': title,
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 81)                         'content': content,
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 82)                         'template': 'videos.html',
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 83)                         'publishedDate': publishedDate,
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 84)                         'thumbnail': thumbnail})
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 85) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 86)     # return results
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 87)     return results

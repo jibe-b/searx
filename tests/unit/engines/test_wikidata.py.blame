@@ -1,0 +1,503 @@
+a0a12849 (marc 2016-06-06 01:08:36 -0500   1) # -*- coding: utf-8 -*-
+a0a12849 (marc 2016-06-06 01:08:36 -0500   2) from lxml.html import fromstring
+a0a12849 (marc 2016-06-06 01:08:36 -0500   3) from collections import defaultdict
+a0a12849 (marc 2016-06-06 01:08:36 -0500   4) import mock
+a0a12849 (marc 2016-06-06 01:08:36 -0500   5) from searx.engines import wikidata
+a0a12849 (marc 2016-06-06 01:08:36 -0500   6) from searx.testing import SearxTestCase
+a0a12849 (marc 2016-06-06 01:08:36 -0500   7) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500   8) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500   9) class TestWikidataEngine(SearxTestCase):
+a0a12849 (marc 2016-06-06 01:08:36 -0500  10) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500  11)     def test_request(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500  12)         query = 'test_query'
+a0a12849 (marc 2016-06-06 01:08:36 -0500  13)         dicto = defaultdict(dict)
+4d177039 (marc 2017-07-20 15:47:20 -0500  14)         dicto['language'] = 'en-US'
+a0a12849 (marc 2016-06-06 01:08:36 -0500  15)         params = wikidata.request(query, dicto)
+a0a12849 (marc 2016-06-06 01:08:36 -0500  16)         self.assertIn('url', params)
+a0a12849 (marc 2016-06-06 01:08:36 -0500  17)         self.assertIn(query, params['url'])
+a0a12849 (marc 2016-06-06 01:08:36 -0500  18)         self.assertIn('wikidata.org', params['url'])
+a0a12849 (marc 2016-06-06 01:08:36 -0500  19)         self.assertIn('en', params['url'])
+a0a12849 (marc 2016-06-06 01:08:36 -0500  20) 
+4d177039 (marc 2017-07-20 15:47:20 -0500  21)         dicto['language'] = 'es-ES'
+a0a12849 (marc 2016-06-06 01:08:36 -0500  22)         params = wikidata.request(query, dicto)
+a0a12849 (marc 2016-06-06 01:08:36 -0500  23)         self.assertIn(query, params['url'])
+a0a12849 (marc 2016-06-06 01:08:36 -0500  24)         self.assertIn('es', params['url'])
+a0a12849 (marc 2016-06-06 01:08:36 -0500  25) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500  26)     # successful cases are not tested here to avoid sending additional requests
+a0a12849 (marc 2016-06-06 01:08:36 -0500  27)     def test_response(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500  28)         self.assertRaises(AttributeError, wikidata.response, None)
+a0a12849 (marc 2016-06-06 01:08:36 -0500  29)         self.assertRaises(AttributeError, wikidata.response, [])
+a0a12849 (marc 2016-06-06 01:08:36 -0500  30)         self.assertRaises(AttributeError, wikidata.response, '')
+a0a12849 (marc 2016-06-06 01:08:36 -0500  31)         self.assertRaises(AttributeError, wikidata.response, '[]')
+a0a12849 (marc 2016-06-06 01:08:36 -0500  32) 
+4d177039 (marc 2017-07-20 15:47:20 -0500  33)         response = mock.Mock(text='<html></html>', search_params={"language": "en"})
+a0a12849 (marc 2016-06-06 01:08:36 -0500  34)         self.assertEqual(wikidata.response(response), [])
+a0a12849 (marc 2016-06-06 01:08:36 -0500  35) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500  36)     def test_getDetail(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500  37)         response = {}
+a0a12849 (marc 2016-06-06 01:08:36 -0500  38)         results = wikidata.getDetail(response, "Q123", "en", "en-US")
+a0a12849 (marc 2016-06-06 01:08:36 -0500  39)         self.assertEqual(results, [])
+a0a12849 (marc 2016-06-06 01:08:36 -0500  40) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500  41)         title_html = '<div><div class="wikibase-title-label">Test</div></div>'
+a0a12849 (marc 2016-06-06 01:08:36 -0500  42)         html = """
+a0a12849 (marc 2016-06-06 01:08:36 -0500  43)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  44)             <div class="wikibase-entitytermsview-heading-description">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  45)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  46)             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  47)                 <ul class="wikibase-sitelinklistview-listview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  48)                     <li data-wb-siteid="enwiki"><a href="http://en.wikipedia.org/wiki/Test">Test</a></li>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  49)                 </ul>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  50)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  51)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  52)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500  53)         response = {"parse": {"displaytitle": title_html, "text": html}}
+a0a12849 (marc 2016-06-06 01:08:36 -0500  54) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500  55)         results = wikidata.getDetail(response, "Q123", "en", "en-US")
+a0a12849 (marc 2016-06-06 01:08:36 -0500  56)         self.assertEqual(len(results), 1)
+a0a12849 (marc 2016-06-06 01:08:36 -0500  57)         self.assertEqual(results[0]['url'], 'https://en.wikipedia.org/wiki/Test')
+a0a12849 (marc 2016-06-06 01:08:36 -0500  58) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500  59)         title_html = """
+a0a12849 (marc 2016-06-06 01:08:36 -0500  60)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  61)             <div class="wikibase-title-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  62)                 <span lang="en">Test</span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  63)                 <sup class="wb-language-fallback-indicator">English</sup>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  64)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  65)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  66)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500  67)         html = """
+a0a12849 (marc 2016-06-06 01:08:36 -0500  68)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  69)             <div class="wikibase-entitytermsview-heading-description">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  70)                 <span lang="en">Description</span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  71)                 <sup class="wb-language-fallback-indicator">English</sup>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  72)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  73)             <div id="P856">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  74)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  75)                     <a href="/wiki/Property:P856">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  76)                         <span lang="en">official website</span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  77)                         <sup class="wb-language-fallback-indicator">English</sup>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  78)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  79)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  80)                 <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  81)                     <a class="external free" href="https://officialsite.com">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  82)                         https://officialsite.com
+a0a12849 (marc 2016-06-06 01:08:36 -0500  83)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  84)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  85)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  86)             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  87)                 <ul class="wikibase-sitelinklistview-listview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500  88)                     <li data-wb-siteid="enwiki"><a href="http://en.wikipedia.org/wiki/Test">Test</a></li>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  89)                 </ul>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  90)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  91)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500  92)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500  93)         response = {"parse": {"displaytitle": title_html, "text": html}}
+a0a12849 (marc 2016-06-06 01:08:36 -0500  94) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500  95)         results = wikidata.getDetail(response, "Q123", "yua", "yua_MX")
+a0a12849 (marc 2016-06-06 01:08:36 -0500  96)         self.assertEqual(len(results), 2)
+ad58b14b (marc 2016-06-27 23:35:43 -0500  97)         self.assertEqual(results[0]['title'], 'Official website')
+a0a12849 (marc 2016-06-06 01:08:36 -0500  98)         self.assertEqual(results[0]['url'], 'https://officialsite.com')
+a0a12849 (marc 2016-06-06 01:08:36 -0500  99) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 100)         self.assertEqual(results[1]['infobox'], 'Test')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 101)         self.assertEqual(results[1]['id'], None)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 102)         self.assertEqual(results[1]['content'], 'Description')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 103)         self.assertEqual(results[1]['attributes'], [])
+ad58b14b (marc 2016-06-27 23:35:43 -0500 104)         self.assertEqual(results[1]['urls'][0]['title'], 'Official website')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 105)         self.assertEqual(results[1]['urls'][0]['url'], 'https://officialsite.com')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 106)         self.assertEqual(results[1]['urls'][1]['title'], 'Wikipedia (en)')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 107)         self.assertEqual(results[1]['urls'][1]['url'], 'https://en.wikipedia.org/wiki/Test')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 108) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 109)     def test_add_image(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500 110)         image_src = wikidata.add_image(fromstring("<div></div>"))
+a0a12849 (marc 2016-06-06 01:08:36 -0500 111)         self.assertEqual(image_src, None)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 112) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 113)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 114)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 115)             <div id="P18">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 116)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 117)                     <a href="/wiki/Property:P18">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 118)                         image
+a0a12849 (marc 2016-06-06 01:08:36 -0500 119)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 120)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 121)                 <div class="wikibase-statementlistview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 122)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 123)                         <div class="wikibase-statementview-rankselector">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 124)                             <span class="wikibase-rankselector-normal"></span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 125)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 126)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 127)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 128)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 129)                                     <a href="https://commons.wikimedia.org/wiki/File:image.png">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 130)                                         image.png
+a0a12849 (marc 2016-06-06 01:08:36 -0500 131)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 132)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 133)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 134)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 135)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 136)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 137)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 138)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 139)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 140)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 141) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 142)         image_src = wikidata.add_image(html_etree)
+ad58b14b (marc 2016-06-27 23:35:43 -0500 143)         self.assertEqual(image_src,
+ad58b14b (marc 2016-06-27 23:35:43 -0500 144)                          "https://commons.wikimedia.org/wiki/Special:FilePath/image.png?width=500&height=400")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 145) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 146)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 147)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 148)             <div id="P2910">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 149)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 150)                     <a href="/wiki/Property:P2910">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 151)                         icon
+a0a12849 (marc 2016-06-06 01:08:36 -0500 152)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 153)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 154)                 <div class="wikibase-statementlistview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 155)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 156)                         <div class="wikibase-statementview-rankselector">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 157)                             <span class="wikibase-rankselector-normal"></span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 158)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 159)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 160)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 161)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 162)                                     <a href="https://commons.wikimedia.org/wiki/File:icon.png">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 163)                                         icon.png
+a0a12849 (marc 2016-06-06 01:08:36 -0500 164)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 165)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 166)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 167)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 168)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 169)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 170)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 171)             <div id="P154">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 172)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 173)                     <a href="/wiki/Property:P154">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 174)                         logo
+a0a12849 (marc 2016-06-06 01:08:36 -0500 175)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 176)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 177)                 <div class="wikibase-statementlistview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 178)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 179)                         <div class="wikibase-statementview-rankselector">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 180)                             <span class="wikibase-rankselector-normal"></span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 181)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 182)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 183)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 184)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 185)                                     <a href="https://commons.wikimedia.org/wiki/File:logo.png">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 186)                                         logo.png
+a0a12849 (marc 2016-06-06 01:08:36 -0500 187)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 188)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 189)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 190)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 191)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 192)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 193)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 194)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 195)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 196)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 197) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 198)         image_src = wikidata.add_image(html_etree)
+ad58b14b (marc 2016-06-27 23:35:43 -0500 199)         self.assertEqual(image_src,
+ad58b14b (marc 2016-06-27 23:35:43 -0500 200)                          "https://commons.wikimedia.org/wiki/Special:FilePath/logo.png?width=500&height=400")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 201) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 202)     def test_add_attribute(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500 203)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 204)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 205)             <div id="P27">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 206)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 207)                     <a href="/wiki/Property:P27">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 208)                         country of citizenship
+a0a12849 (marc 2016-06-06 01:08:36 -0500 209)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 210)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 211)                 <div class="wikibase-statementlistview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 212)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 213)                         <div class="wikibase-statementview-rankselector">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 214)                             <span class="wikibase-rankselector-normal"></span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 215)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 216)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 217)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 218)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 219)                                     <a href="/wiki/Q145">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 220)                                         United Kingdom
+a0a12849 (marc 2016-06-06 01:08:36 -0500 221)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 222)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 223)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 224)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 225)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 226)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 227)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 228)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 229)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 230)         attributes = []
+a0a12849 (marc 2016-06-06 01:08:36 -0500 231)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 232) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 233)         wikidata.add_attribute(attributes, html_etree, "Fail")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 234)         self.assertEqual(attributes, [])
+a0a12849 (marc 2016-06-06 01:08:36 -0500 235) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 236)         wikidata.add_attribute(attributes, html_etree, "P27")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 237)         self.assertEqual(len(attributes), 1)
+ad58b14b (marc 2016-06-27 23:35:43 -0500 238)         self.assertEqual(attributes[0]["label"], "Country of citizenship")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 239)         self.assertEqual(attributes[0]["value"], "United Kingdom")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 240) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 241)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 242)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 243)             <div id="P569">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 244)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 245)                     <a href="/wiki/Property:P569">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 246)                         date of birth
+a0a12849 (marc 2016-06-06 01:08:36 -0500 247)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 248)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 249)                 <div class="wikibase-statementlistview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 250)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 251)                         <div class="wikibase-statementview-rankselector">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 252)                             <span class="wikibase-rankselector-normal"></span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 253)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 254)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 255)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 256)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 257)                                     27 January 1832
+a0a12849 (marc 2016-06-06 01:08:36 -0500 258)                                     <sup class="wb-calendar-name">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 259)                                         Gregorian
+a0a12849 (marc 2016-06-06 01:08:36 -0500 260)                                     </sup>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 261)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 262)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 263)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 264)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 265)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 266)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 267)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 268)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 269)         attributes = []
+a0a12849 (marc 2016-06-06 01:08:36 -0500 270)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 271)         wikidata.add_attribute(attributes, html_etree, "P569", date=True)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 272)         self.assertEqual(len(attributes), 1)
+ad58b14b (marc 2016-06-27 23:35:43 -0500 273)         self.assertEqual(attributes[0]["label"], "Date of birth")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 274)         self.assertEqual(attributes[0]["value"], "27 January 1832")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 275) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 276)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 277)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 278)             <div id="P6">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 279)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 280)                     <a href="/wiki/Property:P27">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 281)                         head of government
+a0a12849 (marc 2016-06-06 01:08:36 -0500 282)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 283)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 284)                 <div class="wikibase-statementlistview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 285)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 286)                         <div class="wikibase-statementview-rankselector">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 287)                             <span class="wikibase-rankselector-normal"></span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 288)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 289)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 290)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 291)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 292)                                     <a href="/wiki/Q206">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 293)                                         Old Prime Minister
+a0a12849 (marc 2016-06-06 01:08:36 -0500 294)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 295)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 296)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 297)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 298)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 299)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 300)                         <div class="wikibase-statementview-rankselector">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 301)                             <span class="wikibase-rankselector-preferred"></span>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 302)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 303)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 304)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 305)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 306)                                     <a href="/wiki/Q3099714">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 307)                                         Actual Prime Minister
+a0a12849 (marc 2016-06-06 01:08:36 -0500 308)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 309)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 310)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 311)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 312)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 313)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 314)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 315)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 316)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 317)         attributes = []
+a0a12849 (marc 2016-06-06 01:08:36 -0500 318)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 319)         wikidata.add_attribute(attributes, html_etree, "P6")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 320)         self.assertEqual(len(attributes), 1)
+ad58b14b (marc 2016-06-27 23:35:43 -0500 321)         self.assertEqual(attributes[0]["label"], "Head of government")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 322)         self.assertEqual(attributes[0]["value"], "Old Prime Minister, Actual Prime Minister")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 323) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 324)         attributes = []
+a0a12849 (marc 2016-06-06 01:08:36 -0500 325)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 326)         wikidata.add_attribute(attributes, html_etree, "P6", trim=True)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 327)         self.assertEqual(len(attributes), 1)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 328)         self.assertEqual(attributes[0]["value"], "Actual Prime Minister")
+a0a12849 (marc 2016-06-06 01:08:36 -0500 329) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 330)     def test_add_url(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500 331)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 332)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 333)             <div id="P856">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 334)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 335)                     <a href="/wiki/Property:P856">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 336)                         official website
+a0a12849 (marc 2016-06-06 01:08:36 -0500 337)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 338)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 339)                 <div class="wikibase-statementlistview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 340)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 341)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 342)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 343)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 344)                                     <a class="external free" href="https://searx.me">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 345)                                         https://searx.me/
+a0a12849 (marc 2016-06-06 01:08:36 -0500 346)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 347)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 348)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 349)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 350)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 351)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 352)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 353)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 354)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 355)         urls = []
+a0a12849 (marc 2016-06-06 01:08:36 -0500 356)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 357)         wikidata.add_url(urls, html_etree, 'P856')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 358)         self.assertEquals(len(urls), 1)
+ad58b14b (marc 2016-06-27 23:35:43 -0500 359)         self.assertIn({'title': 'Official website', 'url': 'https://searx.me/'}, urls)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 360)         urls = []
+a0a12849 (marc 2016-06-06 01:08:36 -0500 361)         results = []
+a0a12849 (marc 2016-06-06 01:08:36 -0500 362)         wikidata.add_url(urls, html_etree, 'P856', 'custom label', results=results)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 363)         self.assertEquals(len(urls), 1)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 364)         self.assertEquals(len(results), 1)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 365)         self.assertIn({'title': 'custom label', 'url': 'https://searx.me/'}, urls)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 366)         self.assertIn({'title': 'custom label', 'url': 'https://searx.me/'}, results)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 367) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 368)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 369)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 370)             <div id="P856">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 371)                 <div class="wikibase-statementgroupview-property-label">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 372)                     <a href="/wiki/Property:P856">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 373)                         official website
+a0a12849 (marc 2016-06-06 01:08:36 -0500 374)                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 375)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 376)                 <div class="wikibase-statementlistview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 377)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 378)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 379)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 380)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 381)                                     <a class="external free" href="http://www.worldofwarcraft.com">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 382)                                         http://www.worldofwarcraft.com
+a0a12849 (marc 2016-06-06 01:08:36 -0500 383)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 384)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 385)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 386)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 387)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 388)                     <div class="wikibase-statementview listview-item">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 389)                         <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 390)                             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 391)                                 <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 392)                                     <a class="external free" href="http://eu.battle.net/wow/en/">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 393)                                         http://eu.battle.net/wow/en/
+a0a12849 (marc 2016-06-06 01:08:36 -0500 394)                                     </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 395)                                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 396)                             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 397)                         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 398)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 399)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 400)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 401)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 402)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 403)         urls = []
+a0a12849 (marc 2016-06-06 01:08:36 -0500 404)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 405)         wikidata.add_url(urls, html_etree, 'P856')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 406)         self.assertEquals(len(urls), 2)
+ad58b14b (marc 2016-06-27 23:35:43 -0500 407)         self.assertIn({'title': 'Official website', 'url': 'http://www.worldofwarcraft.com'}, urls)
+ad58b14b (marc 2016-06-27 23:35:43 -0500 408)         self.assertIn({'title': 'Official website', 'url': 'http://eu.battle.net/wow/en/'}, urls)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 409) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 410)     def test_get_imdblink(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500 411)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 412)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 413)             <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 414)                 <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 415)                     <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 416)                         <a class="wb-external-id" href="http://www.imdb.com/tt0433664">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 417)                             tt0433664
+a0a12849 (marc 2016-06-06 01:08:36 -0500 418)                         </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 419)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 420)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 421)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 422)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 423)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 424)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 425)         imdblink = wikidata.get_imdblink(html_etree, 'https://www.imdb.com/')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 426) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 427)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 428)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 429)             <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 430)                 <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 431)                     <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 432)                         <a class="wb-external-id"
+a0a12849 (marc 2016-06-06 01:08:36 -0500 433)                            href="href="http://tools.wmflabs.org/...http://www.imdb.com/&id=nm4915994"">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 434)                             nm4915994
+a0a12849 (marc 2016-06-06 01:08:36 -0500 435)                         </a>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 436)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 437)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 438)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 439)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 440)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 441)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 442)         imdblink = wikidata.get_imdblink(html_etree, 'https://www.imdb.com/')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 443)         self.assertIn('https://www.imdb.com/name/nm4915994', imdblink)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 444) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 445)     def test_get_geolink(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500 446)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 447)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 448)             <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 449)                 <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 450)                     <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 451)                         60°N, 40°E
+a0a12849 (marc 2016-06-06 01:08:36 -0500 452)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 453)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 454)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 455)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 456)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 457)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 458)         geolink = wikidata.get_geolink(html_etree)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 459)         self.assertIn('https://www.openstreetmap.org/', geolink)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 460)         self.assertIn('lat=60&lon=40', geolink)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 461) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 462)         html = u"""
+a0a12849 (marc 2016-06-06 01:08:36 -0500 463)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 464)             <div class="wikibase-statementview-mainsnak">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 465)                 <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 466)                     <div class="wikibase-snakview-value">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 467)                         34°35'59"S, 58°22'55"W
+a0a12849 (marc 2016-06-06 01:08:36 -0500 468)                     </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 469)                 </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 470)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 471)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 472)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 473)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 474)         geolink = wikidata.get_geolink(html_etree)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 475)         self.assertIn('https://www.openstreetmap.org/', geolink)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 476)         self.assertIn('lat=-34.59', geolink)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 477)         self.assertIn('lon=-58.38', geolink)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 478) 
+a0a12849 (marc 2016-06-06 01:08:36 -0500 479)     def test_get_wikilink(self):
+a0a12849 (marc 2016-06-06 01:08:36 -0500 480)         html = """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 481)         <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 482)             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 483)                 <ul class="wikibase-sitelinklistview-listview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 484)                     <li data-wb-siteid="arwiki"><a href="http://ar.wikipedia.org/wiki/Test">Test</a></li>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 485)                     <li data-wb-siteid="enwiki"><a href="http://en.wikipedia.org/wiki/Test">Test</a></li>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 486)                 </ul>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 487)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 488)             <div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 489)                 <ul class="wikibase-sitelinklistview-listview">
+a0a12849 (marc 2016-06-06 01:08:36 -0500 490)                     <li data-wb-siteid="enwikiquote"><a href="https://en.wikiquote.org/wiki/Test">Test</a></li>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 491)                 </ul>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 492)             </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 493)         </div>
+a0a12849 (marc 2016-06-06 01:08:36 -0500 494)         """
+a0a12849 (marc 2016-06-06 01:08:36 -0500 495)         html_etree = fromstring(html)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 496)         wikilink = wikidata.get_wikilink(html_etree, 'nowiki')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 497)         self.assertEqual(wikilink, None)
+a0a12849 (marc 2016-06-06 01:08:36 -0500 498)         wikilink = wikidata.get_wikilink(html_etree, 'enwiki')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 499)         self.assertEqual(wikilink, 'https://en.wikipedia.org/wiki/Test')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 500)         wikilink = wikidata.get_wikilink(html_etree, 'arwiki')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 501)         self.assertEqual(wikilink, 'https://ar.wikipedia.org/wiki/Test')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 502)         wikilink = wikidata.get_wikilink(html_etree, 'enwikiquote')
+a0a12849 (marc 2016-06-06 01:08:36 -0500 503)         self.assertEqual(wikilink, 'https://en.wikiquote.org/wiki/Test')

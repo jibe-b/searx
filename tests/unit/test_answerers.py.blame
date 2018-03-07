@@ -1,0 +1,16 @@
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  1) # -*- coding: utf-8 -*-
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  2) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  3) from mock import Mock
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  4) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  5) from searx.answerers import answerers
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  6) from searx.testing import SearxTestCase
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  7) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  8) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100  9) class AnswererTest(SearxTestCase):
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 10) 
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 11)     def test_unicode_input(self):
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 12)         query = Mock()
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 13)         unicode_payload = u'árvíztűrő tükörfúrógép'
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 14)         for answerer in answerers:
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 15)             query.query = u'{} {}'.format(answerer.keywords[0], unicode_payload)
+971ed0ab (Adam Tauber 2016-11-19 20:53:51 +0100 16)             self.assertTrue(isinstance(answerer.answer(query), list))

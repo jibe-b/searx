@@ -1,0 +1,224 @@
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600   1) # -*- coding: utf-8 -*-
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600   2) from collections import defaultdict
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600   3) import mock
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600   4) from requests import Request
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600   5) from searx.engines import wolframalpha_noapi
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600   6) from searx.testing import SearxTestCase
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600   7) 
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600   8) 
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600   9) class TestWolframAlphaNoAPIEngine(SearxTestCase):
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  10) 
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  11)     def test_request(self):
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  12)         query = 'test_query'
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  13)         dicto = defaultdict(dict)
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  14)         params = wolframalpha_noapi.request(query, dicto)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  15) 
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  16)         self.assertIn('url', params)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  17)         self.assertIn('https://www.wolframalpha.com/input/json.jsp', params['url'])
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  18)         self.assertIn(query, params['url'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  19)         self.assertEqual('https://www.wolframalpha.com/input/?i=test_query', params['headers']['Referer'])
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  20) 
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  21)     def test_response(self):
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  22)         self.assertRaises(AttributeError, wolframalpha_noapi.response, None)
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  23)         self.assertRaises(AttributeError, wolframalpha_noapi.response, [])
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  24)         self.assertRaises(AttributeError, wolframalpha_noapi.response, '')
+be54e526 searx/tests/engines/test_wolframalpha_noapi.py (a01200356  2015-12-30 00:53:15 -0600  25)         self.assertRaises(AttributeError, wolframalpha_noapi.response, '[]')
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  26) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  27)         referer_url = 'referer_url'
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  28)         request = Request(headers={'Referer': referer_url})
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  29) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  30)         # test failure
+b3ab221b tests/unit/engines/test_wolframalpha_noapi.py  (stepshal   2016-07-11 20:29:47 +0700  31)         json = r'''
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  32)         {"queryresult" : {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  33)             "success" : false,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  34)             "error" : false,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  35)             "numpods" : 0,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  36)             "id" : "",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  37)             "host" : "https:\/\/www5a.wolframalpha.com",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  38)             "didyoumeans" : {}
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  39)         }}
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  40)         '''
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  41)         response = mock.Mock(text=json, request=request)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  42)         self.assertEqual(wolframalpha_noapi.response(response), [])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  43) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  44)         # test basic case
+b3ab221b tests/unit/engines/test_wolframalpha_noapi.py  (stepshal   2016-07-11 20:29:47 +0700  45)         json = r'''
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  46)         {"queryresult" : {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  47)             "success" : true,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  48)             "error" : false,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  49)             "numpods" : 6,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  50)             "datatypes" : "Math",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  51)             "id" : "queryresult_id",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  52)             "host" : "https:\/\/www5b.wolframalpha.com",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  53)             "related" : "related_url",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  54)             "version" : "2.6",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  55)             "pods" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  56)                 {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  57)                     "title" : "Input",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  58)                     "scanners" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  59)                         "Identity"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  60)                     ],
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  61)                     "id" : "Input",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  62)                     "error" : false,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  63)                     "numsubpods" : 1,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  64)                     "subpods" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  65)                         {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  66)                             "title" : "",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  67)                             "img" : {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  68)                                 "src" : "input_img_src.gif",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  69)                                 "alt" : "input_img_alt",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  70)                                 "title" : "input_img_title"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  71)                             },
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  72)                             "plaintext" : "input_plaintext",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  73)                             "minput" : "input_minput"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  74)                         }
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  75)                     ]
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  76)                 },
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  77)                 {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  78)                     "title" : "Result",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  79)                     "scanners" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  80)                         "Simplification"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  81)                     ],
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  82)                     "id" : "Result",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  83)                     "error" : false,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  84)                     "numsubpods" : 1,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  85)                     "primary" : true,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  86)                     "subpods" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  87)                         {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  88)                             "title" : "",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  89)                             "img" : {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  90)                                 "src" : "result_img_src.gif",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  91)                                 "alt" : "result_img_alt",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  92)                                 "title" : "result_img_title"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  93)                             },
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  94)                             "plaintext" : "result_plaintext",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  95)                             "moutput" : "result_moutput"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  96)                         }
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  97)                     ]
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  98)                 },
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600  99)                 {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 100)                     "title" : "Manipulatives illustration",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 101)                     "scanners" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 102)                         "Arithmetic"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 103)                     ],
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 104)                     "id" : "Illustration",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 105)                     "error" : false,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 106)                     "numsubpods" : 1,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 107)                     "subpods" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 108)                         {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 109)                             "title" : "",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 110)                             "CDFcontent" : "Resizeable",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 111)                             "img" : {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 112)                                 "src" : "illustration_img_src.gif",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 113)                                 "alt" : "illustration_img_alt",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 114)                                 "title" : "illustration_img_title"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 115)                             },
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 116)                             "plaintext" : "illustration_img_plaintext"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 117)                         }
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 118)                     ]
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 119)                 }
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 120)             ]
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 121)         }}
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 122)         '''
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 123)         response = mock.Mock(text=json, request=request)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 124)         results = wolframalpha_noapi.response(response)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 125)         self.assertEqual(type(results), list)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 126)         self.assertEqual(len(results), 2)
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 127)         self.assertEqual('input_plaintext', results[0]['infobox'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 128) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 129)         self.assertEqual(len(results[0]['attributes']), 3)
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 130)         self.assertEqual('Input', results[0]['attributes'][0]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 131)         self.assertEqual('input_plaintext', results[0]['attributes'][0]['value'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 132)         self.assertEqual('Result', results[0]['attributes'][1]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 133)         self.assertEqual('result_plaintext', results[0]['attributes'][1]['value'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 134)         self.assertEqual('Manipulatives illustration', results[0]['attributes'][2]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 135)         self.assertEqual('illustration_img_src.gif', results[0]['attributes'][2]['image']['src'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 136)         self.assertEqual('illustration_img_alt', results[0]['attributes'][2]['image']['alt'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 137) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 138)         self.assertEqual(len(results[0]['urls']), 1)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 139) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 140)         self.assertEqual(referer_url, results[0]['urls'][0]['url'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 141)         self.assertEqual('Wolfram|Alpha', results[0]['urls'][0]['title'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 142)         self.assertEqual(referer_url, results[1]['url'])
+f67db1e1 tests/unit/engines/test_wolframalpha_noapi.py  (firebovine 2016-09-10 18:04:24 -0400 143)         self.assertEqual('Wolfram|Alpha (input_plaintext)', results[1]['title'])
+09ee2aa6 tests/unit/engines/test_wolframalpha_noapi.py  (marc       2016-07-06 17:29:40 -0500 144)         self.assertIn('result_plaintext', results[1]['content'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 145) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 146)         # test calc
+b3ab221b tests/unit/engines/test_wolframalpha_noapi.py  (stepshal   2016-07-11 20:29:47 +0700 147)         json = r"""
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 148)         {"queryresult" : {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 149)             "success" : true,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 150)             "error" : false,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 151)             "numpods" : 2,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 152)             "datatypes" : "",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 153)             "id" : "queryresult_id",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 154)             "host" : "https:\/\/www4b.wolframalpha.com",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 155)             "related" : "related_url",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 156)             "version" : "2.6",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 157)             "pods" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 158)                 {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 159)                     "title" : "Indefinite integral",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 160)                     "scanners" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 161)                         "Integral"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 162)                     ],
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 163)                     "id" : "IndefiniteIntegral",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 164)                     "error" : false,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 165)                     "numsubpods" : 1,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 166)                     "primary" : true,
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 167)                     "subpods" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 168)                         {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 169)                             "title" : "",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 170)                             "img" : {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 171)                                 "src" : "integral_img_src.gif",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 172)                                 "alt" : "integral_img_alt",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 173)                                 "title" : "integral_img_title"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 174)                             },
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 175)                             "plaintext" : "integral_plaintext",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 176)                             "minput" : "integral_minput",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 177)                             "moutput" : "integral_moutput"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 178)                         }
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 179)                     ]
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 180)                 },
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 181)                 {
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 182)                     "title" : "Plot of the integral",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 183)                     "scanners" : [
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 184)                         "Integral"
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 185)                     ],
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 186)                     "id" : "Plot",
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 187)                     "error" : false,
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 188)                     "numsubpods" : 1,
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 189)                     "subpods" : [
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 190)                         {
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 191)                             "title" : "",
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 192)                             "img" : {
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 193)                                 "src" : "plot.gif",
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 194)                                 "alt" : "plot_alt",
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 195)                                 "title" : "plot_title"
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 196)                             },
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 197)                             "plaintext" : "",
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 198)                             "minput" : "plot_minput"
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 199)                         }
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 200)                     ]
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 201)                 }
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 202)             ]
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 203)         }}
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 204)         """
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 205)         response = mock.Mock(text=json, request=request)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 206)         results = wolframalpha_noapi.response(response)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 207)         self.assertEqual(type(results), list)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 208)         self.assertEqual(len(results), 2)
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 209)         self.assertEqual('integral_plaintext', results[0]['infobox'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 210) 
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 211)         self.assertEqual(len(results[0]['attributes']), 2)
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 212)         self.assertEqual('Indefinite integral', results[0]['attributes'][0]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 213)         self.assertEqual('integral_plaintext', results[0]['attributes'][0]['value'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 214)         self.assertEqual('Plot of the integral', results[0]['attributes'][1]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 215)         self.assertEqual('plot.gif', results[0]['attributes'][1]['image']['src'])
+8f3b33de tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 02:05:52 -0600 216)         self.assertEqual('plot_alt', results[0]['attributes'][1]['image']['alt'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 217) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 218)         self.assertEqual(len(results[0]['urls']), 1)
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 219) 
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 220)         self.assertEqual(referer_url, results[0]['urls'][0]['url'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 221)         self.assertEqual('Wolfram|Alpha', results[0]['urls'][0]['title'])
+4d8996eb tests/unit/engines/test_wolframalpha_noapi.py  (a01200356  2016-02-28 00:47:36 -0600 222)         self.assertEqual(referer_url, results[1]['url'])
+f67db1e1 tests/unit/engines/test_wolframalpha_noapi.py  (firebovine 2016-09-10 18:04:24 -0400 223)         self.assertEqual('Wolfram|Alpha (integral_plaintext)', results[1]['title'])
+09ee2aa6 tests/unit/engines/test_wolframalpha_noapi.py  (marc       2016-07-06 17:29:40 -0500 224)         self.assertIn('integral_plaintext', results[1]['content'])

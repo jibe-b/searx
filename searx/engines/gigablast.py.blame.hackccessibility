@@ -1,0 +1,108 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   2)  Gigablast (Web)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   3) 
+47b4a85f (Adam Tauber       2015-12-22 20:25:57 +0100   4)  @website     https://gigablast.com
+47b4a85f (Adam Tauber       2015-12-22 20:25:57 +0100   5)  @provide-api yes (https://gigablast.com/api.html)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   8)  @results     XML
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  10)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  11) """
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  12) 
+8849606e (misnyo            2017-08-31 16:11:04 +0200  13) import random
+37035b7a (Adam Tauber       2016-01-31 13:24:09 +0100  14) from json import loads
+f1ac794a (Adam Tauber       2015-10-16 12:05:50 +0200  15) from time import time
+f62ce21f (marc              2016-11-05 20:51:38 -0600  16) from lxml.html import fromstring
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  17) from searx.url_utils import urlencode
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  18) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  19) # engine dependent config
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  20) categories = ['general']
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  21) paging = True
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  22) number_of_results = 10
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  23) language_support = True
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  24) safesearch = True
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  25) 
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  26) # search-url
+47b4a85f (Adam Tauber       2015-12-22 20:25:57 +0100  27) base_url = 'https://gigablast.com/'
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  28) search_string = 'search?{query}'\
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  29)     '&n={number_of_results}'\
+37035b7a (Adam Tauber       2016-01-31 13:24:09 +0100  30)     '&c=main'\
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  31)     '&s={offset}'\
+37035b7a (Adam Tauber       2016-01-31 13:24:09 +0100  32)     '&format=json'\
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  33)     '&qh=0'\
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  34)     '&qlang={lang}'\
+5dd2340b (Adam Tauber       2016-06-12 00:06:31 +0200  35)     '&ff={safesearch}'\
+7752b0a8 (Adam Tauber       2017-12-09 21:00:08 +0100  36)     '&rxiec={rxieu}'\
+8849606e (misnyo            2017-08-31 16:11:04 +0200  37)     '&rand={rxikd}'  # current unix timestamp
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  38) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  39) # specific xpath variables
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  40) results_xpath = '//response//result'
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  41) url_xpath = './/url'
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  42) title_xpath = './/title'
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  43) content_xpath = './/sum'
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  44) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600  45) supported_languages_url = 'https://gigablast.com/search?&rxikd=1'
+c677aee5 (marc              2016-08-06 22:19:21 -0500  46) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  47) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  48) # do search-request
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  49) @little_documented
+def request(query, params):
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  50)     offset = (params['pageno'] - 1) * number_of_results
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  51) 
+4d177039 (marc              2017-07-20 15:47:20 -0500  52)     language = params['language'].replace('-', '_').lower()
+4d177039 (marc              2017-07-20 15:47:20 -0500  53)     if language.split('-')[0] != 'zh':
+4d177039 (marc              2017-07-20 15:47:20 -0500  54)         language = language.split('-')[0]
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  55) 
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  56)     if params['safesearch'] >= 1:
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  57)         safesearch = 1
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  58)     else:
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  59)         safesearch = 0
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  60) 
+8849606e (misnyo            2017-08-31 16:11:04 +0200  61)     # rxieu is some kind of hash from the search query, but accepts random atm
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  62)     search_path = search_string.format(query=urlencode({'q': query}),
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  63)                                        offset=offset,
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  64)                                        number_of_results=number_of_results,
+8849606e (misnyo            2017-08-31 16:11:04 +0200  65)                                        rxikd=int(time() * 1000),
+b91772ef (misnyo            2017-08-31 21:49:19 +0200  66)                                        rxieu=random.randint(1000000000, 9999999999),
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  67)                                        lang=language,
+b9a9abe1 (Thomas Pointhuber 2015-12-23 18:43:35 +0100  68)                                        safesearch=safesearch)
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  69) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  70)     params['url'] = base_url + search_path
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  71) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  72)     return params
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  73) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  74) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  75) # get response from search-request
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  76) def response(resp):
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  77)     results = []
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  78) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  79)     # parse results
+37035b7a (Adam Tauber       2016-01-31 13:24:09 +0100  80)     response_json = loads(resp.text)
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  81) 
+37035b7a (Adam Tauber       2016-01-31 13:24:09 +0100  82)     for result in response_json['results']:
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  83)         # append result
+37035b7a (Adam Tauber       2016-01-31 13:24:09 +0100  84)         results.append({'url': result['url'],
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100  85)                         'title': result['title'],
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100  86)                         'content': result['sum']})
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  87) 
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  88)     # return results
+04f7118d (Thomas Pointhuber 2015-02-08 14:12:14 +0100  89)     return results
+f62ce21f (marc              2016-11-05 20:51:38 -0600  90) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600  91) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600  92) # get supported languages from their site
+af35eee1 (marc              2016-12-15 00:34:43 -0600  93) def _fetch_supported_languages(resp):
+f62ce21f (marc              2016-11-05 20:51:38 -0600  94)     supported_languages = []
+af35eee1 (marc              2016-12-15 00:34:43 -0600  95)     dom = fromstring(resp.text)
+f62ce21f (marc              2016-11-05 20:51:38 -0600  96)     links = dom.xpath('//span[@id="menu2"]/a')
+f62ce21f (marc              2016-11-05 20:51:38 -0600  97)     for link in links:
+1175b390 (marc              2016-12-28 23:24:56 -0600  98)         href = link.xpath('./@href')[0].split('lang%3A')
+1175b390 (marc              2016-12-28 23:24:56 -0600  99)         if len(href) == 2:
+1175b390 (marc              2016-12-28 23:24:56 -0600 100)             code = href[1].split('_')
+1175b390 (marc              2016-12-28 23:24:56 -0600 101)             if len(code) == 2:
+1175b390 (marc              2016-12-28 23:24:56 -0600 102)                 code = code[0] + '-' + code[1].upper()
+1175b390 (marc              2016-12-28 23:24:56 -0600 103)             else:
+1175b390 (marc              2016-12-28 23:24:56 -0600 104)                 code = code[0]
+f62ce21f (marc              2016-11-05 20:51:38 -0600 105)             supported_languages.append(code)
+f62ce21f (marc              2016-11-05 20:51:38 -0600 106) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 107)     return supported_languages

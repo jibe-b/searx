@@ -1,0 +1,63 @@
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  1) """
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  2)  DigBT (Videos, Music, Files)
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  3) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  4)  @website     https://digbt.org
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  5)  @provide-api no
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  6) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  7)  @using-api   no
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  8)  @results     HTML (using search portal)
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200  9)  @stable      no (HTML can change)
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 10)  @parse       url, title, content, magnetlink
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 11) """
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 12) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 13) from sys import version_info
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 14) from lxml import html
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 15) from searx.engines.xpath import extract_text
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 16) from searx.utils import get_torrent_size
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 17) from searx.url_utils import urljoin
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 18) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 19) if version_info[0] == 3:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 20)     unicode = str
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 21) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 22) categories = ['videos', 'music', 'files']
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 23) paging = True
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 24) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 25) URL = 'https://digbt.org'
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 26) SEARCH_URL = URL + '/search/{query}-time-{pageno}'
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 27) FILESIZE = 3
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 28) FILESIZE_MULTIPLIER = 4
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 29) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 30) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 31) @little_documented
+def request(query, params):
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 32)     params['url'] = SEARCH_URL.format(query=query, pageno=params['pageno'])
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 33) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 34)     return params
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 35) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 36) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 37) def response(resp):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 38)     dom = html.fromstring(resp.text)
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 39)     search_res = dom.xpath('.//td[@class="x-item"]')
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 40) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 41)     if not search_res:
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 42)         return list()
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 43) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 44)     results = list()
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 45)     for result in search_res:
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 46)         url = urljoin(URL, result.xpath('.//a[@title]/@href')[0])
+d1d4ed43 (marc        2016-09-20 15:35:54 -0500 47)         title = extract_text(result.xpath('.//a[@title]'))
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 48)         content = extract_text(result.xpath('.//div[@class="files"]'))
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 49)         files_data = extract_text(result.xpath('.//div[@class="tail"]')).split()
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 50)         filesize = get_torrent_size(files_data[FILESIZE], files_data[FILESIZE_MULTIPLIER])
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 51)         magnetlink = result.xpath('.//div[@class="tail"]//a[@class="title"]/@href')[0]
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 52) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 53)         results.append({'url': url,
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 54)                         'title': title,
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 55)                         'content': content,
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 56)                         'filesize': filesize,
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 57)                         'magnetlink': magnetlink,
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 58)                         'seed': 'N/A',
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 59)                         'leech': 'N/A',
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 60)                         'template': 'torrent.html'})
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 61) 
+3a1c5876 (Noemi Vanyi 2016-08-13 14:55:47 +0200 62)     return results

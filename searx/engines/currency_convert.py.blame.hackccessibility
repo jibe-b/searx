@@ -1,0 +1,104 @@
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100   1) import json
+a35128f5 (asciimoo           2013-12-01 16:41:24 +0100   2) import re
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200   3) import os
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100   4) import sys
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200   5) import unicodedata
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200   6) 
+829032f3 (Marc Abonce Seguin 2018-01-16 23:05:18 -0600   7) from io import open
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100   8) from datetime import datetime
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100   9) 
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100  10) if sys.version_info[0] == 3:
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100  11)     unicode = str
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  12) 
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  13) categories = []
+2231b02a (pyrrh0n1c          2017-11-07 13:29:17 +0000  14) url = 'https://finance.google.com/finance/converter?a=1&from={0}&to={1}'
+14cd1d6f (asciimoo           2013-11-10 21:20:22 +0100  15) weight = 100
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  16) 
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100  17) parser_re = re.compile(b'.*?(\\d+(?:\\.\\d+)?) ([^.0-9]+) (?:in|to) ([^.0-9]+)', re.I)
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  18) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  19) db = 1
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  20) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  21) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  22) @little_documented
+def normalize_name(name):
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100  23)     name = name.decode('utf-8').lower().replace('-', ' ').rstrip('s')
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  24)     name = re.sub(' +', ' ', name)
+94567d99 (Cqoicebordel       2015-06-07 15:38:38 +0200  25)     return unicodedata.normalize('NFKD', name).lower()
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  26) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  27) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  28) def name_to_iso4217(name):
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  29)     global db
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  30) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  31)     name = normalize_name(name)
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  32)     currencies = db['names'].get(name, [name])
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  33)     return currencies[0]
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  34) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  35) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  36) def iso4217_to_name(iso4217, language):
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  37)     global db
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  38) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  39)     return db['iso4217'].get(iso4217, {}).get(language, iso4217)
+a35128f5 (asciimoo           2013-12-01 16:41:24 +0100  40) 
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100  41) 
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  42) def request(query, params):
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100  43)     m = parser_re.match(query)
+a35128f5 (asciimoo           2013-12-01 16:41:24 +0100  44)     if not m:
+a35128f5 (asciimoo           2013-12-01 16:41:24 +0100  45)         # wrong query
+a35128f5 (asciimoo           2013-12-01 16:41:24 +0100  46)         return params
+a96208be (Cqoicebordel       2015-02-03 19:56:26 +0100  47) 
+4340c0b1 (pyrrh0n1c          2017-11-07 14:14:20 +0000  48)     amount, from_currency, to_currency = m.groups()
+4340c0b1 (pyrrh0n1c          2017-11-07 14:14:20 +0000  49)     amount = float(amount)
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  50)     from_currency = name_to_iso4217(from_currency.strip())
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  51)     to_currency = name_to_iso4217(to_currency.strip())
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  52) 
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100  53)     q = (from_currency + to_currency).upper()
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  54) 
+2231b02a (pyrrh0n1c          2017-11-07 13:29:17 +0000  55)     params['url'] = url.format(from_currency, to_currency)
+4340c0b1 (pyrrh0n1c          2017-11-07 14:14:20 +0000  56)     params['amount'] = amount
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  57)     params['from'] = from_currency
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  58)     params['to'] = to_currency
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  59)     params['from_name'] = iso4217_to_name(from_currency, 'en')
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  60)     params['to_name'] = iso4217_to_name(to_currency, 'en')
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  61) 
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  62)     return params
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  63) 
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  64) 
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  65) def response(resp):
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  66)     results = []
+2231b02a (pyrrh0n1c          2017-11-07 13:29:17 +0000  67)     pat = '<span class=bld>(.+) {0}</span>'.format(
+2231b02a (pyrrh0n1c          2017-11-07 13:29:17 +0000  68)         resp.search_params['to'].upper())
+2231b02a (pyrrh0n1c          2017-11-07 13:29:17 +0000  69) 
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  70)     try:
+2231b02a (pyrrh0n1c          2017-11-07 13:29:17 +0000  71)         conversion_rate = re.findall(pat, resp.text)[0]
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  72)         conversion_rate = float(conversion_rate)
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  73)     except:
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  74)         return results
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  75) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  76)     answer = '{0} {1} = {2} {3}, 1 {1} ({5}) = {4} {3} ({6})'.format(
+4340c0b1 (pyrrh0n1c          2017-11-07 14:14:20 +0000  77)         resp.search_params['amount'],
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100  78)         resp.search_params['from'],
+4340c0b1 (pyrrh0n1c          2017-11-07 14:14:20 +0000  79)         resp.search_params['amount'] * conversion_rate,
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100  80)         resp.search_params['to'],
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  81)         conversion_rate,
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  82)         resp.search_params['from_name'],
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  83)         resp.search_params['to_name'],
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100  84)     )
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  85) 
+2231b02a (pyrrh0n1c          2017-11-07 13:29:17 +0000  86)     url = 'https://finance.google.com/finance?q={0}{1}'.format(
+2231b02a (pyrrh0n1c          2017-11-07 13:29:17 +0000  87)         resp.search_params['from'].upper(), resp.search_params['to'])
+6bfd5663 (Dalf               2014-09-28 16:51:41 +0200  88) 
+7c13d630 (dalf               2014-12-07 16:37:56 +0100  89)     results.append({'answer': answer, 'url': url})
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  90) 
+cfff04f7 (asciimoo           2013-11-04 21:47:16 +0100  91)     return results
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  92) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  93) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  94) def load():
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  95)     global db
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  96) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  97)     current_dir = os.path.dirname(os.path.realpath(__file__))
+829032f3 (Marc Abonce Seguin 2018-01-16 23:05:18 -0600  98)     json_data = open(current_dir + "/../data/currencies.json", 'r', encoding='utf-8').read()
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200  99) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200 100)     db = json.loads(json_data)
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200 101) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200 102) 
+5525625d (Alexandre Flament  2015-05-12 20:52:08 +0200 103) load()

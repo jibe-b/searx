@@ -1,0 +1,45 @@
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000  1) from flask_babel import gettext
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000  2) import re
+52e615de searx/plugins/doai_rewrite.py   (Adam Tauber       2016-11-30 18:43:03 +0100  3) from searx.url_utils import urlparse, parse_qsl
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200  4) from searx import settings
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200  5) 
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000  6) 
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000  7) regex = re.compile(r'10\.\d{4,9}/[^\s]+')
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000  8) 
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200  9) name = gettext('Open Access DOI rewrite')
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 10) description = gettext('Avoid paywalls by redirecting to open-access versions of publications when available')
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 11) default_on = False
+10a24bdc searx/plugins/doai_rewrite.py   (Alexandre Flament 2017-02-12 15:06:01 +0100 12) preference_section = 'privacy'
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 13) 
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200 14) doi_resolvers = settings['doi_resolvers']
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200 15) 
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 16) 
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 17) @little_documented
+def extract_doi(url):
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 18)     match = regex.search(url.path)
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 19)     if match:
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 20)         return match.group(0)
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 21)     for _, v in parse_qsl(url.query):
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 22)         match = regex.search(v)
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 23)         if match:
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 24)             return match.group(0)
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 25)     return None
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 26) 
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 27) 
+1b10abfc searx/plugins/oa_doi_rewrite.py (Noémi Ványi       2017-11-01 13:58:48 +0100 28) def get_doi_resolver(args, preference_doi_resolver):
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200 29)     doi_resolvers = settings['doi_resolvers']
+1b10abfc searx/plugins/oa_doi_rewrite.py (Noémi Ványi       2017-11-01 13:58:48 +0100 30)     doi_resolver = args.get('doi_resolver', preference_doi_resolver)[0]
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200 31)     if doi_resolver not in doi_resolvers:
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200 32)         doi_resolvers = settings['default_doi_resolver']
+1b10abfc searx/plugins/oa_doi_rewrite.py (Noémi Ványi       2017-11-01 13:58:48 +0100 33)     return doi_resolver
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200 34) 
+575159b1 searx/plugins/oa_doi_rewrite.py (jibe-b            2017-09-22 23:43:05 +0200 35) 
+fbb080f3 searx/plugins/doai_rewrite.py   (dalf              2016-10-22 14:01:53 +0200 36) def on_result(request, search, result):
+fbb080f3 searx/plugins/doai_rewrite.py   (dalf              2016-10-22 14:01:53 +0200 37)     doi = extract_doi(result['parsed_url'])
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 38)     if doi and len(doi) < 50:
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 39)         for suffix in ('/', '.pdf', '/full', '/meta', '/abstract'):
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 40)             if doi.endswith(suffix):
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 41)                 doi = doi[:-len(suffix)]
+1b10abfc searx/plugins/oa_doi_rewrite.py (Noémi Ványi       2017-11-01 13:58:48 +0100 42)         result['url'] = get_doi_resolver(request.args, request.preferences.get_value('doi_resolver')) + doi
+88dfee85 searx/plugins/doai_rewrite.py   (Adam Tauber       2016-11-14 17:25:21 +0100 43)         result['parsed_url'] = urlparse(result['url'])
+117d36b6 searx/plugins/doai_rewrite.py   (David A Roberts   2016-07-16 19:26:29 +1000 44)     return True

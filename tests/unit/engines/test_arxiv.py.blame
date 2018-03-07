@@ -1,0 +1,58 @@
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  1) # -*- coding: utf-8 -*-
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  2) from collections import defaultdict
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  3) import mock
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  4) from searx.engines import arxiv
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  5) from searx.testing import SearxTestCase
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  6) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  7) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  8) class TestBaseEngine(SearxTestCase):
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200  9) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 10)     def test_request(self):
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 11)         query = 'test_query'
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 12)         dicto = defaultdict(dict)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 13)         dicto['pageno'] = 1
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 14)         params = arxiv.request(query, dicto)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 15)         self.assertIn('url', params)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 16)         self.assertIn('export.arxiv.org/api/', params['url'])
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 17) 
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 18)     def test_response(self):
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 19)         self.assertRaises(AttributeError, arxiv.response, None)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 20)         self.assertRaises(AttributeError, arxiv.response, [])
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 21)         self.assertRaises(AttributeError, arxiv.response, '')
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 22)         self.assertRaises(AttributeError, arxiv.response, '[]')
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 23) 
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100 24)         response = mock.Mock(content=b'''<?xml version="1.0" encoding="UTF-8"?>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 25) <feed xmlns="http://www.w3.org/2005/Atom"></feed>''')
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 26)         self.assertEqual(arxiv.response(response), [])
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 27) 
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100 28)         xml_mock = b'''<?xml version="1.0" encoding="UTF-8"?>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 29) <feed xmlns="http://www.w3.org/2005/Atom">
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 30)   <title type="html">ArXiv Query: search_query=all:test_query&amp;id_list=&amp;start=0&amp;max_results=1</title>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 31)   <id>http://arxiv.org/api/1</id>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 32)   <updated>2000-01-21T00:00:00-01:00</updated>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 33)   <opensearch:totalResults xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">1</opensearch:totalResults>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 34)   <opensearch:startIndex xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">0</opensearch:startIndex>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 35)   <opensearch:itemsPerPage xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">1</opensearch:itemsPerPage>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 36)   <entry>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 37)     <id>http://arxiv.org/1</id>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 38)     <updated>2000-01-01T00:00:01Z</updated>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 39)     <published>2000-01-01T00:00:01Z</published>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 40)     <title>Mathematical proof.</title>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 41)     <summary>Mathematical formula.</summary>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 42)     <author>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 43)       <name>A. B.</name>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 44)     </author>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 45)     <link href="http://arxiv.org/1" rel="alternate" type="text/html"/>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 46)     <link title="pdf" href="http://arxiv.org/1" rel="related" type="application/pdf"/>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 47)     <category term="math.QA" scheme="http://arxiv.org/schemas/atom"/>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 48)     <category term="1" scheme="http://arxiv.org/schemas/atom"/>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 49)   </entry>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 50) </feed>
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 51) '''
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 52) 
+9c2b7a82 (Noémi Ványi 2017-11-01 12:28:18 +0100 53)         response = mock.Mock(content=xml_mock)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 54)         results = arxiv.response(response)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 55)         self.assertEqual(type(results), list)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 56)         self.assertEqual(len(results), 1)
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 57)         self.assertEqual(results[0]['title'], 'Mathematical proof.')
+3e3672e0 (jibe-b      2017-09-23 14:16:06 +0200 58)         self.assertEqual(results[0]['content'], 'Mathematical formula.')

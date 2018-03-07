@@ -1,0 +1,44 @@
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  1) from collections import defaultdict
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  2) from datetime import datetime
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  3) import mock
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  4) from searx.engines import currency_convert
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  5) from searx.testing import SearxTestCase
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  6) 
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  7) 
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  8) class TestCurrencyConvertEngine(SearxTestCase):
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100  9) 
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 10)     def test_request(self):
+52e615de tests/unit/engines/test_currency_convert.py  (Adam Tauber       2016-11-30 18:43:03 +0100 11)         query = b'test_query'
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 12)         dicto = defaultdict(dict)
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 13)         dicto['pageno'] = 1
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 14)         params = currency_convert.request(query, dicto)
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 15)         self.assertNotIn('url', params)
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 16) 
+52e615de tests/unit/engines/test_currency_convert.py  (Adam Tauber       2016-11-30 18:43:03 +0100 17)         query = b'convert 10 Pound Sterlings to United States Dollars'
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 18)         params = currency_convert.request(query, dicto)
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 19)         self.assertIn('url', params)
+a1d1a501 tests/unit/engines/test_currency_convert.py  (pyrrh0n1c         2017-11-07 14:49:10 +0000 20)         self.assertIn('finance.google.com', params['url'])
+56e53c92 tests/unit/engines/test_currency_convert.py  (Maxqia            2016-05-02 17:06:17 -0700 21)         self.assertIn('GBP', params['url'])
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 22)         self.assertIn('USD', params['url'])
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 23) 
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 24)     def test_response(self):
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 25)         dicto = defaultdict(dict)
+4340c0b1 tests/unit/engines/test_currency_convert.py  (pyrrh0n1c         2017-11-07 14:14:20 +0000 26)         dicto['amount'] = float(10)
+56e53c92 tests/unit/engines/test_currency_convert.py  (Maxqia            2016-05-02 17:06:17 -0700 27)         dicto['from'] = "GBP"
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 28)         dicto['to'] = "USD"
+56e53c92 tests/unit/engines/test_currency_convert.py  (Maxqia            2016-05-02 17:06:17 -0700 29)         dicto['from_name'] = "pound sterling"
+5525625d searx/tests/engines/test_currency_convert.py (Alexandre Flament 2015-05-12 20:52:08 +0200 30)         dicto['to_name'] = "United States dollar"
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 31)         response = mock.Mock(text='a,b,c,d', search_params=dicto)
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 32)         self.assertEqual(currency_convert.response(response), [])
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 33) 
+a1d1a501 tests/unit/engines/test_currency_convert.py  (pyrrh0n1c         2017-11-07 14:49:10 +0000 34)         body = "<span class=bld>0.5 {}</span>".format(dicto['to'])
+a1d1a501 tests/unit/engines/test_currency_convert.py  (pyrrh0n1c         2017-11-07 14:49:10 +0000 35)         response = mock.Mock(text=body, search_params=dicto)
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 36)         results = currency_convert.response(response)
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 37)         self.assertEqual(type(results), list)
+1ea5bc63 searx/tests/engines/test_currency_convert.py (Cqoicebordel      2015-02-02 18:39:50 +0100 38)         self.assertEqual(len(results), 1)
+56e53c92 tests/unit/engines/test_currency_convert.py  (Maxqia            2016-05-02 17:06:17 -0700 39)         self.assertEqual(results[0]['answer'], '10.0 GBP = 5.0 USD, 1 GBP (pound sterling)' +
+56e53c92 tests/unit/engines/test_currency_convert.py  (Maxqia            2016-05-02 17:06:17 -0700 40)                          ' = 0.5 USD (United States dollar)')
+a1d1a501 tests/unit/engines/test_currency_convert.py  (pyrrh0n1c         2017-11-07 14:49:10 +0000 41) 
+a1d1a501 tests/unit/engines/test_currency_convert.py  (pyrrh0n1c         2017-11-07 14:49:10 +0000 42)         target_url = 'https://finance.google.com/finance?q={}{}'.format(
+a1d1a501 tests/unit/engines/test_currency_convert.py  (pyrrh0n1c         2017-11-07 14:49:10 +0000 43)             dicto['from'], dicto['to'])
+a1d1a501 tests/unit/engines/test_currency_convert.py  (pyrrh0n1c         2017-11-07 14:49:10 +0000 44)         self.assertEqual(results[0]['url'], target_url)

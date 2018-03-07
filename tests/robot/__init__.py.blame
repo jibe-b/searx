@@ -1,0 +1,75 @@
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  1) # -*- coding: utf-8 -*-
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  2) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  3) from time import sleep
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  4) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  5) url = "http://localhost:11111/"
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  6) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  7) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  8) def test_index(browser):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  9)     # Visit URL
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 10)     browser.visit(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 11)     assert browser.is_text_present('about')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 12) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 13) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 14) def test_404(browser):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 15)     # Visit URL
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 16)     browser.visit(url + 'missing_link')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 17)     assert browser.is_text_present('Page not found')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 18) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 19) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 20) def test_about(browser):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 21)     browser.visit(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 22)     browser.click_link_by_text('about')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 23)     assert browser.is_text_present('Why use searx?')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 24) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 25) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 26) def test_preferences(browser):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 27)     browser.visit(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 28)     browser.click_link_by_text('preferences')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 29)     assert browser.is_text_present('Preferences')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 30)     assert browser.is_text_present('Cookies')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 31) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 32)     assert browser.is_element_present_by_xpath('//label[@for="checkbox_dummy"]')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 33) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 34) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 35) def test_preferences_engine_select(browser):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 36)     browser.visit(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 37)     browser.click_link_by_text('preferences')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 38) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 39)     assert browser.is_element_present_by_xpath('//a[@href="#tab_engine"]')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 40)     browser.find_by_xpath('//a[@href="#tab_engine"]').first.click()
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 41) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 42)     assert not browser.find_by_xpath('//input[@id="engine_general_dummy__general"]').first.checked
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 43)     browser.find_by_xpath('//label[@for="engine_general_dummy__general"]').first.check()
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 44)     browser.find_by_xpath('//input[@value="save"]').first.click()
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 45) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 46)     # waiting for the redirect - without this the test is flaky..
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 47)     sleep(1)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 48) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 49)     browser.visit(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 50)     browser.click_link_by_text('preferences')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 51)     browser.find_by_xpath('//a[@href="#tab_engine"]').first.click()
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 52) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 53)     assert browser.find_by_xpath('//input[@id="engine_general_dummy__general"]').first.checked
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 54) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 55) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 56) def test_preferences_locale(browser):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 57)     browser.visit(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 58)     browser.click_link_by_text('preferences')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 59) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 60)     browser.select('locale', 'hu')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 61)     browser.find_by_xpath('//input[@value="save"]').first.click()
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 62) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 63)     # waiting for the redirect - without this the test is flaky..
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 64)     sleep(1)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 65) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 66)     browser.visit(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 67)     browser.click_link_by_text('beállítások')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 68)     browser.is_text_present('Beállítások')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 69) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 70) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 71) def test_search(browser):
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 72)     browser.visit(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 73)     browser.fill('q', 'test search query')
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 74)     browser.find_by_xpath('//button[@type="submit"]').first.click()
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 75)     assert browser.is_text_present('didn\'t find any results')

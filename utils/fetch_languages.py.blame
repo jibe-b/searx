@@ -1,0 +1,189 @@
+f62ce21f (marc 2016-11-05 20:51:38 -0600   1) # -*- coding: utf-8 -*-
+f62ce21f (marc 2016-11-05 20:51:38 -0600   2) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600   3) # This script generates languages.py from intersecting each engine's supported languages.
+f62ce21f (marc 2016-11-05 20:51:38 -0600   4) #
+f62ce21f (marc 2016-11-05 20:51:38 -0600   5) # The country names are obtained from http://api.geonames.org which requires registering as a user.
+f62ce21f (marc 2016-11-05 20:51:38 -0600   6) #
+f62ce21f (marc 2016-11-05 20:51:38 -0600   7) # Output files (engines_languages.json and languages.py)
+f62ce21f (marc 2016-11-05 20:51:38 -0600   8) # are written in current directory to avoid overwriting in case something goes wrong.
+f62ce21f (marc 2016-11-05 20:51:38 -0600   9) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  10) from requests import get
+f62ce21f (marc 2016-11-05 20:51:38 -0600  11) from lxml.html import fromstring
+44085e31 (marc 2017-10-10 16:52:41 -0500  12) from json import loads, dump
+f62ce21f (marc 2016-11-05 20:51:38 -0600  13) import io
+f62ce21f (marc 2016-11-05 20:51:38 -0600  14) from sys import path
+f62ce21f (marc 2016-11-05 20:51:38 -0600  15) path.append('../searx')  # noqa
+805fb02e (marc 2017-02-24 20:21:48 -0600  16) from searx import settings
+44085e31 (marc 2017-10-10 16:52:41 -0500  17) from searx.url_utils import urlencode
+805fb02e (marc 2017-02-24 20:21:48 -0600  18) from searx.engines import initialize_engines, engines
+f62ce21f (marc 2016-11-05 20:51:38 -0600  19) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  20) # Geonames API for country names.
+f62ce21f (marc 2016-11-05 20:51:38 -0600  21) geonames_user = ''  # ADD USER NAME HERE
+f62ce21f (marc 2016-11-05 20:51:38 -0600  22) country_names_url = 'http://api.geonames.org/countryInfoJSON?{parameters}'
+f62ce21f (marc 2016-11-05 20:51:38 -0600  23) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  24) # Output files.
+f62ce21f (marc 2016-11-05 20:51:38 -0600  25) engines_languages_file = 'engines_languages.json'
+f62ce21f (marc 2016-11-05 20:51:38 -0600  26) languages_file = 'languages.py'
+f62ce21f (marc 2016-11-05 20:51:38 -0600  27) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  28) engines_languages = {}
+f62ce21f (marc 2016-11-05 20:51:38 -0600  29) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  30) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  31) # To filter out invalid codes and dialects.
+f62ce21f (marc 2016-11-05 20:51:38 -0600  32) def valid_code(lang_code):
+f62ce21f (marc 2016-11-05 20:51:38 -0600  33)     # filter invalid codes
+f62ce21f (marc 2016-11-05 20:51:38 -0600  34)     # sl-SL is technically not invalid, but still a mistake
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  35)     invalid_codes = ['sl-SL', 'wt-WT', 'jw']
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  36)     invalid_countries = ['UK', 'XA', 'XL']
+f62ce21f (marc 2016-11-05 20:51:38 -0600  37)     if lang_code[:2] == 'xx'\
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  38)        or lang_code in invalid_codes\
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  39)        or lang_code[-2:] in invalid_countries\
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  40)        or is_dialect(lang_code):
+f62ce21f (marc 2016-11-05 20:51:38 -0600  41)         return False
+f62ce21f (marc 2016-11-05 20:51:38 -0600  42) 
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  43)     return True
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  44) 
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  45) 
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  46) # Language codes with any additional tags other than language and country.
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  47) def is_dialect(lang_code):
+f62ce21f (marc 2016-11-05 20:51:38 -0600  48)     lang_code = lang_code.split('-')
+f62ce21f (marc 2016-11-05 20:51:38 -0600  49)     if len(lang_code) > 2 or len(lang_code[0]) > 3:
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  50)         return True
+f62ce21f (marc 2016-11-05 20:51:38 -0600  51)     if len(lang_code) == 2 and len(lang_code[1]) > 2:
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  52)         return True
+f62ce21f (marc 2016-11-05 20:51:38 -0600  53) 
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  54)     return False
+f62ce21f (marc 2016-11-05 20:51:38 -0600  55) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  56) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  57) # Get country name in specified language.
+f62ce21f (marc 2016-11-05 20:51:38 -0600  58) def get_country_name(locale):
+f62ce21f (marc 2016-11-05 20:51:38 -0600  59)     if geonames_user is '':
+f62ce21f (marc 2016-11-05 20:51:38 -0600  60)         return ''
+f62ce21f (marc 2016-11-05 20:51:38 -0600  61) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  62)     locale = locale.split('-')
+f62ce21f (marc 2016-11-05 20:51:38 -0600  63)     if len(locale) != 2:
+f62ce21f (marc 2016-11-05 20:51:38 -0600  64)         return ''
+f62ce21f (marc 2016-11-05 20:51:38 -0600  65) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  66)     url = country_names_url.format(parameters=urlencode({'lang': locale[0],
+f62ce21f (marc 2016-11-05 20:51:38 -0600  67)                                                          'country': locale[1],
+f62ce21f (marc 2016-11-05 20:51:38 -0600  68)                                                          'username': geonames_user}))
+f62ce21f (marc 2016-11-05 20:51:38 -0600  69)     response = get(url)
+f62ce21f (marc 2016-11-05 20:51:38 -0600  70)     json = loads(response.text)
+f62ce21f (marc 2016-11-05 20:51:38 -0600  71)     content = json.get('geonames', None)
+f62ce21f (marc 2016-11-05 20:51:38 -0600  72)     if content is None or len(content) != 1:
+44085e31 (marc 2017-10-10 16:52:41 -0500  73)         print("No country name found for " + locale[0] + "-" + locale[1])
+f62ce21f (marc 2016-11-05 20:51:38 -0600  74)         return ''
+f62ce21f (marc 2016-11-05 20:51:38 -0600  75) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  76)     return content[0].get('countryName', '')
+f62ce21f (marc 2016-11-05 20:51:38 -0600  77) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  78) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  79) # Fetchs supported languages for each engine and writes json file with those.
+f62ce21f (marc 2016-11-05 20:51:38 -0600  80) def fetch_supported_languages():
+805fb02e (marc 2017-02-24 20:21:48 -0600  81)     initialize_engines(settings['engines'])
+f62ce21f (marc 2016-11-05 20:51:38 -0600  82)     for engine_name in engines:
+f62ce21f (marc 2016-11-05 20:51:38 -0600  83)         if hasattr(engines[engine_name], 'fetch_supported_languages'):
+f62ce21f (marc 2016-11-05 20:51:38 -0600  84)             try:
+f62ce21f (marc 2016-11-05 20:51:38 -0600  85)                 engines_languages[engine_name] = engines[engine_name].fetch_supported_languages()
+f62ce21f (marc 2016-11-05 20:51:38 -0600  86)             except Exception as e:
+44085e31 (marc 2017-10-10 16:52:41 -0500  87)                 print(e)
+f62ce21f (marc 2016-11-05 20:51:38 -0600  88) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  89)     # write json file
+4a1ff563 (marc 2016-12-16 22:14:14 -0600  90)     with io.open(engines_languages_file, "w", encoding="utf-8") as f:
+44085e31 (marc 2017-10-10 16:52:41 -0500  91)         dump(engines_languages, f, ensure_ascii=False)
+f62ce21f (marc 2016-11-05 20:51:38 -0600  92) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  93) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600  94) # Join all language lists.
+f62ce21f (marc 2016-11-05 20:51:38 -0600  95) # Iterate all languages supported by each engine.
+f62ce21f (marc 2016-11-05 20:51:38 -0600  96) def join_language_lists():
+1175b390 (marc 2016-12-28 23:24:56 -0600  97)     global languages
+f62ce21f (marc 2016-11-05 20:51:38 -0600  98)     # include wikipedia first for more accurate language names
+1175b390 (marc 2016-12-28 23:24:56 -0600  99)     languages = {code: lang for code, lang
+44085e31 (marc 2017-10-10 16:52:41 -0500 100)                  in engines_languages['wikipedia'].items()
+1175b390 (marc 2016-12-28 23:24:56 -0600 101)                  if valid_code(code)}
+f62ce21f (marc 2016-11-05 20:51:38 -0600 102) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600 103)     for engine_name in engines_languages:
+f62ce21f (marc 2016-11-05 20:51:38 -0600 104)         for locale in engines_languages[engine_name]:
+1175b390 (marc 2016-12-28 23:24:56 -0600 105)             if valid_code(locale):
+1175b390 (marc 2016-12-28 23:24:56 -0600 106)                 # if language is not on list or if it has no name yet
+1175b390 (marc 2016-12-28 23:24:56 -0600 107)                 if locale not in languages or not languages[locale].get('name'):
+1175b390 (marc 2016-12-28 23:24:56 -0600 108)                     if isinstance(engines_languages[engine_name], dict):
+1175b390 (marc 2016-12-28 23:24:56 -0600 109)                         languages[locale] = engines_languages[engine_name][locale]
+1175b390 (marc 2016-12-28 23:24:56 -0600 110)                     else:
+1175b390 (marc 2016-12-28 23:24:56 -0600 111)                         languages[locale] = {}
+1175b390 (marc 2016-12-28 23:24:56 -0600 112) 
+1175b390 (marc 2016-12-28 23:24:56 -0600 113)             # add to counter of engines that support given language
+1175b390 (marc 2016-12-28 23:24:56 -0600 114)             lang = locale.split('-')[0]
+1175b390 (marc 2016-12-28 23:24:56 -0600 115)             if lang in languages:
+1175b390 (marc 2016-12-28 23:24:56 -0600 116)                 if 'counter' not in languages[lang]:
+1175b390 (marc 2016-12-28 23:24:56 -0600 117)                     languages[lang]['counter'] = [engine_name]
+1175b390 (marc 2016-12-28 23:24:56 -0600 118)                 elif engine_name not in languages[lang]['counter']:
+1175b390 (marc 2016-12-28 23:24:56 -0600 119)                     languages[lang]['counter'].append(engine_name)
+1175b390 (marc 2016-12-28 23:24:56 -0600 120) 
+1175b390 (marc 2016-12-28 23:24:56 -0600 121)     # filter list to include only languages supported by most engines
+805fb02e (marc 2017-02-24 20:21:48 -0600 122)     min_supported_engines = int(0.70 * len(engines_languages))
+1175b390 (marc 2016-12-28 23:24:56 -0600 123)     languages = {code: lang for code, lang
+44085e31 (marc 2017-10-10 16:52:41 -0500 124)                  in languages.items()
+1175b390 (marc 2016-12-28 23:24:56 -0600 125)                  if len(lang.get('counter', [])) >= min_supported_engines or
+1175b390 (marc 2016-12-28 23:24:56 -0600 126)                  len(languages.get(code.split('-')[0], {}).get('counter', [])) >= min_supported_engines}
+f62ce21f (marc 2016-11-05 20:51:38 -0600 127) 
+af35eee1 (marc 2016-12-15 00:34:43 -0600 128)     # get locales that have no name or country yet
+f62ce21f (marc 2016-11-05 20:51:38 -0600 129)     for locale in languages.keys():
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 130)         # try to get language names
+f62ce21f (marc 2016-11-05 20:51:38 -0600 131)         if not languages[locale].get('name'):
+f62ce21f (marc 2016-11-05 20:51:38 -0600 132)             name = languages.get(locale.split('-')[0], {}).get('name', None)
+f62ce21f (marc 2016-11-05 20:51:38 -0600 133)             if name:
+f62ce21f (marc 2016-11-05 20:51:38 -0600 134)                 languages[locale]['name'] = name
+f62ce21f (marc 2016-11-05 20:51:38 -0600 135)             else:
+f62ce21f (marc 2016-11-05 20:51:38 -0600 136)                 # filter out locales with no name
+f62ce21f (marc 2016-11-05 20:51:38 -0600 137)                 del languages[locale]
+af35eee1 (marc 2016-12-15 00:34:43 -0600 138)                 continue
+af35eee1 (marc 2016-12-15 00:34:43 -0600 139) 
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 140)         # try to get language name in english
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 141)         if not languages[locale].get('english_name'):
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 142)             languages[locale]['english_name'] = languages.get(locale.split('-')[0], {}).get('english_name', '')
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 143) 
+af35eee1 (marc 2016-12-15 00:34:43 -0600 144)         # try to get country name
+af35eee1 (marc 2016-12-15 00:34:43 -0600 145)         if locale.find('-') > 0 and not languages[locale].get('country'):
+af35eee1 (marc 2016-12-15 00:34:43 -0600 146)             languages[locale]['country'] = get_country_name(locale) or ''
+f62ce21f (marc 2016-11-05 20:51:38 -0600 147) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600 148) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600 149) # Remove countryless language if language is featured in only one country.
+f62ce21f (marc 2016-11-05 20:51:38 -0600 150) def filter_single_country_languages():
+f62ce21f (marc 2016-11-05 20:51:38 -0600 151)     prev_lang = None
+1175b390 (marc 2016-12-28 23:24:56 -0600 152)     prev_code = None
+f62ce21f (marc 2016-11-05 20:51:38 -0600 153)     for code in sorted(languages):
+f62ce21f (marc 2016-11-05 20:51:38 -0600 154)         lang = code.split('-')[0]
+f62ce21f (marc 2016-11-05 20:51:38 -0600 155)         if lang == prev_lang:
+f62ce21f (marc 2016-11-05 20:51:38 -0600 156)             countries += 1
+f62ce21f (marc 2016-11-05 20:51:38 -0600 157)         else:
+f62ce21f (marc 2016-11-05 20:51:38 -0600 158)             if prev_lang is not None and countries == 1:
+f62ce21f (marc 2016-11-05 20:51:38 -0600 159)                 del languages[prev_lang]
+1175b390 (marc 2016-12-28 23:24:56 -0600 160)                 languages[prev_code]['country'] = ''
+f62ce21f (marc 2016-11-05 20:51:38 -0600 161)             countries = 0
+f62ce21f (marc 2016-11-05 20:51:38 -0600 162)             prev_lang = lang
+1175b390 (marc 2016-12-28 23:24:56 -0600 163)         prev_code = code
+f62ce21f (marc 2016-11-05 20:51:38 -0600 164) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600 165) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600 166) # Write languages.py.
+f62ce21f (marc 2016-11-05 20:51:38 -0600 167) def write_languages_file():
+44085e31 (marc 2017-10-10 16:52:41 -0500 168)     new_file = open(languages_file, 'wb')
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 169)     file_content = '# -*- coding: utf-8 -*-\n'\
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 170)                    + '# list of language codes\n'\
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 171)                    + '# this file is generated automatically by utils/update_search_languages.py\n'\
+4a1ff563 (marc 2016-12-16 22:14:14 -0600 172)                    + '\nlanguage_codes = ('
+f62ce21f (marc 2016-11-05 20:51:38 -0600 173)     for code in sorted(languages):
+f62ce21f (marc 2016-11-05 20:51:38 -0600 174)         file_content += '\n    (u"' + code + '"'\
+f62ce21f (marc 2016-11-05 20:51:38 -0600 175)                         + ', u"' + languages[code]['name'].split(' (')[0] + '"'\
+f62ce21f (marc 2016-11-05 20:51:38 -0600 176)                         + ', u"' + languages[code].get('country', '') + '"'\
+f62ce21f (marc 2016-11-05 20:51:38 -0600 177)                         + ', u"' + languages[code].get('english_name', '').split(' (')[0] + '"),'
+f62ce21f (marc 2016-11-05 20:51:38 -0600 178)     # remove last comma
+f62ce21f (marc 2016-11-05 20:51:38 -0600 179)     file_content = file_content[:-1]
+f62ce21f (marc 2016-11-05 20:51:38 -0600 180)     file_content += '\n)\n'
+f62ce21f (marc 2016-11-05 20:51:38 -0600 181)     new_file.write(file_content.encode('utf8'))
+f62ce21f (marc 2016-11-05 20:51:38 -0600 182)     new_file.close()
+f62ce21f (marc 2016-11-05 20:51:38 -0600 183) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600 184) 
+f62ce21f (marc 2016-11-05 20:51:38 -0600 185) if __name__ == "__main__":
+f62ce21f (marc 2016-11-05 20:51:38 -0600 186)     fetch_supported_languages()
+f62ce21f (marc 2016-11-05 20:51:38 -0600 187)     join_language_lists()
+f62ce21f (marc 2016-11-05 20:51:38 -0600 188)     filter_single_country_languages()
+f62ce21f (marc 2016-11-05 20:51:38 -0600 189)     write_languages_file()

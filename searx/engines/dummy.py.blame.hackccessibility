@@ -1,0 +1,17 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Dummy
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @results     empty array
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) """
+80b9312e (Thomas Pointhuber 2014-09-02 17:20:16 +0200  7) 
+80b9312e (Thomas Pointhuber 2014-09-02 17:20:16 +0200  8) 
+80b9312e (Thomas Pointhuber 2014-09-02 17:20:16 +0200  9) # do search-request
+6624dd51 (Matej Cotman      2014-01-25 18:07:57 +0100 10) @little_documented
+def request(query, params):
+6624dd51 (Matej Cotman      2014-01-25 18:07:57 +0100 11)     return params
+6624dd51 (Matej Cotman      2014-01-25 18:07:57 +0100 12) 
+6624dd51 (Matej Cotman      2014-01-25 18:07:57 +0100 13) 
+80b9312e (Thomas Pointhuber 2014-09-02 17:20:16 +0200 14) # get response from search-request
+6624dd51 (Matej Cotman      2014-01-25 18:07:57 +0100 15) def response(resp):
+6624dd51 (Matej Cotman      2014-01-25 18:07:57 +0100 16)     return []

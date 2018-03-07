@@ -1,0 +1,109 @@
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600   1) """
+01330f71 (misnyo        2017-08-31 21:32:30 +0200   2)  Nyaa.si (Anime Bittorrent tracker)
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600   3) 
+01330f71 (misnyo        2017-08-31 21:32:30 +0200   4)  @website      http://www.nyaa.si/
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600   5)  @provide-api  no
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600   6)  @using-api    no
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600   7)  @results      HTML
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600   8)  @stable       no (HTML can change)
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600   9)  @parse        url, title, content, seed, leech, torrentfile
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  10) """
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  11) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  12) from lxml import html
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  13) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100  14) from searx.url_utils import urlencode
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  15) from searx.utils import get_torrent_size, int_or_zero
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  16) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  17) # engine dependent config
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  18) categories = ['files', 'images', 'videos', 'music']
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  19) paging = True
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  20) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  21) # search-url
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  22) base_url = 'http://www.nyaa.si/'
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  23) search_url = base_url + '?page=search&{query}&offset={offset}'
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  24) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  25) # xpath queries
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  26) xpath_results = '//table[contains(@class, "torrent-list")]//tr[not(th)]'
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  27) xpath_category = './/td[1]/a[1]'
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  28) xpath_title = './/td[2]/a[last()]'
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  29) xpath_torrent_links = './/td[3]/a'
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  30) xpath_filesize = './/td[4]/text()'
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  31) xpath_seeds = './/td[6]/text()'
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  32) xpath_leeches = './/td[7]/text()'
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  33) xpath_downloads = './/td[8]/text()'
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  34) 
+e202c6fb (Kirill Isakov 2016-03-27 05:23:17 +0600  35) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  36) # do search-request
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  37) @little_documented
+def request(query, params):
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  38)     query = urlencode({'term': query})
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  39)     params['url'] = search_url.format(query=query, offset=params['pageno'])
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  40)     return params
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  41) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  42) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  43) # get response from search-request
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  44) def response(resp):
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  45)     results = []
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  46) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  47)     dom = html.fromstring(resp.text)
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  48) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  49)     for result in dom.xpath(xpath_results):
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  50)         # defaults
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  51)         filesize = 0
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  52)         magnet_link = ""
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  53)         torrent_link = ""
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  54) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  55)         # category in which our torrent belongs
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  56)         try:
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  57)             category = result.xpath(xpath_category)[0].attrib.get('title')
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  58)         except:
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  59)             pass
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  60) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  61)         # torrent title
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  62)         page_a = result.xpath(xpath_title)[0]
+16bdc0ba (Adam Tauber   2016-12-09 11:44:24 +0100  63)         title = extract_text(page_a)
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  64) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  65)         # link to the page
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  66)         href = base_url + page_a.attrib.get('href')
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  67) 
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  68)         for link in result.xpath(xpath_torrent_links):
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  69)             url = link.attrib.get('href')
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  70)             if 'magnet' in url:
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  71)                 # link to the magnet
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  72)                 magnet_link = url
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  73)             else:
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  74)                 # link to the torrent file
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  75)                 torrent_link = url
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  76) 
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  77)         # seed count
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  78)         seed = int_or_zero(result.xpath(xpath_seeds))
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  79) 
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  80)         # leech count
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  81)         leech = int_or_zero(result.xpath(xpath_leeches))
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  82) 
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  83)         # torrent downloads count
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200  84)         downloads = int_or_zero(result.xpath(xpath_downloads))
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  85) 
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  86)         # let's try to calculate the torrent size
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  87)         try:
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  88)             filesize_info = result.xpath(xpath_filesize)[0]
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  89)             filesize, filesize_multiplier = filesize_info.split()
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  90)             filesize = get_torrent_size(filesize, filesize_multiplier)
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  91)         except:
+01330f71 (misnyo        2017-08-31 21:32:30 +0200  92)             pass
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  93) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  94)         # content string contains all information not included into template
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  95)         content = 'Category: "{category}". Downloaded {downloads} times.'
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  96)         content = content.format(category=category, downloads=downloads)
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  97) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  98)         results.append({'url': href,
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600  99)                         'title': title,
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600 100)                         'content': content,
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600 101)                         'seed': seed,
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600 102)                         'leech': leech,
+01330f71 (misnyo        2017-08-31 21:32:30 +0200 103)                         'filesize': filesize,
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600 104)                         'torrentfile': torrent_link,
+01330f71 (misnyo        2017-08-31 21:32:30 +0200 105)                         'magnetlink': magnet_link,
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600 106)                         'template': 'torrent.html'})
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600 107) 
+e5677ae6 (Kirill Isakov 2016-03-25 00:24:37 +0600 108)     return results

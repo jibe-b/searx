@@ -1,0 +1,82 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  1x (Images)
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     http://1x.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, thumbnail, img_src, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 12) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 13) from lxml import html
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 14) import re
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 15) from searx.url_utils import urlencode, urljoin
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 16) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 17) # engine dependent config
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 18) categories = ['images']
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 19) paging = False
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 20) 
+ded3f982 (Dalf              2015-06-06 19:44:41 +0200 21) # search-url
+9e147d91 (Dalf              2015-06-06 19:23:07 +0200 22) base_url = 'https://1x.com'
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 23) search_url = base_url + '/backend/search.php?{query}'
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 24) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 25) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 26) # do search-request
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 27) @little_documented
+def request(query, params):
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 28)     params['url'] = search_url.format(query=urlencode({'q': query}))
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 29) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 30)     return params
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 31) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 32) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 33) # get response from search-request
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 34) def response(resp):
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 35)     results = []
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 36) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 37)     # get links from result-text
+a605d0ae (Thomas Pointhuber 2015-02-01 13:52:43 +0100 38)     regex = re.compile('(</a>|<a)')
+a605d0ae (Thomas Pointhuber 2015-02-01 13:52:43 +0100 39)     results_parts = re.split(regex, resp.text)
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 40) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 41)     cur_element = ''
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 42) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 43)     # iterate over link parts
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 44)     for result_part in results_parts:
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 45)         # processed start and end of link
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 46)         if result_part == '<a':
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 47)             cur_element = result_part
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 48)             continue
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 49)         elif result_part != '</a>':
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 50)             cur_element += result_part
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 51)             continue
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 52) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 53)         cur_element += result_part
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 54) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 55)         # fix xml-error
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 56)         cur_element = cur_element.replace('"></a>', '"/></a>')
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 57) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 58)         dom = html.fromstring(cur_element)
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 59)         link = dom.xpath('//a')[0]
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 60) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 61)         url = urljoin(base_url, link.attrib.get('href'))
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 62)         title = link.attrib.get('title', '')
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 63) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 64)         thumbnail_src = urljoin(base_url, link.xpath('.//img')[0].attrib['src'])
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 65)         # TODO: get image with higher resolution
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 66)         img_src = thumbnail_src
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 67) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 68)         # check if url is showing to a photo
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 69)         if '/photo/' not in url:
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 70)             continue
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 71) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 72)         # append result
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 73)         results.append({'url': url,
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 74)                         'title': title,
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 75)                         'img_src': img_src,
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 76)                         'content': '',
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 77)                         'thumbnail_src': thumbnail_src,
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 78)                         'template': 'images.html'})
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 79) 
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 80)     # return results
+6042f2bc (Thomas Pointhuber 2015-02-01 11:27:28 +0100 81)     return results

@@ -1,0 +1,84 @@
+856dfc30 (marc 2017-07-21 22:17:28 -0500  1) """
+856dfc30 (marc 2017-07-21 22:17:28 -0500  2)  Google (Videos)
+856dfc30 (marc 2017-07-21 22:17:28 -0500  3) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500  4)  @website     https://www.google.com
+856dfc30 (marc 2017-07-21 22:17:28 -0500  5)  @provide-api yes (https://developers.google.com/custom-search/)
+856dfc30 (marc 2017-07-21 22:17:28 -0500  6) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500  7)  @using-api   no
+856dfc30 (marc 2017-07-21 22:17:28 -0500  8)  @results     HTML
+856dfc30 (marc 2017-07-21 22:17:28 -0500  9)  @stable      no
+856dfc30 (marc 2017-07-21 22:17:28 -0500 10)  @parse       url, title, content
+856dfc30 (marc 2017-07-21 22:17:28 -0500 11) """
+856dfc30 (marc 2017-07-21 22:17:28 -0500 12) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 13) from datetime import date, timedelta
+856dfc30 (marc 2017-07-21 22:17:28 -0500 14) from json import loads
+856dfc30 (marc 2017-07-21 22:17:28 -0500 15) from lxml import html
+856dfc30 (marc 2017-07-21 22:17:28 -0500 16) from searx.engines.xpath import extract_text
+856dfc30 (marc 2017-07-21 22:17:28 -0500 17) from searx.url_utils import urlencode
+856dfc30 (marc 2017-07-21 22:17:28 -0500 18) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 19) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 20) # engine dependent config
+856dfc30 (marc 2017-07-21 22:17:28 -0500 21) categories = ['videos']
+856dfc30 (marc 2017-07-21 22:17:28 -0500 22) paging = True
+856dfc30 (marc 2017-07-21 22:17:28 -0500 23) safesearch = True
+856dfc30 (marc 2017-07-21 22:17:28 -0500 24) time_range_support = True
+856dfc30 (marc 2017-07-21 22:17:28 -0500 25) number_of_results = 10
+856dfc30 (marc 2017-07-21 22:17:28 -0500 26) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 27) search_url = 'https://www.google.com/search'\
+856dfc30 (marc 2017-07-21 22:17:28 -0500 28)     '?{query}'\
+856dfc30 (marc 2017-07-21 22:17:28 -0500 29)     '&tbm=vid'\
+856dfc30 (marc 2017-07-21 22:17:28 -0500 30)     '&{search_options}'
+856dfc30 (marc 2017-07-21 22:17:28 -0500 31) time_range_attr = "qdr:{range}"
+856dfc30 (marc 2017-07-21 22:17:28 -0500 32) time_range_custom_attr = "cdr:1,cd_min:{start},cd_max{end}"
+856dfc30 (marc 2017-07-21 22:17:28 -0500 33) time_range_dict = {'day': 'd',
+856dfc30 (marc 2017-07-21 22:17:28 -0500 34)                    'week': 'w',
+856dfc30 (marc 2017-07-21 22:17:28 -0500 35)                    'month': 'm'}
+856dfc30 (marc 2017-07-21 22:17:28 -0500 36) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 37) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 38) # do search-request
+856dfc30 (marc 2017-07-21 22:17:28 -0500 39) @little_documented
+def request(query, params):
+856dfc30 (marc 2017-07-21 22:17:28 -0500 40)     search_options = {
+856dfc30 (marc 2017-07-21 22:17:28 -0500 41)         'ijn': params['pageno'] - 1,
+856dfc30 (marc 2017-07-21 22:17:28 -0500 42)         'start': (params['pageno'] - 1) * number_of_results
+856dfc30 (marc 2017-07-21 22:17:28 -0500 43)     }
+856dfc30 (marc 2017-07-21 22:17:28 -0500 44) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 45)     if params['time_range'] in time_range_dict:
+856dfc30 (marc 2017-07-21 22:17:28 -0500 46)         search_options['tbs'] = time_range_attr.format(range=time_range_dict[params['time_range']])
+856dfc30 (marc 2017-07-21 22:17:28 -0500 47)     elif params['time_range'] == 'year':
+856dfc30 (marc 2017-07-21 22:17:28 -0500 48)         now = date.today()
+856dfc30 (marc 2017-07-21 22:17:28 -0500 49)         then = now - timedelta(days=365)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 50)         start = then.strftime('%m/%d/%Y')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 51)         end = now.strftime('%m/%d/%Y')
+856dfc30 (marc 2017-07-21 22:17:28 -0500 52)         search_options['tbs'] = time_range_custom_attr.format(start=start, end=end)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 53) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 54)     if safesearch and params['safesearch']:
+856dfc30 (marc 2017-07-21 22:17:28 -0500 55)         search_options['safe'] = 'on'
+856dfc30 (marc 2017-07-21 22:17:28 -0500 56) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 57)     params['url'] = search_url.format(query=urlencode({'q': query}),
+856dfc30 (marc 2017-07-21 22:17:28 -0500 58)                                       search_options=urlencode(search_options))
+856dfc30 (marc 2017-07-21 22:17:28 -0500 59) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 60)     return params
+856dfc30 (marc 2017-07-21 22:17:28 -0500 61) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 62) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 63) # get response from search-request
+856dfc30 (marc 2017-07-21 22:17:28 -0500 64) def response(resp):
+856dfc30 (marc 2017-07-21 22:17:28 -0500 65)     results = []
+856dfc30 (marc 2017-07-21 22:17:28 -0500 66) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 67)     dom = html.fromstring(resp.text)
+856dfc30 (marc 2017-07-21 22:17:28 -0500 68) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 69)     # parse results
+856dfc30 (marc 2017-07-21 22:17:28 -0500 70)     for result in dom.xpath('//div[@class="g"]'):
+856dfc30 (marc 2017-07-21 22:17:28 -0500 71) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 72)         title = extract_text(result.xpath('.//h3/a'))
+856dfc30 (marc 2017-07-21 22:17:28 -0500 73)         url = result.xpath('.//h3/a/@href')[0]
+856dfc30 (marc 2017-07-21 22:17:28 -0500 74)         content = extract_text(result.xpath('.//span[@class="st"]'))
+856dfc30 (marc 2017-07-21 22:17:28 -0500 75) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 76)         # append result
+856dfc30 (marc 2017-07-21 22:17:28 -0500 77)         results.append({'url': url,
+856dfc30 (marc 2017-07-21 22:17:28 -0500 78)                         'title': title,
+856dfc30 (marc 2017-07-21 22:17:28 -0500 79)                         'content': content,
+856dfc30 (marc 2017-07-21 22:17:28 -0500 80)                         'thumbnail': '',
+856dfc30 (marc 2017-07-21 22:17:28 -0500 81)                         'template': 'videos.html'})
+856dfc30 (marc 2017-07-21 22:17:28 -0500 82) 
+856dfc30 (marc 2017-07-21 22:17:28 -0500 83)     return results

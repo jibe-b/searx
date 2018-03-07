@@ -1,0 +1,46 @@
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  1) '''
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  2) searx is free software: you can redistribute it and/or modify
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  3) it under the terms of the GNU Affero General Public License as published by
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  4) the Free Software Foundation, either version 3 of the License, or
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  5) (at your option) any later version.
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  6) 
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  7) searx is distributed in the hope that it will be useful,
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  8) but WITHOUT ANY WARRANTY; without even the implied warranty of
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200  9) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200 10) GNU Affero General Public License for more details.
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200 11) 
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200 12) You should have received a copy of the GNU Affero General Public License
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200 13) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200 14) 
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200 15) (C) 2015 by Adam Tauber, <asciimoo@gmail.com>
+146928a7 searx/plugins/self_ip.py   (Adam Tauber 2015-04-13 00:08:04 +0200 16) '''
+257e5295 searx/plugins/self_info.py (Adam Tauber 2016-07-04 22:46:43 +0200 17) from flask_babel import gettext
+41fd748c searx/plugins/self.py      (Luc Didry   2015-06-15 10:22:37 +0200 18) import re
+41fd748c searx/plugins/self.py      (Luc Didry   2015-06-15 10:22:37 +0200 19) name = "Self Informations"
+0fe362ba searx/plugins/self_info.py (Luc Didry   2015-06-15 13:36:38 +0200 20) description = gettext('Displays your IP if the query is "ip" and your user agent if the query contains "user agent".')
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 21) default_on = True
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 22) 
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 23) 
+41fd748c searx/plugins/self.py      (Luc Didry   2015-06-15 10:22:37 +0200 24) # Self User Agent regex
+52e615de searx/plugins/self_info.py (Adam Tauber 2016-11-30 18:43:03 +0100 25) p = re.compile(b'.*user[ -]agent.*', re.IGNORECASE)
+41fd748c searx/plugins/self.py      (Luc Didry   2015-06-15 10:22:37 +0200 26) 
+41fd748c searx/plugins/self.py      (Luc Didry   2015-06-15 10:22:37 +0200 27) 
+54f1bc04 searx/plugins/self_ip.py   (Adam Tauber 2015-04-07 11:07:46 +0200 28) # attach callback to the post search hook
+13ea0a20 searx/plugins/self_ip.py   (Adam Tauber 2015-03-14 19:45:15 +0100 29) #  request: flask request object
+13ea0a20 searx/plugins/self_ip.py   (Adam Tauber 2015-03-14 19:45:15 +0100 30) #  ctx: the whole local context of the pre search hook
+fbb080f3 searx/plugins/self_info.py (dalf        2016-10-22 14:01:53 +0200 31) def post_search(request, search):
+fbb080f3 searx/plugins/self_info.py (dalf        2016-10-22 14:01:53 +0200 32)     if search.search_query.pageno > 1:
+aa227180 searx/plugins/self_info.py (Noemi Vanyi 2016-08-27 16:45:25 +0200 33)         return True
+52e615de searx/plugins/self_info.py (Adam Tauber 2016-11-30 18:43:03 +0100 34)     if search.search_query.query == b'ip':
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 35)         x_forwarded_for = request.headers.getlist("X-Forwarded-For")
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 36)         if x_forwarded_for:
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 37)             ip = x_forwarded_for[0]
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 38)         else:
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 39)             ip = request.remote_addr
+fbb080f3 searx/plugins/self_info.py (dalf        2016-10-22 14:01:53 +0200 40)         search.result_container.answers.clear()
+fbb080f3 searx/plugins/self_info.py (dalf        2016-10-22 14:01:53 +0200 41)         search.result_container.answers.add(ip)
+fbb080f3 searx/plugins/self_info.py (dalf        2016-10-22 14:01:53 +0200 42)     elif p.match(search.search_query.query):
+41fd748c searx/plugins/self.py      (Luc Didry   2015-06-15 10:22:37 +0200 43)         ua = request.user_agent
+fbb080f3 searx/plugins/self_info.py (dalf        2016-10-22 14:01:53 +0200 44)         search.result_container.answers.clear()
+fbb080f3 searx/plugins/self_info.py (dalf        2016-10-22 14:01:53 +0200 45)         search.result_container.answers.add(ua)
+00cc4dcb searx/plugins/self_ip.py   (Adam Tauber 2015-03-10 19:55:22 +0100 46)     return True

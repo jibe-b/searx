@@ -1,0 +1,108 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   2)  Soundcloud (Music)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   4)  @website     https://soundcloud.com
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   5)  @provide-api yes (https://developers.soundcloud.com/)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  10)  @parse       url, title, content, publishedDate, embedded
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  11) """
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  12) 
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  13) import re
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  14) from json import loads
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  15) from lxml import html
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100  16) from dateutil import parser
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  17) from searx import logger
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  18) from searx.poolrequests import get as http_get
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  19) from searx.url_utils import quote_plus, urlencode
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  20) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  21) try:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  22)     from cStringIO import StringIO
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  23) except:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  24)     from io import StringIO
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  25) 
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  26) # engine dependent config
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  27) categories = ['music']
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  28) paging = True
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  29) 
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  30) # search-url
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  31) url = 'https://api.soundcloud.com/'
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100  32) search_url = url + 'search?{query}'\
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100  33)                          '&facet=model'\
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100  34)                          '&limit=20'\
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100  35)                          '&offset={offset}'\
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100  36)                          '&linked_partitioning=1'\
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100  37)                          '&client_id={client_id}'   # noqa
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  38) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100  39) embedded_url = '<iframe width="100%" height="166" ' +\
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100  40)     'scrolling="no" frameborder="no" ' +\
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100  41)     'data-src="https://w.soundcloud.com/player/?url={uri}"></iframe>'
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100  42) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  43) cid_re = re.compile(r'client_id:"([^"]*)"', re.I | re.U)
+78365ffb (Adam Tauber       2017-06-06 22:20:20 +0200  44) guest_client_id = ''
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  45) 
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  46) 
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  47) def get_client_id():
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  48)     response = http_get("https://soundcloud.com")
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  49) 
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  50)     if response.ok:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  51)         tree = html.fromstring(response.content)
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  52)         script_tags = tree.xpath("//script[contains(@src, '/assets/app')]")
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  53)         app_js_urls = [script_tag.get('src') for script_tag in script_tags if script_tag is not None]
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  54) 
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  55)         # extracts valid app_js urls from soundcloud.com content
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  56)         for app_js_url in app_js_urls:
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  57)             # gets app_js and searches for the clientid
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  58)             response = http_get(app_js_url)
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  59)             if response.ok:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  60)                 cids = cid_re.search(response.text)
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  61)                 if cids is not None and len(cids.groups()):
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  62)                     return cids.groups()[0]
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  63)     logger.warning("Unable to fetch guest client_id from SoundCloud, check parser!")
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  64)     return ""
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  65) 
+7e16c9d3 (stepshal          2016-07-16 00:49:23 +0700  66) 
+78365ffb (Adam Tauber       2017-06-06 22:20:20 +0200  67) @little_documented
+def init():
+78365ffb (Adam Tauber       2017-06-06 22:20:20 +0200  68)     global guest_client_id
+78365ffb (Adam Tauber       2017-06-06 22:20:20 +0200  69)     # api-key
+78365ffb (Adam Tauber       2017-06-06 22:20:20 +0200  70)     guest_client_id = get_client_id()
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  71) 
+dc55d87e (misnyo            2015-12-30 01:20:14 +0100  72) 
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  73) # do search-request
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  74) def request(query, params):
+6cbf9bf6 (asciimoo          2014-01-30 01:50:15 +0100  75)     offset = (params['pageno'] - 1) * 20
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  76) 
+6cbf9bf6 (asciimoo          2014-01-30 01:50:15 +0100  77)     params['url'] = search_url.format(query=urlencode({'q': query}),
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  78)                                       offset=offset,
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  79)                                       client_id=guest_client_id)
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  80) 
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  81)     return params
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  82) 
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  83) 
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  84) # get response from search-request
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  85) def response(resp):
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  86)     results = []
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  87) 
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  88)     search_res = loads(resp.text)
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  89) 
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  90)     # parse results
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  91)     for result in search_res.get('collection', []):
+7b6e5b5d (asciimoo          2013-10-20 00:52:32 +0200  92)         if result['kind'] in ('track', 'playlist'):
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  93)             title = result['title']
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200  94)             content = result['description']
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100  95)             publishedDate = parser.parse(result['last_modified'])
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100  96)             uri = quote_plus(result['uri'])
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100  97)             embedded = embedded_url.format(uri=uri)
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  98) 
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200  99)             # append result
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 100)             results.append({'url': result['permalink_url'],
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 101)                             'title': title,
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 102)                             'publishedDate': publishedDate,
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 103)                             'embedded': embedded,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 104)                             'content': content})
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200 105) 
+64a68a72 (Thomas Pointhuber 2014-09-02 18:12:30 +0200 106)     # return results
+b9153864 (asciimoo          2013-10-17 21:21:23 +0200 107)     return results

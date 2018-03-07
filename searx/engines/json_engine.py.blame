@@ -1,0 +1,136 @@
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100   1) from collections import Iterable
+52e615de (Adam Tauber     2016-11-30 18:43:03 +0100   2) from json import loads
+52e615de (Adam Tauber     2016-11-30 18:43:03 +0100   3) from sys import version_info
+52e615de (Adam Tauber     2016-11-30 18:43:03 +0100   4) from searx.url_utils import urlencode
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100   5) from searx.utils import to_string
+52e615de (Adam Tauber     2016-11-30 18:43:03 +0100   6) 
+52e615de (Adam Tauber     2016-11-30 18:43:03 +0100   7) if version_info[0] == 3:
+52e615de (Adam Tauber     2016-11-30 18:43:03 +0100   8)     unicode = str
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100   9) 
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  10) search_url = None
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  11) url_query = None
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  12) content_query = None
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  13) title_query = None
+52e615de (Adam Tauber     2016-11-30 18:43:03 +0100  14) paging = False
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000  15) suggestion_query = ''
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000  16) results_query = ''
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  17) 
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  18) # parameters for engines with paging support
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  19) #
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  20) # number of results on each page
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  21) # (only needed if the site requires not a page number, but an offset)
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  22) page_size = 1
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  23) # number of the first page (usually 0 or 1)
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  24) first_page_num = 1
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  25) 
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  26) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  27) def iterate(iterable):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  28)     if type(iterable) == dict:
+52e615de (Adam Tauber     2016-11-30 18:43:03 +0100  29)         it = iterable.items()
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  30) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  31)     else:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  32)         it = enumerate(iterable)
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  33)     for index, value in it:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  34)         yield str(index), value
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  35) 
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  36) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  37) def is_iterable(obj):
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  38)     if type(obj) == str:
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  39)         return False
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  40)     if type(obj) == unicode:
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  41)         return False
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  42)     return isinstance(obj, Iterable)
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  43) 
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  44) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  45) def parse(query):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  46)     q = []
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  47)     for part in query.split('/'):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  48)         if part == '':
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  49)             continue
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  50)         else:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  51)             q.append(part)
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  52)     return q
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  53) 
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  54) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  55) def do_query(data, q):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  56)     ret = []
+c1d7d30b (asciimoo        2014-02-11 13:13:51 +0100  57)     if not q:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  58)         return ret
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  59) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  60)     qkey = q[0]
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  61) 
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  62)     for key, value in iterate(data):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  63) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  64)         if len(q) == 1:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  65)             if key == qkey:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  66)                 ret.append(value)
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  67)             elif is_iterable(value):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  68)                 ret.extend(do_query(value, q))
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  69)         else:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  70)             if not is_iterable(value):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  71)                 continue
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  72)             if key == qkey:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  73)                 ret.extend(do_query(value, q[1:]))
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  74)             else:
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  75)                 ret.extend(do_query(value, q))
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  76)     return ret
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  77) 
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  78) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  79) def query(data, query_string):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  80)     q = parse(query_string)
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  81) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  82)     return do_query(data, q)
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  83) 
+b2492c94 (asciimoo        2014-01-20 02:31:20 +0100  84) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  85) def request(query, params):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  86)     query = urlencode({'q': query})[2:]
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  87) 
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  88)     fp = {'query': query}
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  89)     if paging and search_url.find('{pageno}') >= 0:
+1e9dab08 (David A Roberts 2016-08-14 21:46:54 +1000  90)         fp['pageno'] = (params['pageno'] - 1) * page_size + first_page_num
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  91) 
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  92)     params['url'] = search_url.format(**fp)
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  93)     params['query'] = query
+117d36b6 (David A Roberts 2016-07-16 19:26:29 +1000  94) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  95)     return params
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  96) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  97) 
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  98) def response(resp):
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100  99)     results = []
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100 100)     json = loads(resp.text)
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 101)     if results_query:
+181f1c63 (Adam Tauber     2017-11-02 00:43:29 +0100 102)         rs = query(json, results_query)
+181f1c63 (Adam Tauber     2017-11-02 00:43:29 +0100 103)         if not len(rs):
+181f1c63 (Adam Tauber     2017-11-02 00:43:29 +0100 104)             return results
+181f1c63 (Adam Tauber     2017-11-02 00:43:29 +0100 105)         for result in rs[0]:
+7a9b18e9 (Adam Tauber     2017-11-02 01:08:15 +0100 106)             try:
+7a9b18e9 (Adam Tauber     2017-11-02 01:08:15 +0100 107)                 url = query(result, url_query)[0]
+7a9b18e9 (Adam Tauber     2017-11-02 01:08:15 +0100 108)                 title = query(result, title_query)[0]
+7a9b18e9 (Adam Tauber     2017-11-02 01:08:15 +0100 109)             except:
+7a9b18e9 (Adam Tauber     2017-11-02 01:08:15 +0100 110)                 continue
+181f1c63 (Adam Tauber     2017-11-02 00:43:29 +0100 111)             try:
+181f1c63 (Adam Tauber     2017-11-02 00:43:29 +0100 112)                 content = query(result, content_query)[0]
+181f1c63 (Adam Tauber     2017-11-02 00:43:29 +0100 113)             except:
+181f1c63 (Adam Tauber     2017-11-02 00:43:29 +0100 114)                 content = ""
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 115)             results.append({
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 116)                 'url': to_string(url),
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 117)                 'title': to_string(title),
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 118)                 'content': to_string(content),
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 119)             })
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 120)     else:
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 121)         for url, title, content in zip(
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 122)             query(json, url_query),
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 123)             query(json, title_query),
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 124)             query(json, content_query)
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 125)         ):
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 126)             results.append({
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 127)                 'url': to_string(url),
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 128)                 'title': to_string(title),
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 129)                 'content': to_string(content),
+0969e50c (Adam Tauber     2017-12-01 20:45:24 +0100 130)             })
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 131) 
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 132)     if not suggestion_query:
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 133)         return results
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 134)     for suggestion in query(json, suggestion_query):
+61fe5daf (David A Roberts 2016-08-12 20:15:27 +1000 135)         results.append({'suggestion': suggestion})
+1cb489ba (asciimoo        2013-11-19 15:49:52 +0100 136)     return results

@@ -1,0 +1,167 @@
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   1) #!/usr/bin/env python
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   2) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   3) '''
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   4) searx is free software: you can redistribute it and/or modify
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   5) it under the terms of the GNU Affero General Public License as published by
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   6) the Free Software Foundation, either version 3 of the License, or
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   7) (at your option) any later version.
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   8) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200   9) searx is distributed in the hope that it will be useful,
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  10) but WITHOUT ANY WARRANTY; without even the implied warranty of
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  11) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  12) GNU Affero General Public License for more details.
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  13) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  14) You should have received a copy of the GNU Affero General Public License
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  15) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  16) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  17) (C) 2014 by Thomas Pointhuber, <thomas.pointhuber@gmx.at>
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  18) '''
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  19) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  20) from searx.languages import language_codes
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  21) from searx.engines import (
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  22)     categories, engines, engine_shortcuts
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  23) )
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  24) import re
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  25) import sys
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  26) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  27) if sys.version_info[0] == 3:
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  28)     unicode = str
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  29) 
+fd65c129 (marc              2017-03-01 17:11:51 -0600  30) VALID_LANGUAGE_CODE = re.compile(r'^[a-z]{2,3}(-[a-zA-Z]{2})?$')
+1175b390 (marc              2016-12-28 23:24:56 -0600  31) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  32) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200  33) class RawTextQuery(object):
+67e11c42 (dalf              2016-10-22 13:10:31 +0200  34)     """parse raw text query (the value from the html input)"""
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  35) 
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200  36)     @little_documented
+def __init__(self, query, disabled_engines):
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  37)         self.query = query
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200  38)         self.disabled_engines = []
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  39) 
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200  40)         if disabled_engines:
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200  41)             self.disabled_engines = disabled_engines
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  42) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  43)         self.query_parts = []
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  44)         self.engines = []
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  45)         self.languages = []
+96c4d52e (Cqoicebordel      2015-01-03 02:31:23 +0100  46)         self.specific = False
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  47) 
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  48)     # parse query, if tags are set, which
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  49)     # change the serch engine or search-language
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  50)     def parse_query(self):
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  51)         self.query_parts = []
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  52) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  53)         # split query, including whitespaces
+02cb5602 (Zeph              2017-11-23 22:04:00 +0100  54)         raw_query_parts = re.split(r'(\s+)' if isinstance(self.query, str) else b'(\s+)', self.query)
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  55) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  56)         parse_next = True
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  57) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  58)         for query_part in raw_query_parts:
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  59)             if not parse_next:
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  60)                 self.query_parts[-1] += query_part
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  61)                 continue
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  62) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  63)             parse_next = False
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  64) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  65)             # part does only contain spaces, skip
+62d1a70c (Thomas Pointhuber 2014-10-01 17:57:53 +0200  66)             if query_part.isspace()\
+62d1a70c (Thomas Pointhuber 2014-10-01 17:57:53 +0200  67)                or query_part == '':
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  68)                 parse_next = True
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  69)                 self.query_parts.append(query_part)
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  70)                 continue
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  71) 
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  72)             # this force a language
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  73)             if query_part[0] == ':':
+fd65c129 (marc              2017-03-01 17:11:51 -0600  74)                 lang = query_part[1:].lower().replace('_', '-')
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  75) 
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  76)                 # check if any language-code is equal with
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  77)                 # declared language-codes
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  78)                 for lc in language_codes:
+149802c5 (marc              2016-08-05 23:34:56 -0500  79)                     lang_id, lang_name, country, english_name = map(unicode.lower, lc)
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200  80) 
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  81)                     # if correct language-code is found
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200  82)                     # set it as new search-language
+4d177039 (marc              2017-07-20 15:47:20 -0500  83)                     if (lang == lang_id
+4d177039 (marc              2017-07-20 15:47:20 -0500  84)                         or lang == lang_name
+4d177039 (marc              2017-07-20 15:47:20 -0500  85)                         or lang == english_name
+4d177039 (marc              2017-07-20 15:47:20 -0500  86)                         or lang.replace('-', ' ') == country)\
+4d177039 (marc              2017-07-20 15:47:20 -0500  87)                        and lang not in self.languages:
+4d177039 (marc              2017-07-20 15:47:20 -0500  88)                             parse_next = True
+4d177039 (marc              2017-07-20 15:47:20 -0500  89)                             lang_parts = lang_id.split('-')
+4d177039 (marc              2017-07-20 15:47:20 -0500  90)                             if len(lang_parts) == 2:
+4d177039 (marc              2017-07-20 15:47:20 -0500  91)                                 self.languages.append(lang_parts[0] + '-' + lang_parts[1].upper())
+4d177039 (marc              2017-07-20 15:47:20 -0500  92)                             else:
+4d177039 (marc              2017-07-20 15:47:20 -0500  93)                                 self.languages.append(lang_id)
+4d177039 (marc              2017-07-20 15:47:20 -0500  94)                             # to ensure best match (first match is not necessarily the best one)
+4d177039 (marc              2017-07-20 15:47:20 -0500  95)                             if lang == lang_id:
+4d177039 (marc              2017-07-20 15:47:20 -0500  96)                                 break
+4d177039 (marc              2017-07-20 15:47:20 -0500  97) 
+4d177039 (marc              2017-07-20 15:47:20 -0500  98)                 # user may set a valid, yet not selectable language
+4d177039 (marc              2017-07-20 15:47:20 -0500  99)                 if not self.languages and VALID_LANGUAGE_CODE.match(lang):
+4d177039 (marc              2017-07-20 15:47:20 -0500 100)                     self.languages.append(lang)
+4d177039 (marc              2017-07-20 15:47:20 -0500 101)                     parse_next = True
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 102) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 103)             # this force a engine or category
+96c4d52e (Cqoicebordel      2015-01-03 02:31:23 +0100 104)             if query_part[0] == '!' or query_part[0] == '?':
+448903cd (Alexandre Flament 2017-01-12 16:17:29 +0100 105)                 prefix = query_part[1:].replace('-', ' ').replace('_', ' ')
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 106) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 107)                 # check if prefix is equal with engine shortcut
+78828efd (Adam Tauber       2015-01-31 23:11:48 +0100 108)                 if prefix in engine_shortcuts:
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 109)                     parse_next = True
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 110)                     self.engines.append({'category': 'none',
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 111)                                          'name': engine_shortcuts[prefix]})
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 112) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 113)                 # check if prefix is equal with engine name
+78828efd (Adam Tauber       2015-01-31 23:11:48 +0100 114)                 elif prefix in engines:
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 115)                     parse_next = True
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 116)                     self.engines.append({'category': 'none',
+78828efd (Adam Tauber       2015-01-31 23:11:48 +0100 117)                                          'name': prefix})
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 118) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 119)                 # check if prefix is equal with categorie name
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 120)                 elif prefix in categories:
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 121)                     # using all engines for that search, which
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 122)                     # are declared under that categorie name
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 123)                     parse_next = True
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 124)                     self.engines.extend({'category': prefix,
+78828efd (Adam Tauber       2015-01-31 23:11:48 +0100 125)                                          'name': engine.name}
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 126)                                         for engine in categories[prefix]
+8c4db084 (Noemi Vanyi       2016-04-09 18:26:29 +0200 127)                                         if (engine.name, prefix) not in self.disabled_engines)
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 128) 
+96c4d52e (Cqoicebordel      2015-01-03 02:31:23 +0100 129)             if query_part[0] == '!':
+96c4d52e (Cqoicebordel      2015-01-03 02:31:23 +0100 130)                 self.specific = True
+96c4d52e (Cqoicebordel      2015-01-03 02:31:23 +0100 131) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 132)             # append query part to query_part list
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 133)             self.query_parts.append(query_part)
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 134) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 135)     def changeSearchQuery(self, search_query):
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 136)         if len(self.query_parts):
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 137)             self.query_parts[-1] = search_query
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 138)         else:
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 139)             self.query_parts.append(search_query)
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 140) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 141)     def getSearchQuery(self):
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 142)         if len(self.query_parts):
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 143)             return self.query_parts[-1]
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 144)         else:
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 145)             return ''
+5740cfbf (Adam Tauber       2014-10-19 12:41:04 +0200 146) 
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 147)     def getFullQuery(self):
+510aba5e (Thomas Pointhuber 2014-10-01 17:18:18 +0200 148)         # get full querry including whitespaces
+fe6e87a5 (Adam Tauber       2017-11-23 17:40:26 +0100 149)         return u''.join(self.query_parts)
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 150) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 151) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 152) class SearchQuery(object):
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 153)     """container for all the search parameters (query, language, etc...)"""
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 154) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 155)     @little_documented
+def __init__(self, query, engines, categories, lang, safesearch, pageno, time_range):
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 156)         self.query = query.encode('utf-8')
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 157)         self.engines = engines
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 158)         self.categories = categories
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 159)         self.lang = lang
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 160)         self.safesearch = safesearch
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 161)         self.pageno = pageno
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 162)         self.time_range = time_range
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 163) 
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 164)     def __str__(self):
+67e11c42 (dalf              2016-10-22 13:10:31 +0200 165)         return str(self.query) + ";" + str(self.engines)

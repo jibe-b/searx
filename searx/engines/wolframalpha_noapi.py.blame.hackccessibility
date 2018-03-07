@@ -1,0 +1,122 @@
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600   1) # Wolfram|Alpha (Science)
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600   2) #
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600   3) # @website     https://www.wolframalpha.com/
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600   4) # @provide-api yes (https://api.wolframalpha.com/v2/)
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600   5) #
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600   6) # @using-api   no
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600   7) # @results     JSON
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600   8) # @stable      no
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600   9) # @parse       url, infobox
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  10) 
+be54e526 (a01200356   2015-12-30 00:53:15 -0600  11) from json import loads
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  12) from time import time
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  13) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  14) from searx.poolrequests import get as http_get
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  15) from searx.url_utils import urlencode
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  16) 
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  17) # search-url
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  18) url = 'https://www.wolframalpha.com/'
+19d025f0 (a01200356   2016-01-02 01:49:32 -0600  19) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  20) search_url = url + 'input/json.jsp'\
+8f3b33de (a01200356   2016-02-28 02:05:52 -0600  21)     '?async=false'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  22)     '&banners=raw'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  23)     '&debuggingdata=false'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  24)     '&format=image,plaintext,imagemap,minput,moutput'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  25)     '&formattimeout=2'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  26)     '&{query}'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  27)     '&output=JSON'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  28)     '&parsetimeout=2'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  29)     '&proxycode={token}'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  30)     '&scantimeout=0.5'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  31)     '&sponsorcategories=true'\
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  32)     '&statemethod=deploybutton'
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  33) 
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  34) referer_url = url + 'input/?{query}'
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  35) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  36) token = {'value': '',
+e145fdb8 (firebovine  2016-07-07 19:41:33 -0400  37)          'last_updated': None}
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  38) 
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  39) # pods to display as image in infobox
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  40) # this pods do return a plaintext, but they look better and are more useful as images
+4d8996eb (a01200356   2016-02-28 00:47:36 -0600  41) image_pods = {'VisualRepresentation',
+4d8996eb (a01200356   2016-02-28 00:47:36 -0600  42)               'Illustration',
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  43)               'Symbol'}
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  44) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  45) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  46) # seems, wolframalpha resets its token in every hour
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  47) @little_documented
+def obtain_token():
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  48)     update_time = time() - (time() % 3600)
+db72fc64 (Adam Tauber 2016-02-17 17:21:54 +0100  49)     try:
+db72fc64 (Adam Tauber 2016-02-17 17:21:54 +0100  50)         token_response = http_get('https://www.wolframalpha.com/input/api/v1/code?ts=9999999999999999999', timeout=2.0)
+db72fc64 (Adam Tauber 2016-02-17 17:21:54 +0100  51)         token['value'] = loads(token_response.text)['code']
+db72fc64 (Adam Tauber 2016-02-17 17:21:54 +0100  52)         token['last_updated'] = update_time
+db72fc64 (Adam Tauber 2016-02-17 17:21:54 +0100  53)     except:
+db72fc64 (Adam Tauber 2016-02-17 17:21:54 +0100  54)         pass
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  55)     return token
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  56) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  57) 
+78365ffb (Adam Tauber 2017-06-06 22:20:20 +0200  58) def init():
+78365ffb (Adam Tauber 2017-06-06 22:20:20 +0200  59)     obtain_token()
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  60) 
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  61) 
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  62) # do search-request
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  63) def request(query, params):
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  64)     # obtain token if last update was more than an hour
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  65)     if time() - (token['last_updated'] or 0) > 3600:
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  66)         obtain_token()
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  67)     params['url'] = search_url.format(query=urlencode({'input': query}), token=token['value'])
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  68)     params['headers']['Referer'] = referer_url.format(query=urlencode({'i': query}))
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  69) 
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  70)     return params
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  71) 
+b51ba32f (a01200356   2015-12-29 20:59:51 -0600  72) 
+d827fc49 (a01200356   2015-12-29 21:11:49 -0600  73) # get response from search-request
+d827fc49 (a01200356   2015-12-29 21:11:49 -0600  74) def response(resp):
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  75)     results = []
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  76) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  77)     resp_json = loads(resp.text)
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  78) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  79)     if not resp_json['queryresult']['success']:
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  80)         return []
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  81) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  82)     # TODO handle resp_json['queryresult']['assumptions']
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  83)     result_chunks = []
+e145fdb8 (firebovine  2016-07-07 19:41:33 -0400  84)     infobox_title = ""
+e145fdb8 (firebovine  2016-07-07 19:41:33 -0400  85)     result_content = ""
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  86)     for pod in resp_json['queryresult']['pods']:
+4d8996eb (a01200356   2016-02-28 00:47:36 -0600  87)         pod_id = pod.get('id', '')
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  88)         pod_title = pod.get('title', '')
+09ee2aa6 (marc        2016-07-06 17:29:40 -0500  89)         pod_is_result = pod.get('primary', None)
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  90) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  91)         if 'subpods' not in pod:
+8f3b33de (a01200356   2016-02-28 02:05:52 -0600  92)             continue
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  93) 
+4d8996eb (a01200356   2016-02-28 00:47:36 -0600  94)         if pod_id == 'Input' or not infobox_title:
+4d8996eb (a01200356   2016-02-28 00:47:36 -0600  95)             infobox_title = pod['subpods'][0]['plaintext']
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  96) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100  97)         for subpod in pod['subpods']:
+4d8996eb (a01200356   2016-02-28 00:47:36 -0600  98)             if subpod['plaintext'] != '' and pod_id not in image_pods:
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600  99)                 # append unless it's not an actual answer
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 100)                 if subpod['plaintext'] != '(requires interactivity)':
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 101)                     result_chunks.append({'label': pod_title, 'value': subpod['plaintext']})
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 102) 
+e145fdb8 (firebovine  2016-07-07 19:41:33 -0400 103)                 if pod_is_result or not result_content:
+e145fdb8 (firebovine  2016-07-07 19:41:33 -0400 104)                     if pod_id != "Input":
+e145fdb8 (firebovine  2016-07-07 19:41:33 -0400 105)                         result_content = pod_title + ': ' + subpod['plaintext']
+09ee2aa6 (marc        2016-07-06 17:29:40 -0500 106) 
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 107)             elif 'img' in subpod:
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 108)                 result_chunks.append({'label': pod_title, 'image': subpod['img']})
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100 109) 
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100 110)     if not result_chunks:
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100 111)         return []
+d0617813 (Adam Tauber 2016-02-17 17:07:19 +0100 112) 
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 113)     results.append({'infobox': infobox_title,
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 114)                     'attributes': result_chunks,
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 115)                     'urls': [{'title': 'Wolfram|Alpha', 'url': resp.request.headers['Referer']}]})
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 116) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 117)     results.append({'url': resp.request.headers['Referer'],
+e145fdb8 (firebovine  2016-07-07 19:41:33 -0400 118)                     'title': 'Wolfram|Alpha (' + infobox_title + ')',
+e145fdb8 (firebovine  2016-07-07 19:41:33 -0400 119)                     'content': result_content})
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 120) 
+78d3f3d6 (a01200356   2016-02-27 19:06:44 -0600 121)     return results

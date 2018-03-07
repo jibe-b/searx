@@ -1,0 +1,24 @@
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100  1) # -*- coding: utf-8 -*-
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100  2) 
+22fd0746 searx/tests/test_robot.py (Gabor Nagy   2014-02-05 20:24:31 +0100  3) import os
+22fd0746 searx/tests/test_robot.py (Gabor Nagy   2014-02-05 20:24:31 +0100  4) import unittest2 as unittest
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100  5) from plone.testing import layered
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100  6) from robotsuite import RobotTestSuite
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100  7) from searx.testing import SEARXROBOTLAYER
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100  8) 
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100  9) 
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 10) @little_documented
+def test_suite():
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 11)     suite = unittest.TestSuite()
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 12)     current_dir = os.path.abspath(os.path.dirname(__file__))
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 13)     robot_dir = os.path.join(current_dir, 'robot')
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 14)     tests = [
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 15)         os.path.join('robot', f) for f in
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 16)         os.listdir(robot_dir) if f.endswith('.robot') and
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 17)         f.startswith('test_')
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 18)     ]
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 19)     for test in tests:
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 20)         suite.addTests([
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 21)             layered(RobotTestSuite(test), layer=SEARXROBOTLAYER),
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 22)         ])
+e740c8a8 searx/tests/test_robot.py (Matej Cotman 2014-01-12 12:40:27 +0100 23)     return suite

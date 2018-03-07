@@ -1,0 +1,143 @@
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100   1) from collections import defaultdict
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100   2) import mock
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100   3) from searx.engines import bing_news
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100   4) from searx.testing import SearxTestCase
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200   5) import lxml
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100   6) 
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100   7) 
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100   8) class TestBingNewsEngine(SearxTestCase):
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100   9) 
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  10)     @little_documented
+def test_request(self):
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  11)         query = 'test_query'
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  12)         dicto = defaultdict(dict)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  13)         dicto['pageno'] = 1
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  14)         dicto['language'] = 'fr_FR'
+f70d4052 tests/unit/engines/test_bing_news.py  (Noémi Ványi       2016-10-30 18:14:42 +0100  15)         dicto['time_range'] = ''
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  16)         params = bing_news.request(query, dicto)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  17)         self.assertIn('url', params)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  18)         self.assertIn(query, params['url'])
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  19)         self.assertIn('bing.com', params['url'])
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  20)         self.assertIn('fr', params['url'])
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  21) 
+b0343568 tests/unit/engines/test_bing_news.py  (Noémi Ványi       2016-12-11 16:41:14 +0100  22)     def test_no_url_in_request_year_time_range(self):
+b0343568 tests/unit/engines/test_bing_news.py  (Noémi Ványi       2016-12-11 16:41:14 +0100  23)         dicto = defaultdict(dict)
+b0343568 tests/unit/engines/test_bing_news.py  (Noémi Ványi       2016-12-11 16:41:14 +0100  24)         query = 'test_query'
+b0343568 tests/unit/engines/test_bing_news.py  (Noémi Ványi       2016-12-11 16:41:14 +0100  25)         dicto['time_range'] = 'year'
+b0343568 tests/unit/engines/test_bing_news.py  (Noémi Ványi       2016-12-11 16:41:14 +0100  26)         params = bing_news.request(query, dicto)
+b0343568 tests/unit/engines/test_bing_news.py  (Noémi Ványi       2016-12-11 16:41:14 +0100  27)         self.assertEqual({}, params['url'])
+b0343568 tests/unit/engines/test_bing_news.py  (Noémi Ványi       2016-12-11 16:41:14 +0100  28) 
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  29)     def test_response(self):
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  30)         self.assertRaises(AttributeError, bing_news.response, None)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  31)         self.assertRaises(AttributeError, bing_news.response, [])
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  32)         self.assertRaises(AttributeError, bing_news.response, '')
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  33)         self.assertRaises(AttributeError, bing_news.response, '[]')
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  34) 
+8db527c1 tests/unit/engines/test_bing_news.py  (Adam Tauber       2017-05-22 15:36:52 +0200  35)         response = mock.Mock(content='<html></html>')
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  36)         self.assertEqual(bing_news.response(response), [])
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  37) 
+8db527c1 tests/unit/engines/test_bing_news.py  (Adam Tauber       2017-05-22 15:36:52 +0200  38)         response = mock.Mock(content='<html></html>')
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  39)         self.assertEqual(bing_news.response(response), [])
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  40) 
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  41)         html = """<?xml version="1.0" encoding="utf-8" ?>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  42) <rss version="2.0" xmlns:News="https://www.bing.com:443/news/search?q=python&amp;setmkt=en-US&amp;first=1&amp;format=RSS">
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  43)     <channel>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  44)         <title>python - Bing News</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  45)         <link>https://www.bing.com:443/news/search?q=python&amp;setmkt=en-US&amp;first=1&amp;format=RSS</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  46)         <description>Search results</description>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  47)         <image>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  48)             <url>http://10.53.64.9/rsslogo.gif</url>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  49)             <title>test</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  50)             <link>https://www.bing.com:443/news/search?q=test&amp;setmkt=en-US&amp;first=1&amp;format=RSS</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  51)         </image>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  52)         <copyright>Copyright</copyright>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  53)         <item>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  54)             <title>Title</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  55)             <link>https://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=c237eccc50bd4758b106a5e3c94fce09&amp;url=http%3a%2f%2furl.of.article%2f&amp;c=xxxxxxxxx&amp;mkt=en-us</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  56)             <description>Article Content</description>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  57)             <pubDate>Tue, 02 Jun 2015 13:37:00 GMT</pubDate>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  58)             <News:Source>Infoworld</News:Source>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  59)             <News:Image>http://a1.bing4.com/th?id=ON.13371337133713371337133713371337&amp;pid=News</News:Image>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  60)             <News:ImageSize>w={0}&amp;h={1}&amp;c=7</News:ImageSize>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  61)             <News:ImageKeepOriginalRatio></News:ImageKeepOriginalRatio>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  62)             <News:ImageMaxWidth>620</News:ImageMaxWidth>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  63)             <News:ImageMaxHeight>413</News:ImageMaxHeight>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  64)         </item>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  65)         <item>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  66)             <title>Another Title</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  67)             <link>https://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=c237eccc50bd4758b106a5e3c94fce09&amp;url=http%3a%2f%2fanother.url.of.article%2f&amp;c=xxxxxxxxx&amp;mkt=en-us</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  68)             <description>Another Article Content</description>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  69)             <pubDate>Tue, 02 Jun 2015 13:37:00 GMT</pubDate>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  70)         </item>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  71)     </channel>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  72) </rss>"""  # noqa
+8db527c1 tests/unit/engines/test_bing_news.py  (Adam Tauber       2017-05-22 15:36:52 +0200  73)         response = mock.Mock(content=html.encode('utf-8'))
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  74)         results = bing_news.response(response)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  75)         self.assertEqual(type(results), list)
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  76)         self.assertEqual(len(results), 2)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  77)         self.assertEqual(results[0]['title'], 'Title')
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  78)         self.assertEqual(results[0]['url'], 'http://url.of.article/')
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  79)         self.assertEqual(results[0]['content'], 'Article Content')
+f5128c7c tests/unit/engines/test_bing_news.py  (Alexandre Flament 2017-02-12 14:58:49 +0100  80)         self.assertEqual(results[0]['img_src'], 'https://www.bing.com/th?id=ON.13371337133713371337133713371337')
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  81)         self.assertEqual(results[1]['title'], 'Another Title')
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  82)         self.assertEqual(results[1]['url'], 'http://another.url.of.article/')
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  83)         self.assertEqual(results[1]['content'], 'Another Article Content')
+f5128c7c tests/unit/engines/test_bing_news.py  (Alexandre Flament 2017-02-12 14:58:49 +0100  84)         self.assertNotIn('img_src', results[1])
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100  85) 
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  86)         html = """<?xml version="1.0" encoding="utf-8" ?>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  87) <rss version="2.0" xmlns:News="https://www.bing.com:443/news/search?q=python&amp;setmkt=en-US&amp;first=1&amp;format=RSS">
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  88)     <channel>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  89)         <title>python - Bing News</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  90)         <link>https://www.bing.com:443/news/search?q=python&amp;setmkt=en-US&amp;first=1&amp;format=RSS</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  91)         <description>Search results</description>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  92)         <image>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  93)             <url>http://10.53.64.9/rsslogo.gif</url>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  94)             <title>test</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  95)             <link>https://www.bing.com:443/news/search?q=test&amp;setmkt=en-US&amp;first=1&amp;format=RSS</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  96)         </image>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  97)         <copyright>Copyright</copyright>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  98)         <item>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200  99)             <title>Title</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 100)             <link>http://another.url.of.article/</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 101)             <description>Article Content</description>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 102)             <pubDate>garbage</pubDate>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 103)             <News:Source>Infoworld</News:Source>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 104)             <News:Image>http://another.bing.com/image</News:Image>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 105)             <News:ImageSize>w={0}&amp;h={1}&amp;c=7</News:ImageSize>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 106)             <News:ImageKeepOriginalRatio></News:ImageKeepOriginalRatio>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 107)             <News:ImageMaxWidth>620</News:ImageMaxWidth>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 108)             <News:ImageMaxHeight>413</News:ImageMaxHeight>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 109)         </item>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 110)     </channel>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 111) </rss>"""  # noqa
+8db527c1 tests/unit/engines/test_bing_news.py  (Adam Tauber       2017-05-22 15:36:52 +0200 112)         response = mock.Mock(content=html.encode('utf-8'))
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100 113)         results = bing_news.response(response)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100 114)         self.assertEqual(type(results), list)
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 115)         self.assertEqual(len(results), 1)
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 116)         self.assertEqual(results[0]['title'], 'Title')
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 117)         self.assertEqual(results[0]['url'], 'http://another.url.of.article/')
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 118)         self.assertEqual(results[0]['content'], 'Article Content')
+f5128c7c tests/unit/engines/test_bing_news.py  (Alexandre Flament 2017-02-12 14:58:49 +0100 119)         self.assertEqual(results[0]['img_src'], 'http://another.bing.com/image')
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 120) 
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 121)         html = """<?xml version="1.0" encoding="utf-8" ?>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 122) <rss version="2.0" xmlns:News="https://www.bing.com:443/news/search?q=python&amp;setmkt=en-US&amp;first=1&amp;format=RSS">
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 123)     <channel>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 124)         <title>python - Bing News</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 125)         <link>https://www.bing.com:443/news/search?q=python&amp;setmkt=en-US&amp;first=1&amp;format=RSS</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 126)         <description>Search results</description>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 127)         <image>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 128)             <url>http://10.53.64.9/rsslogo.gif</url>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 129)             <title>test</title>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 130)             <link>https://www.bing.com:443/news/search?q=test&amp;setmkt=en-US&amp;first=1&amp;format=RSS</link>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 131)         </image>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 132)     </channel>
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 133) </rss>"""  # noqa
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100 134) 
+8db527c1 tests/unit/engines/test_bing_news.py  (Adam Tauber       2017-05-22 15:36:52 +0200 135)         response = mock.Mock(content=html.encode('utf-8'))
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100 136)         results = bing_news.response(response)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100 137)         self.assertEqual(type(results), list)
+efde2c21 searx/tests/engines/test_bing_news.py (Cqoicebordel      2015-01-29 20:56:57 +0100 138)         self.assertEqual(len(results), 0)
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 139) 
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 140)         html = """<?xml version="1.0" encoding="utf-8" ?>gabarge"""
+8db527c1 tests/unit/engines/test_bing_news.py  (Adam Tauber       2017-05-22 15:36:52 +0200 141)         response = mock.Mock(content=html.encode('utf-8'))
+62cc2a56 searx/tests/engines/test_bing_news.py (Dalf              2015-06-04 18:30:08 +0200 142)         self.assertRaises(lxml.etree.XMLSyntaxError, bing_news.response, response)

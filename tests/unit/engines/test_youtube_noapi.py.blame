@@ -1,0 +1,174 @@
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   1) # -*- coding: utf-8 -*-
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   2) from collections import defaultdict
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   3) import mock
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   4) from searx.engines import youtube_noapi
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   5) from searx.testing import SearxTestCase
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   6) 
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   7) 
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   8) class TestYoutubeNoAPIEngine(SearxTestCase):
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200   9) 
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  10)     def test_request(self):
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  11)         query = 'test_query'
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  12)         dicto = defaultdict(dict)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  13)         dicto['pageno'] = 0
+d2e0cbaf tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-10-30 20:26:38 +0100  14)         dicto['time_range'] = ''
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  15)         params = youtube_noapi.request(query, dicto)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  16)         self.assertIn('url', params)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  17)         self.assertIn(query, params['url'])
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  18)         self.assertIn('youtube.com', params['url'])
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  19) 
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  20)     def test_time_range_search(self):
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  21)         dicto = defaultdict(dict)
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  22)         query = 'test_query'
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  23)         dicto['time_range'] = 'year'
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  24)         params = youtube_noapi.request(query, dicto)
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  25)         self.assertIn('&sp=EgIIBQ%253D%253D', params['url'])
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  26) 
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  27)         dicto['time_range'] = 'month'
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  28)         params = youtube_noapi.request(query, dicto)
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  29)         self.assertIn('&sp=EgIIBA%253D%253D', params['url'])
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  30) 
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  31)         dicto['time_range'] = 'week'
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  32)         params = youtube_noapi.request(query, dicto)
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  33)         self.assertIn('&sp=EgIIAw%253D%253D', params['url'])
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  34) 
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  35)         dicto['time_range'] = 'day'
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  36)         params = youtube_noapi.request(query, dicto)
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  37)         self.assertIn('&sp=EgIIAg%253D%253D', params['url'])
+c59c76e6 tests/unit/engines/test_youtube_noapi.py  (Noémi Ványi  2016-12-11 16:39:12 +0100  38) 
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  39)     def test_response(self):
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  40)         self.assertRaises(AttributeError, youtube_noapi.response, None)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  41)         self.assertRaises(AttributeError, youtube_noapi.response, [])
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  42)         self.assertRaises(AttributeError, youtube_noapi.response, '')
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  43)         self.assertRaises(AttributeError, youtube_noapi.response, '[]')
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  44) 
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  45)         response = mock.Mock(text='<html></html>')
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  46)         self.assertEqual(youtube_noapi.response(response), [])
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  47) 
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  48)         html = """
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  49)         <ol id="item-section-063864" class="item-section">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  50)             <li>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  51)                 <div class="yt-lockup yt-lockup-tile yt-lockup-video vve-check clearfix yt-uix-tile"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  52)                 data-context-item-id="DIVZCPfAOeM"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  53)                 data-visibility-tracking="CBgQ3DAYACITCPGXnYau6sUCFZEIHAod-VQASCj0JECx_-GK5uqMpcIB">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  54)                 <div class="yt-lockup-dismissable"><div class="yt-lockup-thumbnail contains-addto">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  55)                 <a aria-hidden="true" href="/watch?v=DIVZCPfAOeM" class=" yt-uix-sessionlink pf-link"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  56)                 data-sessionlink="itct=CBgQ3DAYACITCPGXnYau6sUCFZEIHAod-VQASCj0JFIEdGVzdA">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  57)                 <div class="yt-thumb video-thumb"><img src="//i.ytimg.com/vi/DIVZCPfAOeM/mqdefault.jpg"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  58)                 width="196" height="110"/></div><span class="video-time" aria-hidden="true">11:35</span></a>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  59)                 <span class="thumb-menu dark-overflow-action-menu video-actions">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  60)                 </span>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  61)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  62)                 <div class="yt-lockup-content">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  63)                 <h3 class="yt-lockup-title">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  64)                 <a href="/watch?v=DIVZCPfAOeM"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  65)                 class="yt-uix-tile-link yt-ui-ellipsis yt-ui-ellipsis-2 yt-uix-sessionlink spf-link"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  66)                 data-sessionlink="itct=CBgQ3DAYACITCPGXnYau6sUCFZEIHAod-VQASCj0JFIEdGVzdA"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  67)                 title="Top Speed Test Kawasaki Ninja H2 (Thailand) By. MEHAY SUPERBIKE"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  68)                 aria-describedby="description-id-259079" rel="spf-prefetch" dir="ltr">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  69)                 Title
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  70)                 </a>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  71)                 <span class="accessible-description" id="description-id-259079"> - Durée : 11:35.</span>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  72)                 </h3>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  73)                 <div class="yt-lockup-byline">de
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  74)                 <a href="/user/mheejapan" class=" yt-uix-sessionlink spf-link g-hovercard"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  75)                 data-sessionlink="itct=CBgQ3DAYACITCPGXnYau6sUCFZEIHAod-VQASCj0JA" data-ytid="UCzEesu54Hjs0uRKmpy66qeA"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  76)                 data-name="">MEHAY SUPERBIKE</a></div><div class="yt-lockup-meta">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  77)                 <ul class="yt-lockup-meta-info">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  78)                     <li>il y a 20 heures</li>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  79)                     <li>8 424 vues</li>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  80)                 </ul>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  81)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  82)                 <div class="yt-lockup-description yt-ui-ellipsis yt-ui-ellipsis-2" dir="ltr">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  83)                 Description
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  84)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  85)                 <div class="yt-lockup-badges">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  86)                 <ul class="yt-badge-list ">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  87)                     <li class="yt-badge-item" >
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  88)                         <span class="yt-badge">Nouveauté</span>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  89)                     </li>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  90)                     <li class="yt-badge-item" ><span class="yt-badge " >HD</span></li>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  91)                 </ul>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  92)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  93)                 <div class="yt-lockup-action-menu yt-uix-menu-container">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  94)                 <div class="yt-uix-menu yt-uix-videoactionmenu hide-until-delayloaded"
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  95)                 data-video-id="DIVZCPfAOeM" data-menu-content-id="yt-uix-videoactionmenu-menu">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  96)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  97)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  98)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200  99)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 100)                 </div>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 101)             </li>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 102)         </ol>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 103)         """
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 104)         response = mock.Mock(text=html)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 105)         results = youtube_noapi.response(response)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 106)         self.assertEqual(type(results), list)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 107)         self.assertEqual(len(results), 1)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 108)         self.assertEqual(results[0]['title'], 'Title')
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 109)         self.assertEqual(results[0]['url'], 'https://www.youtube.com/watch?v=DIVZCPfAOeM')
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 110)         self.assertEqual(results[0]['content'], 'Description')
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 111)         self.assertEqual(results[0]['thumbnail'], 'https://i.ytimg.com/vi/DIVZCPfAOeM/hqdefault.jpg')
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 112)         self.assertTrue('DIVZCPfAOeM' in results[0]['embedded'])
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 113) 
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 114)         html = """
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 115)         <ol id="item-section-063864" class="item-section">
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 116)             <li>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 117)                 <div class="yt-lockup yt-lockup-tile yt-lockup-video vve-check clearfix yt-uix-tile"
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 118)                 data-context-item-id="DIVZCPfAOeM"
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 119)                 data-visibility-tracking="CBgQ3DAYACITCPGXnYau6sUCFZEIHAod-VQASCj0JECx_-GK5uqMpcIB">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 120)                 <div class="yt-lockup-dismissable"><div class="yt-lockup-thumbnail contains-addto">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 121)                 <a aria-hidden="true" href="/watch?v=DIVZCPfAOeM" class=" yt-uix-sessionlink pf-link"
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 122)                 data-sessionlink="itct=CBgQ3DAYACITCPGXnYau6sUCFZEIHAod-VQASCj0JFIEdGVzdA">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 123)                 <div class="yt-thumb video-thumb"><img src="//i.ytimg.com/vi/DIVZCPfAOeM/mqdefault.jpg"
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 124)                 width="196" height="110"/></div><span class="video-time" aria-hidden="true">11:35</span></a>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 125)                 <span class="thumb-menu dark-overflow-action-menu video-actions">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 126)                 </span>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 127)                 </div>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 128)                 <div class="yt-lockup-content">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 129)                 <h3 class="yt-lockup-title">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 130)                 <span class="accessible-description" id="description-id-259079"> - Durée : 11:35.</span>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 131)                 </h3>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 132)                 <div class="yt-lockup-byline">de
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 133)                 <a href="/user/mheejapan" class=" yt-uix-sessionlink spf-link g-hovercard"
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 134)                 data-sessionlink="itct=CBgQ3DAYACITCPGXnYau6sUCFZEIHAod-VQASCj0JA" data-ytid="UCzEesu54Hjs0uRKmpy66qeA"
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 135)                 data-name="">MEHAY SUPERBIKE</a></div><div class="yt-lockup-meta">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 136)                 <ul class="yt-lockup-meta-info">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 137)                     <li>il y a 20 heures</li>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 138)                     <li>8 424 vues</li>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 139)                 </ul>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 140)                 </div>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 141)                 <div class="yt-lockup-badges">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 142)                 <ul class="yt-badge-list ">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 143)                     <li class="yt-badge-item" >
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 144)                         <span class="yt-badge">Nouveauté</span>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 145)                     </li>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 146)                     <li class="yt-badge-item" ><span class="yt-badge " >HD</span></li>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 147)                 </ul>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 148)                 </div>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 149)                 <div class="yt-lockup-action-menu yt-uix-menu-container">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 150)                 <div class="yt-uix-menu yt-uix-videoactionmenu hide-until-delayloaded"
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 151)                 data-video-id="DIVZCPfAOeM" data-menu-content-id="yt-uix-videoactionmenu-menu">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 152)                 </div>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 153)                 </div>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 154)                 </div>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 155)                 </div>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 156)                 </div>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 157)             </li>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 158)         </ol>
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 159)         """
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 160)         response = mock.Mock(text=html)
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 161)         results = youtube_noapi.response(response)
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 162)         self.assertEqual(type(results), list)
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 163)         self.assertEqual(len(results), 1)
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 164) 
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 165)         html = """
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 166)         <ol id="item-section-063864" class="item-section">
+0a1a3e73 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-06-12 19:54:03 +0200 167)             <li>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 168)             </li>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 169)         </ol>
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 170)         """
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 171)         response = mock.Mock(text=html)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 172)         results = youtube_noapi.response(response)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 173)         self.assertEqual(type(results), list)
+f965c978 searx/tests/engines/test_youtube_noapi.py (Cqoicebordel 2015-05-31 00:25:59 +0200 174)         self.assertEqual(len(results), 0)

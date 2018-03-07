@@ -1,0 +1,24 @@
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  1) '''
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  2) searx is free software: you can redistribute it and/or modify
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  3) it under the terms of the GNU Affero General Public License as published by
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  4) the Free Software Foundation, either version 3 of the License, or
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  5) (at your option) any later version.
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  6) 
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  7) searx is distributed in the hope that it will be useful,
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  8) but WITHOUT ANY WARRANTY; without even the implied warranty of
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100  9) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 10) GNU Affero General Public License for more details.
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 11) 
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 12) You should have received a copy of the GNU Affero General Public License
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 13) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 14) 
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 15) (C) 2016 by Adam Tauber, <asciimoo@gmail.com>
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 16) '''
+257e5295 (Adam Tauber 2016-07-04 22:46:43 +0200 17) from flask_babel import gettext
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 18) name = gettext('Open result links on new browser tabs')
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 19) description = gettext('Results are opened in the same window by default. '
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 20)                       'This plugin overwrites the default behaviour to open links on new tabs/windows. '
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 21)                       '(JavaScript required)')
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 22) default_on = False
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 23) 
+ab6a7601 (Adam Tauber 2016-02-10 18:04:04 +0100 24) js_dependencies = ('plugins/js/open_results_on_new_tab.js',)

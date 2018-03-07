@@ -1,0 +1,61 @@
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  1) from collections import defaultdict
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  2) import mock
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  3) from searx.engines import digbt
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  4) from searx.testing import SearxTestCase
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  5) 
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  6) 
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  7) class TestDigBTEngine(SearxTestCase):
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  8) 
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200  9)     def test_request(self):
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 10)         query = 'test_query'
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 11)         dicto = defaultdict(dict)
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 12)         dicto['pageno'] = 0
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 13)         params = digbt.request(query, dicto)
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 14)         self.assertIn('url', params)
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 15)         self.assertIn(query, params['url'])
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 16)         self.assertIn('digbt.org', params['url'])
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 17) 
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 18)     def test_response(self):
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 19)         self.assertRaises(AttributeError, digbt.response, None)
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 20)         self.assertRaises(AttributeError, digbt.response, [])
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 21)         self.assertRaises(AttributeError, digbt.response, '')
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 22)         self.assertRaises(AttributeError, digbt.response, '[]')
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 23) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 24)         response = mock.Mock(text='<html></html>')
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 25)         self.assertEqual(digbt.response(response), [])
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 26) 
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 27)         html = """
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 28)         <table class="table">
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 29)             <tr><td class="x-item">
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 30)             <div>
+d1d4ed43 (marc        2016-09-20 15:35:54 -0500 31)                 <a title="The Big Bang Theory" class="title" href="/The-Big-Bang-Theory-d2.html">
+d1d4ed43 (marc        2016-09-20 15:35:54 -0500 32)                     The Big <span class="highlight">Bang</span> Theory
+d1d4ed43 (marc        2016-09-20 15:35:54 -0500 33)                 </a>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 34)                 <span class="ctime"><span style="color:red;">4 hours ago</span></span>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 35)             </div>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 36)             <div class="files">
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 37)                 <ul>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 38)                     <li>The Big Bang Theory  2.9 GB</li>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 39)                     <li>....</li>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 40)                 </ul>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 41)             </div>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 42)             <div class="tail">
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 43)                 Files: 1 Size: 2.9 GB  Downloads: 1 Updated: <span style="color:red;">4 hours ago</span>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 44)                 &nbsp; &nbsp;
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 45)                 <a class="title" href="magnet:?xt=urn:btih:a&amp;dn=The+Big+Bang+Theory">
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 46)                     <span class="glyphicon glyphicon-magnet"></span> magnet-link
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 47)                 </a>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 48)                 &nbsp; &nbsp;
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 49)             </div>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 50)             </td></tr>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 51)         </table>
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 52)         """
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 53)         response = mock.Mock(text=html.encode('utf-8'))
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 54)         results = digbt.response(response)
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 55)         self.assertEqual(type(results), list)
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 56)         self.assertEqual(len(results), 1)
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 57)         self.assertEqual(results[0]['title'], 'The Big Bang Theory')
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 58)         self.assertEqual(results[0]['url'], 'https://digbt.org/The-Big-Bang-Theory-d2.html')
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 59)         self.assertEqual(results[0]['content'], 'The Big Bang Theory 2.9 GB ....')
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 60)         self.assertEqual(results[0]['filesize'], 3113851289)
+6dd5f7a8 (Noemi Vanyi 2016-08-13 16:16:54 +0200 61)         self.assertEqual(results[0]['magnetlink'], 'magnet:?xt=urn:btih:a&dn=The+Big+Bang+Theory')

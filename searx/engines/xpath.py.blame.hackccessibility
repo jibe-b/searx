@@ -1,0 +1,123 @@
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200   1) from lxml import html
+6f535b6f (potato            2014-03-04 19:43:41 +0100   2) from lxml.etree import _ElementStringResult, _ElementUnicodeResult
+59eeeaab (asciimoo          2014-01-23 11:08:08 +0100   3) from searx.utils import html_to_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100   4) from searx.url_utils import unquote, urlencode, urljoin, urlparse
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200   5) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100   6) search_url = None
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100   7) url_xpath = None
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200   8) content_xpath = None
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100   9) title_xpath = None
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  10) paging = False
+e50a72b0 (asciimoo          2013-11-13 19:33:09 +0100  11) suggestion_xpath = ''
+5d764f95 (asciimoo          2013-10-26 13:45:43 +0200  12) results_xpath = ''
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  13) 
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  14) # parameters for engines with paging support
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  15) #
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  16) # number of results on each page
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  17) # (only needed if the site requires not a page number, but an offset)
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  18) page_size = 1
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  19) # number of the first page (usually 0 or 1)
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  20) first_page_num = 1
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  21) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  22) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  23) '''
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  24) if xpath_results is list, extract the text from each result and concat the list
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  25) if xpath_results is a xml element, extract all the text node from it
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  26)    ( text_content() method from lxml )
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  27) if xpath_results is a string element, then it's already done
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  28) '''
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  29) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  30) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  31) @little_documented
+def extract_text(xpath_results):
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  32)     if type(xpath_results) == list:
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  33)         # it's list of result : concat everything using recursive call
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  34)         result = ''
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  35)         for e in xpath_results:
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  36)             result = result + extract_text(e)
+44c9216c (Cqoicebordel      2015-01-25 20:04:44 +0100  37)         return result.strip()
+6f535b6f (potato            2014-03-04 19:43:41 +0100  38)     elif type(xpath_results) in [_ElementStringResult, _ElementUnicodeResult]:
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  39)         # it's a string
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  40)         return ''.join(xpath_results)
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  41)     else:
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  42)         # it's a element
+90e1db3e (Alexandre Flament 2016-12-31 13:56:09 +0100  43)         text = html.tostring(xpath_results, encoding='unicode', method='text', with_tail=False)
+90e1db3e (Alexandre Flament 2016-12-31 13:56:09 +0100  44)         text = text.strip().replace('\n', ' ')
+90e1db3e (Alexandre Flament 2016-12-31 13:56:09 +0100  45)         return ' '.join(text.split())
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  46) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  47) 
+3dcb8359 (asciimoo          2014-01-30 02:36:05 +0100  48) def extract_url(xpath_results, search_url):
+7492997c (David A Roberts   2017-01-17 21:14:33 +1000  49)     if xpath_results == []:
+7492997c (David A Roberts   2017-01-17 21:14:33 +1000  50)         raise Exception('Empty url resultset')
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  51)     url = extract_text(xpath_results)
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  52) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  53)     if url.startswith('//'):
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  54)         # add http or https to this kind of url //example.com/
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  55)         parsed_search_url = urlparse(search_url)
+1972a044 (Adam Tauber       2017-05-22 15:48:37 +0200  56)         url = u'{0}:{1}'.format(parsed_search_url.scheme, url)
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  57)     elif url.startswith('/'):
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  58)         # fix relative url to the search engine
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  59)         url = urljoin(search_url, url)
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  60) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  61)     # normalize url
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  62)     url = normalize_url(url)
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  63) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  64)     return url
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  65) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  66) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  67) def normalize_url(url):
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  68)     parsed_url = urlparse(url)
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  69) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  70)     # add a / at this end of the url if there is no path
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  71)     if not parsed_url.netloc:
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  72)         raise Exception('Cannot parse url')
+7965da55 (asciimoo          2013-10-27 12:01:03 +0100  73)     if not parsed_url.path:
+7965da55 (asciimoo          2013-10-27 12:01:03 +0100  74)         url += '/'
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  75) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  76)     # FIXME : hack for yahoo
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  77)     if parsed_url.hostname == 'search.yahoo.com'\
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100  78)        and parsed_url.path.startswith('/r'):
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  79)         p = parsed_url.path
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  80)         mark = p.find('/**')
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  81)         if mark != -1:
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100  82)             return unquote(p[mark + 3:]).decode('utf-8')
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  83) 
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  84)     return url
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  85) 
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100  86) 
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  87) def request(query, params):
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  88)     query = urlencode({'q': query})[2:]
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  89) 
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  90)     fp = {'query': query}
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  91)     if paging and search_url.find('{pageno}') >= 0:
+1e9dab08 (David A Roberts   2016-08-14 21:46:54 +1000  92)         fp['pageno'] = (params['pageno'] - 1) * page_size + first_page_num
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  93) 
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  94)     params['url'] = search_url.format(**fp)
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  95)     params['query'] = query
+bacc9a3d (Kirill Isakov     2016-03-28 19:15:03 +0600  96) 
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  97)     return params
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  98) 
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200  99) 
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200 100) def response(resp):
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200 101)     results = []
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200 102)     dom = html.fromstring(resp.text)
+5d764f95 (asciimoo          2013-10-26 13:45:43 +0200 103)     if results_xpath:
+5d764f95 (asciimoo          2013-10-26 13:45:43 +0200 104)         for result in dom.xpath(results_xpath):
+3dcb8359 (asciimoo          2014-01-30 02:36:05 +0100 105)             url = extract_url(result.xpath(url_xpath), search_url)
+7492997c (David A Roberts   2017-01-17 21:14:33 +1000 106)             title = extract_text(result.xpath(title_xpath))
+7492997c (David A Roberts   2017-01-17 21:14:33 +1000 107)             content = extract_text(result.xpath(content_xpath))
+5d764f95 (asciimoo          2013-10-26 13:45:43 +0200 108)             results.append({'url': url, 'title': title, 'content': content})
+5d764f95 (asciimoo          2013-10-26 13:45:43 +0200 109)     else:
+060ea4d2 (asciimoo          2014-01-12 18:48:38 +0100 110)         for url, title, content in zip(
+b647244a (asciimoo          2014-01-30 03:10:20 +0100 111)             (extract_url(x, search_url) for
+b647244a (asciimoo          2014-01-30 03:10:20 +0100 112)              x in dom.xpath(url_xpath)),
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 113)             map(extract_text, dom.xpath(title_xpath)),
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 114)             map(extract_text, dom.xpath(content_xpath))
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 115)         ):
+5d764f95 (asciimoo          2013-10-26 13:45:43 +0200 116)             results.append({'url': url, 'title': title, 'content': content})
+5d764f95 (asciimoo          2013-10-26 13:45:43 +0200 117) 
+e50a72b0 (asciimoo          2013-11-13 19:33:09 +0100 118)     if not suggestion_xpath:
+e50a72b0 (asciimoo          2013-11-13 19:33:09 +0100 119)         return results
+e50a72b0 (asciimoo          2013-11-13 19:33:09 +0100 120)     for suggestion in dom.xpath(suggestion_xpath):
+3dc3fc77 (Dalf              2014-01-05 14:06:52 +0100 121)         results.append({'suggestion': extract_text(suggestion)})
+badd9885 (asciimoo          2013-10-26 02:22:20 +0200 122)     return results

@@ -1,0 +1,129 @@
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600   1) # Wolfram Alpha (Science)
+4578575c (a01200356           2015-12-23 00:01:00 -0600   2) #
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600   3) # @website     https://www.wolframalpha.com
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600   4) # @provide-api yes (https://api.wolframalpha.com/v2/)
+4578575c (a01200356           2015-12-23 00:01:00 -0600   5) #
+4578575c (a01200356           2015-12-23 00:01:00 -0600   6) # @using-api   yes
+4578575c (a01200356           2015-12-23 00:01:00 -0600   7) # @results     XML
+4578575c (a01200356           2015-12-23 00:01:00 -0600   8) # @stable      yes
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600   9) # @parse       url, infobox
+4578575c (a01200356           2015-12-23 00:01:00 -0600  10) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  11) from lxml import etree
+52e615de (Adam Tauber         2016-11-30 18:43:03 +0100  12) from searx.url_utils import urlencode
+4578575c (a01200356           2015-12-23 00:01:00 -0600  13) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  14) # search-url
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  15) search_url = 'https://api.wolframalpha.com/v2/query?appid={api_key}&{query}'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  16) site_url = 'https://www.wolframalpha.com/input/?{query}'
+e9d35c13 (a01200356           2016-01-02 00:41:14 -0600  17) api_key = ''  # defined in settings.yml
+bc2420f8 (a01200356           2015-12-28 01:17:42 -0600  18) 
+0871c7ca (a01200356           2016-01-01 22:02:10 -0600  19) # xpath variables
+0871c7ca (a01200356           2016-01-01 22:02:10 -0600  20) failure_xpath = '/queryresult[attribute::success="false"]'
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  21) input_xpath = '//pod[starts-with(attribute::id, "Input")]/subpod/plaintext'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  22) pods_xpath = '//pod'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  23) subpods_xpath = './subpod'
+09ee2aa6 (marc                2016-07-06 17:29:40 -0500  24) pod_primary_xpath = './@primary'
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  25) pod_id_xpath = './@id'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  26) pod_title_xpath = './@title'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  27) plaintext_xpath = './plaintext'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  28) image_xpath = './img'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  29) img_src_xpath = './@src'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  30) img_alt_xpath = './@alt'
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  31) 
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  32) # pods to display as image in infobox
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  33) # this pods do return a plaintext, but they look better and are more useful as images
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  34) image_pods = {'VisualRepresentation',
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  35)               'Illustration'}
+0871c7ca (a01200356           2016-01-01 22:02:10 -0600  36) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  37) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  38) # do search-request
+4578575c (a01200356           2015-12-23 00:01:00 -0600  39) def request(query, params):
+52e615de (Adam Tauber         2016-11-30 18:43:03 +0100  40)     params['url'] = search_url.format(query=urlencode({'input': query}), api_key=api_key)
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  41)     params['headers']['Referer'] = site_url.format(query=urlencode({'i': query}))
+4578575c (a01200356           2015-12-23 00:01:00 -0600  42) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  43)     return params
+4578575c (a01200356           2015-12-23 00:01:00 -0600  44) 
+bc2420f8 (a01200356           2015-12-28 01:17:42 -0600  45) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  46) # replace private user area characters to make text legible
+4578575c (a01200356           2015-12-23 00:01:00 -0600  47) def replace_pua_chars(text):
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  48)     pua_chars = {u'\uf522': u'\u2192',  # rigth arrow
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  49)                  u'\uf7b1': u'\u2115',  # set of natural numbers
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  50)                  u'\uf7b4': u'\u211a',  # set of rational numbers
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  51)                  u'\uf7b5': u'\u211d',  # set of real numbers
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  52)                  u'\uf7bd': u'\u2124',  # set of integer numbers
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  53)                  u'\uf74c': 'd',        # differential
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  54)                  u'\uf74d': u'\u212f',  # euler's number
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  55)                  u'\uf74e': 'i',        # imaginary number
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  56)                  u'\uf7d9': '='}        # equals sign
+4578575c (a01200356           2015-12-23 00:01:00 -0600  57) 
+52e615de (Adam Tauber         2016-11-30 18:43:03 +0100  58)     for k, v in pua_chars.items():
+4578575c (a01200356           2015-12-23 00:01:00 -0600  59)         text = text.replace(k, v)
+4578575c (a01200356           2015-12-23 00:01:00 -0600  60) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  61)     return text
+4578575c (a01200356           2015-12-23 00:01:00 -0600  62) 
+bc2420f8 (a01200356           2015-12-28 01:17:42 -0600  63) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  64) # get response from search-request
+4578575c (a01200356           2015-12-23 00:01:00 -0600  65) def response(resp):
+4578575c (a01200356           2015-12-23 00:01:00 -0600  66)     results = []
+4578575c (a01200356           2015-12-23 00:01:00 -0600  67) 
+52e615de (Adam Tauber         2016-11-30 18:43:03 +0100  68)     search_results = etree.XML(resp.text)
+4578575c (a01200356           2015-12-23 00:01:00 -0600  69) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600  70)     # return empty array if there are no results
+0871c7ca (a01200356           2016-01-01 22:02:10 -0600  71)     if search_results.xpath(failure_xpath):
+4578575c (a01200356           2015-12-23 00:01:00 -0600  72)         return []
+4578575c (a01200356           2015-12-23 00:01:00 -0600  73) 
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  74)     try:
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  75)         infobox_title = search_results.xpath(input_xpath)[0].text
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  76)     except:
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200  77)         infobox_title = ""
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  78) 
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  79)     pods = search_results.xpath(pods_xpath)
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  80)     result_chunks = []
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200  81)     result_content = ""
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  82)     for pod in pods:
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  83)         pod_id = pod.xpath(pod_id_xpath)[0]
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  84)         pod_title = pod.xpath(pod_title_xpath)[0]
+09ee2aa6 (marc                2016-07-06 17:29:40 -0500  85)         pod_is_result = pod.xpath(pod_primary_xpath)
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  86) 
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  87)         subpods = pod.xpath(subpods_xpath)
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  88)         if not subpods:
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  89)             continue
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  90) 
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  91)         # Appends either a text or an image, depending on which one is more suitable
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  92)         for subpod in subpods:
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  93)             content = subpod.xpath(plaintext_xpath)[0].text
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600  94)             image = subpod.xpath(image_xpath)
+0871c7ca (a01200356           2016-01-01 22:02:10 -0600  95) 
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  96)             if content and pod_id not in image_pods:
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600  97) 
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200  98)                 if pod_is_result or not result_content:
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200  99)                     if pod_id != "Input":
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200 100)                         result_content = "%s: %s" % (pod_title, content)
+09ee2aa6 (marc                2016-07-06 17:29:40 -0500 101) 
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600 102)                 # if no input pod was found, title is first plaintext pod
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 103)                 if not infobox_title:
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 104)                     infobox_title = content
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 105) 
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600 106)                 content = replace_pua_chars(content)
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600 107)                 result_chunks.append({'label': pod_title, 'value': content})
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600 108) 
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 109)             elif image:
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 110)                 result_chunks.append({'label': pod_title,
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 111)                                       'image': {'src': image[0].xpath(img_src_xpath)[0],
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 112)                                                 'alt': image[0].xpath(img_alt_xpath)[0]}})
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 113) 
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 114)     if not result_chunks:
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 115)         return []
+be54e526 (a01200356           2015-12-30 00:53:15 -0600 116) 
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200 117)     title = "Wolfram|Alpha (%s)" % infobox_title
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200 118) 
+4d8996eb (a01200356           2016-02-28 00:47:36 -0600 119)     # append infobox
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 120)     results.append({'infobox': infobox_title,
+78d3f3d6 (a01200356           2016-02-27 19:06:44 -0600 121)                     'attributes': result_chunks,
+52e615de (Adam Tauber         2016-11-30 18:43:03 +0100 122)                     'urls': [{'title': 'Wolfram|Alpha', 'url': resp.request.headers['Referer']}]})
+8ca57448 (a01200356           2016-01-05 21:47:31 -0600 123) 
+8ca57448 (a01200356           2016-01-05 21:47:31 -0600 124)     # append link to site
+52e615de (Adam Tauber         2016-11-30 18:43:03 +0100 125)     results.append({'url': resp.request.headers['Referer'],
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200 126)                     'title': title,
+a8907224 (Lorenzo J. Lucchini 2016-07-07 00:33:03 +0200 127)                     'content': result_content})
+4578575c (a01200356           2015-12-23 00:01:00 -0600 128) 
+4578575c (a01200356           2015-12-23 00:01:00 -0600 129)     return results

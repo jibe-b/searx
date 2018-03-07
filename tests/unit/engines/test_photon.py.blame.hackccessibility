@@ -1,0 +1,167 @@
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   1) # -*- coding: utf-8 -*-
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   2) from collections import defaultdict
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   3) import mock
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   4) from searx.engines import photon
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   5) from searx.testing import SearxTestCase
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   6) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   7) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   8) class TestPhotonEngine(SearxTestCase):
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100   9) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  10)     @little_documented
+def test_request(self):
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  11)         query = 'test_query'
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  12)         dicto = defaultdict(dict)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  13)         dicto['pageno'] = 1
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  14)         dicto['language'] = 'all'
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  15)         params = photon.request(query, dicto)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  16)         self.assertIn('url', params)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  17)         self.assertIn(query, params['url'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  18)         self.assertIn('photon.komoot.de', params['url'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  19) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  20)         dicto['language'] = 'all'
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  21)         params = photon.request(query, dicto)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  22)         self.assertNotIn('lang', params['url'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  23) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  24)         dicto['language'] = 'al'
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  25)         params = photon.request(query, dicto)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  26)         self.assertNotIn('lang', params['url'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  27) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  28)         dicto['language'] = 'fr'
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  29)         params = photon.request(query, dicto)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  30)         self.assertIn('fr', params['url'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  31) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  32)     def test_response(self):
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  33)         self.assertRaises(AttributeError, photon.response, None)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  34)         self.assertRaises(AttributeError, photon.response, [])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  35)         self.assertRaises(AttributeError, photon.response, '')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  36)         self.assertRaises(AttributeError, photon.response, '[]')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  37) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  38)         response = mock.Mock(text='{}')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  39)         self.assertEqual(photon.response(response), [])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  40) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  41)         response = mock.Mock(text='{"data": []}')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  42)         self.assertEqual(photon.response(response), [])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  43) 
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  44)         json = """
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  45)         {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  46)           "features": [
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  47)             {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  48)               "properties": {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  49)                 "osm_key": "waterway",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  50)                 "extent": [
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  51)                   -1.4508446,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  52)                   51.1614997,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  53)                   -1.4408036,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  54)                   51.1525635
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  55)                 ],
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  56)                 "name": "This is the title",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  57)                 "state": "England",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  58)                 "osm_id": 114823817,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  59)                 "osm_type": "W",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  60)                 "osm_value": "river",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  61)                 "city": "Test Valley",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  62)                 "country": "United Kingdom"
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  63)               },
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  64)               "type": "Feature",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  65)               "geometry": {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  66)                 "type": "Point",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  67)                 "coordinates": [
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  68)                   -1.4458571,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  69)                   51.1576661
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  70)                 ]
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  71)               }
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  72)             },
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  73)             {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  74)               "properties": {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  75)                 "osm_key": "place",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  76)                 "street": "Rue",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  77)                 "state": "Ile-de-France",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  78)                 "osm_id": 129211377,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  79)                 "osm_type": "R",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  80)                 "housenumber": "10",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  81)                 "postcode": "75011",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  82)                 "osm_value": "house",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  83)                 "city": "Paris",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  84)                 "country": "France"
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  85)               },
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  86)               "type": "Feature",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  87)               "geometry": {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  88)                 "type": "Point",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  89)                 "coordinates": [
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  90)                   2.3725025,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  91)                   48.8654481
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  92)                 ]
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  93)               }
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  94)             },
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  95)             {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  96)               "properties": {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  97)                 "osm_key": "amenity",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  98)                 "street": "Allée",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100  99)                 "name": "Bibliothèque",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 100)                 "state": "Ile-de-France",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 101)                 "osm_id": 1028573132,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 102)                 "osm_type": "N",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 103)                 "postcode": "75001",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 104)                 "osm_value": "library",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 105)                 "city": "Paris",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 106)                 "country": "France"
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 107)               },
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 108)               "type": "Feature",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 109)               "geometry": {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 110)                 "type": "Point",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 111)                 "coordinates": [
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 112)                   2.3445634,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 113)                   48.862494
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 114)                 ]
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 115)               }
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 116)             },
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 117)             {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 118)               "properties": {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 119)                 "osm_key": "amenity",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 120)                 "osm_id": 1028573132,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 121)                 "osm_type": "Y",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 122)                 "postcode": "75001",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 123)                 "osm_value": "library",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 124)                 "city": "Paris",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 125)                 "country": "France"
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 126)               },
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 127)               "type": "Feature",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 128)               "geometry": {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 129)                 "type": "Point",
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 130)                 "coordinates": [
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 131)                   2.3445634,
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 132)                   48.862494
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 133)                 ]
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 134)               }
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 135)             },
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 136)             {
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 137)             }
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 138)         ],
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 139)           "type": "FeatureCollection"
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 140)         }
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 141)         """
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 142)         response = mock.Mock(text=json)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 143)         results = photon.response(response)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 144)         self.assertEqual(type(results), list)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 145)         self.assertEqual(len(results), 3)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 146)         self.assertEqual(results[0]['title'], 'This is the title')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 147)         self.assertEqual(results[0]['content'], '')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 148)         self.assertEqual(results[0]['longitude'], -1.4458571)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 149)         self.assertEqual(results[0]['latitude'], 51.1576661)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 150)         self.assertIn(-1.4508446, results[0]['boundingbox'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 151)         self.assertIn(51.1614997, results[0]['boundingbox'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 152)         self.assertIn(-1.4408036, results[0]['boundingbox'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 153)         self.assertIn(51.1525635, results[0]['boundingbox'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 154)         self.assertIn('type', results[0]['geojson'])
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 155)         self.assertEqual(results[0]['geojson']['type'], 'Point')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 156)         self.assertEqual(results[0]['address'], None)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 157)         self.assertEqual(results[0]['osm']['type'], 'way')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 158)         self.assertEqual(results[0]['osm']['id'], 114823817)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 159)         self.assertEqual(results[0]['url'], 'https://openstreetmap.org/way/114823817')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 160)         self.assertEqual(results[1]['osm']['type'], 'relation')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 161)         self.assertEqual(results[2]['address']['name'], u'Bibliothèque')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 162)         self.assertEqual(results[2]['address']['house_number'], None)
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 163)         self.assertEqual(results[2]['address']['locality'], 'Paris')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 164)         self.assertEqual(results[2]['address']['postcode'], '75001')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 165)         self.assertEqual(results[2]['address']['country'], 'France')
+f703a77f searx/tests/engines/test_photon.py (Cqoicebordel 2015-02-10 18:44:49 +0100 166)         self.assertEqual(results[2]['osm']['type'], 'node')

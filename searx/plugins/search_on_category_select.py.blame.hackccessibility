@@ -1,0 +1,24 @@
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  1) '''
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  2) searx is free software: you can redistribute it and/or modify
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  3) it under the terms of the GNU Affero General Public License as published by
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  4) the Free Software Foundation, either version 3 of the License, or
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  5) (at your option) any later version.
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  6) 
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  7) searx is distributed in the hope that it will be useful,
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  8) but WITHOUT ANY WARRANTY; without even the implied warranty of
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200  9) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 10) GNU Affero General Public License for more details.
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 11) 
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 12) You should have received a copy of the GNU Affero General Public License
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 13) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 14) 
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 15) (C) 2015 by Adam Tauber, <asciimoo@gmail.com>
+146928a7 (Adam Tauber       2015-04-13 00:08:04 +0200 16) '''
+257e5295 (Adam Tauber       2016-07-04 22:46:43 +0200 17) from flask_babel import gettext
+ff68546c (Adam Tauber       2015-04-26 18:57:03 +0200 18) name = gettext('Search on category select')
+3683b358 (Adam Tauber       2015-05-02 23:54:38 +0200 19) description = gettext('Perform search immediately if a category selected. '
+3683b358 (Adam Tauber       2015-05-02 23:54:38 +0200 20)                       'Disable to select multiple categories. (JavaScript required)')
+ff68546c (Adam Tauber       2015-04-26 18:57:03 +0200 21) default_on = True
+10a24bdc (Alexandre Flament 2017-02-12 15:06:01 +0100 22) preference_section = 'ui'
+973c97c8 (Adam Tauber       2015-04-12 19:27:48 +0200 23) 
+4e5af8d8 (Adam Tauber       2016-02-10 18:06:11 +0100 24) js_dependencies = ('plugins/js/search_on_category_select.js',)

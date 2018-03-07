@@ -1,0 +1,64 @@
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  1) """
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  2)  Yahoo (Web)
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  3) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  4)  @website     https://yandex.ru/
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  5)  @provide-api ?
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  6)  @using-api   no
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  7)  @results     HTML (using search portal)
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  8)  @stable      no (HTML can change)
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100  9)  @parse       url, title, content
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 10) """
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 11) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 12) from lxml import html
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 13) from searx import logger
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 14) from searx.url_utils import urlencode
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 15) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 16) logger = logger.getChild('yandex engine')
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 17) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 18) # engine dependent config
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 19) categories = ['general']
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 20) paging = True
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 21) language_support = True  # TODO
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 22) 
+e98aef6f (Adam Tauber 2015-10-31 23:05:07 +0100 23) default_tld = 'com'
+e98aef6f (Adam Tauber 2015-10-31 23:05:07 +0100 24) language_map = {'ru': 'ru',
+a11948c7 (marc        2016-10-29 21:04:01 -0500 25)                 'ua': 'ua',
+a11948c7 (marc        2016-10-29 21:04:01 -0500 26)                 'be': 'by',
+a11948c7 (marc        2016-10-29 21:04:01 -0500 27)                 'kk': 'kz',
+e98aef6f (Adam Tauber 2015-10-31 23:05:07 +0100 28)                 'tr': 'com.tr'}
+e98aef6f (Adam Tauber 2015-10-31 23:05:07 +0100 29) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 30) # search-url
+e98aef6f (Adam Tauber 2015-10-31 23:05:07 +0100 31) base_url = 'https://yandex.{tld}/'
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 32) search_url = 'search/?{query}&p={page}'
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 33) 
+553f3a3a (Noémi Ványi 2016-12-11 04:57:42 +0100 34) results_xpath = '//li[@class="serp-item"]'
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 35) url_xpath = './/h2/a/@href'
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 36) title_xpath = './/h2/a//text()'
+553f3a3a (Noémi Ványi 2016-12-11 04:57:42 +0100 37) content_xpath = './/div[@class="text-container typo typo_text_m typo_line_m organic__text"]//text()'
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 38) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 39) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 40) def request(query, params):
+149802c5 (marc        2016-08-05 23:34:56 -0500 41)     lang = params['language'].split('-')[0]
+e98aef6f (Adam Tauber 2015-10-31 23:05:07 +0100 42)     host = base_url.format(tld=language_map.get(lang) or default_tld)
+bd22e9a3 (Adam Tauber 2016-01-18 12:47:31 +0100 43)     params['url'] = host + search_url.format(page=params['pageno'] - 1,
+e98aef6f (Adam Tauber 2015-10-31 23:05:07 +0100 44)                                              query=urlencode({'text': query}))
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 45)     return params
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 46) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 47) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 48) # get response from search-request
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 49) def response(resp):
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 50)     dom = html.fromstring(resp.text)
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 51)     results = []
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 52) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 53)     for result in dom.xpath(results_xpath):
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 54)         try:
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 55)             res = {'url': result.xpath(url_xpath)[0],
+16bdc0ba (Adam Tauber 2016-12-09 11:44:24 +0100 56)                    'title': ''.join(result.xpath(title_xpath)),
+16bdc0ba (Adam Tauber 2016-12-09 11:44:24 +0100 57)                    'content': ''.join(result.xpath(content_xpath))}
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 58)         except:
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 59)             logger.exception('yandex parse crash')
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 60)             continue
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 61) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 62)         results.append(res)
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 63) 
+fafc5648 (Adam Tauber 2015-10-31 15:27:23 +0100 64)     return results

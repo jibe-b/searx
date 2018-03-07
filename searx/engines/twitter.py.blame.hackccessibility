@@ -1,0 +1,83 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Twitter (Social media)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://twitter.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (https://dev.twitter.com/docs/using-search)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML (using search portal)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 12)  @todo        publishedDate
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 13) """
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 14) 
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 15) from lxml import html
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 16) from datetime import datetime
+d6e511fc (Cqoicebordel      2015-02-04 19:39:31 +0100 17) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 18) from searx.url_utils import urlencode, urljoin
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 19) 
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 20) # engine dependent config
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 21) categories = ['social media']
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 22) language_support = True
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 23) 
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 24) # search-url
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 25) base_url = 'https://twitter.com/'
+d6e511fc (Cqoicebordel      2015-02-04 19:39:31 +0100 26) search_url = base_url + 'search?'
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 27) 
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 28) # specific xpath variables
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 29) results_xpath = '//li[@data-item-type="tweet"]'
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 30) avatar_xpath = './/img[contains(@class, "avatar")]/@src'
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 31) link_xpath = './/small[@class="time"]//a'
+48cffb14 (Alexandre Flament 2015-05-02 18:20:12 +0200 32) title_xpath = './/span[contains(@class, "username")]'
+48cffb14 (Alexandre Flament 2015-05-02 18:20:12 +0200 33) content_xpath = './/p[contains(@class, "tweet-text")]'
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 34) timestamp_xpath = './/span[contains(@class,"_timestamp")]'
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 35) 
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 36) 
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 37) # do search-request
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 38) @little_documented
+def request(query, params):
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 39)     params['url'] = search_url + urlencode({'q': query})
+4d177039 (marc              2017-07-20 15:47:20 -0500 40)     params['cookies']['lang'] = params['language'].split('-')[0]
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 41) 
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 42)     return params
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 43) 
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 44) 
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 45) # get response from search-request
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 46) def response(resp):
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 47)     results = []
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 48) 
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 49)     dom = html.fromstring(resp.text)
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 50) 
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 51)     # parse results
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 52)     for tweet in dom.xpath(results_xpath):
+28493d41 (Adam Tauber       2015-08-25 13:12:51 +0200 53)         try:
+28493d41 (Adam Tauber       2015-08-25 13:12:51 +0200 54)             link = tweet.xpath(link_xpath)[0]
+28493d41 (Adam Tauber       2015-08-25 13:12:51 +0200 55)             content = extract_text(tweet.xpath(content_xpath)[0])
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 56)             img_src = tweet.xpath(avatar_xpath)[0]
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 57)             img_src = img_src.replace('_bigger', '_normal')
+28493d41 (Adam Tauber       2015-08-25 13:12:51 +0200 58)         except Exception:
+28493d41 (Adam Tauber       2015-08-25 13:12:51 +0200 59)             continue
+28493d41 (Adam Tauber       2015-08-25 13:12:51 +0200 60) 
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 61)         url = urljoin(base_url, link.attrib.get('href'))
+d6e511fc (Cqoicebordel      2015-02-04 19:39:31 +0100 62)         title = extract_text(tweet.xpath(title_xpath))
+d6e511fc (Cqoicebordel      2015-02-04 19:39:31 +0100 63) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 64)         pubdate = tweet.xpath(timestamp_xpath)
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 65)         if len(pubdate) > 0:
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 66)             timestamp = float(pubdate[0].attrib.get('data-time'))
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 67)             publishedDate = datetime.fromtimestamp(timestamp, None)
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 68)             # append result
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 69)             results.append({'url': url,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 70)                             'title': title,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 71)                             'content': content,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 72)                             'img_src': img_src,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 73)                             'publishedDate': publishedDate})
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 74)         else:
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 75)             # append result
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 76)             results.append({'url': url,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 77)                             'title': title,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 78)                             'content': content,
+f5128c7c (Alexandre Flament 2017-02-12 14:58:49 +0100 79)                             'img_src': img_src})
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 80) 
+9460750f (Thomas Pointhuber 2014-09-02 20:14:52 +0200 81)     # return results
+c7b5cddc (asciimoo          2013-10-20 10:40:02 +0200 82)     return results

@@ -1,0 +1,85 @@
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  1) # Doku Wiki
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  2) #
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  3) # @website     https://www.dokuwiki.org/
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  4) # @provide-api yes
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  5) #              (https://www.dokuwiki.org/devel:xmlrpc)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  6) #
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  7) # @using-api   no
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  8) # @results     HTML
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200  9) # @stable      yes
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 10) # @parse       (general)    url, title, content
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 11) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 12) from lxml.html import fromstring
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 13) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100 14) from searx.url_utils import urlencode
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 15) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 16) # engine dependent config
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 17) categories = ['general']  # TODO , 'images', 'music', 'videos', 'files'
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 18) paging = False
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 19) language_support = False
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 20) number_of_results = 5
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 21) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 22) # search-url
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 23) # Doku is OpenSearch compatible
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 24) base_url = 'http://localhost:8090'
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 25) search_url = '/?do=search'\
+2733a923 (Guilhem Bonnefille 2016-04-05 13:31:49 +0200 26)              '&{query}'
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 27) # TODO             '&startRecord={offset}'\
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 28) # TODO             '&maximumRecords={limit}'\
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 29) 
+f26f0dab (Guilhem Bonnefille 2016-04-04 13:38:22 +0200 30) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 31) # do search-request
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 32) @little_documented
+def request(query, params):
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 33) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 34)     params['url'] = base_url +\
+2733a923 (Guilhem Bonnefille 2016-04-05 13:31:49 +0200 35)         search_url.format(query=urlencode({'id': query}))
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 36) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 37)     return params
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 38) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 39) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 40) # get response from search-request
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 41) def response(resp):
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 42)     results = []
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 43) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 44)     doc = fromstring(resp.text)
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 45) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 46)     # parse results
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 47)     # Quickhits
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 48)     for r in doc.xpath('//div[@class="search_quickresult"]/ul/li'):
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 49)         try:
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 50)             res_url = r.xpath('.//a[@class="wikilink1"]/@href')[-1]
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 51)         except:
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 52)             continue
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 53) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 54)         if not res_url:
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 55)             continue
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 56) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 57)         title = extract_text(r.xpath('.//a[@class="wikilink1"]/@title'))
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 58) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 59)         # append result
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 60)         results.append({'title': title,
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 61)                         'content': "",
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 62)                         'url': base_url + res_url})
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 63) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 64)     # Search results
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 65)     for r in doc.xpath('//dl[@class="search_results"]/*'):
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 66)         try:
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 67)             if r.tag == "dt":
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 68)                 res_url = r.xpath('.//a[@class="wikilink1"]/@href')[-1]
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 69)                 title = extract_text(r.xpath('.//a[@class="wikilink1"]/@title'))
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 70)             elif r.tag == "dd":
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 71)                 content = extract_text(r.xpath('.'))
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 72) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 73)                 # append result
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 74)                 results.append({'title': title,
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 75)                                 'content': content,
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 76)                                 'url': base_url + res_url})
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 77)         except:
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 78)             continue
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 79) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 80)         if not res_url:
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 81)             continue
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 82) 
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 83)     # return results
+cf09b500 (Guilhem Bonnefille 2016-04-03 22:03:41 +0200 84)     return results

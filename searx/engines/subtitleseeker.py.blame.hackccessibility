@@ -1,0 +1,87 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Subtitleseeker (Video)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     http://www.subtitleseeker.com
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 12) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 13) from lxml import html
+3b3921fc (Adam Tauber       2014-12-24 21:02:26 +0100 14) from searx.languages import language_codes
+3a4d6045 (Cqoicebordel      2015-02-06 16:39:59 +0100 15) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 16) from searx.url_utils import quote_plus
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 17) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 18) # engine dependent config
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 19) categories = ['videos']
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 20) paging = True
+10e4f6f3 (Cqoicebordel      2014-12-23 01:51:07 +0100 21) language = ""
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 22) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 23) # search-url
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 24) url = 'http://www.subtitleseeker.com/'
+f62ce21f (marc              2016-11-05 20:51:38 -0600 25) search_url = url + 'search/TITLES/{query}?p={pageno}'
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 26) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 27) # specific xpath variables
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 28) results_xpath = '//div[@class="boxRows"]'
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 29) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 30) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 31) # do search-request
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 32) @little_documented
+def request(query, params):
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 33)     params['url'] = search_url.format(query=quote_plus(query),
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 34)                                       pageno=params['pageno'])
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 35)     return params
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 36) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 37) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 38) # get response from search-request
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 39) def response(resp):
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 40)     results = []
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 41) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 42)     dom = html.fromstring(resp.text)
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 43) 
+3b3921fc (Adam Tauber       2014-12-24 21:02:26 +0100 44)     search_lang = ""
+3b3921fc (Adam Tauber       2014-12-24 21:02:26 +0100 45) 
+149802c5 (marc              2016-08-05 23:34:56 -0500 46)     # dirty fix for languages named differenly in their site
+149802c5 (marc              2016-08-05 23:34:56 -0500 47)     if resp.search_params['language'][:2] == 'fa':
+149802c5 (marc              2016-08-05 23:34:56 -0500 48)         search_lang = 'Farsi'
+e0c270bd (marc              2016-12-13 23:51:15 -0600 49)     elif resp.search_params['language'] == 'pt-BR':
+149802c5 (marc              2016-08-05 23:34:56 -0500 50)         search_lang = 'Brazilian'
+4d177039 (marc              2017-07-20 15:47:20 -0500 51)     else:
+149802c5 (marc              2016-08-05 23:34:56 -0500 52)         search_lang = [lc[3]
+3b3921fc (Adam Tauber       2014-12-24 21:02:26 +0100 53)                        for lc in language_codes
+f62ce21f (marc              2016-11-05 20:51:38 -0600 54)                        if lc[0].split('-')[0] == resp.search_params['language'].split('-')[0]]
+f62ce21f (marc              2016-11-05 20:51:38 -0600 55)         search_lang = search_lang[0].split(' (')[0]
+3b3921fc (Adam Tauber       2014-12-24 21:02:26 +0100 56) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 57)     # parse results
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 58)     for result in dom.xpath(results_xpath):
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 59)         link = result.xpath(".//a")[0]
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 60)         href = link.attrib.get('href')
+10e4f6f3 (Cqoicebordel      2014-12-23 01:51:07 +0100 61) 
+10e4f6f3 (Cqoicebordel      2014-12-23 01:51:07 +0100 62)         if language is not "":
+3b3921fc (Adam Tauber       2014-12-24 21:02:26 +0100 63)             href = href + language + '/'
+3b3921fc (Adam Tauber       2014-12-24 21:02:26 +0100 64)         elif search_lang:
+3b3921fc (Adam Tauber       2014-12-24 21:02:26 +0100 65)             href = href + search_lang + '/'
+10e4f6f3 (Cqoicebordel      2014-12-23 01:51:07 +0100 66) 
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 67)         title = extract_text(link)
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 68) 
+3a4d6045 (Cqoicebordel      2015-02-06 16:39:59 +0100 69)         content = extract_text(result.xpath('.//div[contains(@class,"red")]'))
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 70)         content = content + " - "
+3a4d6045 (Cqoicebordel      2015-02-06 16:39:59 +0100 71)         text = extract_text(result.xpath('.//div[contains(@class,"grey-web")]')[0])
+3a4d6045 (Cqoicebordel      2015-02-06 16:39:59 +0100 72)         content = content + text
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 73) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 74)         if result.xpath(".//span") != []:
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 75)             content = content +\
+cc4e17b6 (Adam Tauber       2015-01-02 12:33:40 +0100 76)                 " - (" +\
+3a4d6045 (Cqoicebordel      2015-02-06 16:39:59 +0100 77)                 extract_text(result.xpath(".//span")) +\
+cc4e17b6 (Adam Tauber       2015-01-02 12:33:40 +0100 78)                 ")"
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 79) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 80)         # append result
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 81)         results.append({'url': href,
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 82)                         'title': title,
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 83)                         'content': content})
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 84) 
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 85)     # return results
+550232fc (Cqoicebordel      2014-12-22 01:00:16 +0100 86)     return results

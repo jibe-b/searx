@@ -1,0 +1,67 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Deezer (Music)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://deezer.com
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (http://developers.deezer.com/api/)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content, embedded
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 12) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 13) from json import loads
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 14) from searx.url_utils import urlencode
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 15) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 16) # engine dependent config
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 17) categories = ['music']
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 18) paging = True
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 19) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 20) # search-url
+6379595e (Adam Tauber       2015-03-03 11:32:21 +0100 21) url = 'https://api.deezer.com/'
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 22) search_url = url + 'search?{query}&index={offset}'
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 23) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 24) embedded_url = '<iframe scrolling="no" frameborder="0" allowTransparency="true" ' +\
+6379595e (Adam Tauber       2015-03-03 11:32:21 +0100 25)     'data-src="https://www.deezer.com/plugins/player?type=tracks&id={audioid}" ' +\
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 26)     'width="540" height="80"></iframe>'
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 27) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 28) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 29) # do search-request
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 30) def request(query, params):
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 31)     offset = (params['pageno'] - 1) * 25
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 32) 
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 33)     params['url'] = search_url.format(query=urlencode({'q': query}), offset=offset)
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 34) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 35)     return params
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 36) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 37) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 38) # get response from search-request
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 39) def response(resp):
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 40)     results = []
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 41) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 42)     search_res = loads(resp.text)
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 43) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 44)     # parse results
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 45)     for result in search_res.get('data', []):
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 46)         if result['type'] == 'track':
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 47)             title = result['title']
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 48)             url = result['link']
+6379595e (Adam Tauber       2015-03-03 11:32:21 +0100 49) 
+6379595e (Adam Tauber       2015-03-03 11:32:21 +0100 50)             if url.startswith('http://'):
+6379595e (Adam Tauber       2015-03-03 11:32:21 +0100 51)                 url = 'https' + url[4:]
+6379595e (Adam Tauber       2015-03-03 11:32:21 +0100 52) 
+e12a137a (Adam Tauber       2016-12-10 00:30:34 +0100 53)             content = u'{} - {} - {}'.format(
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 54)                 result['artist']['name'],
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 55)                 result['album']['title'],
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 56)                 result['title'])
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 57) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 58)             embedded = embedded_url.format(audioid=result['id'])
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 59) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 60)             # append result
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 61)             results.append({'url': url,
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 62)                             'title': title,
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 63)                             'embedded': embedded,
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 64)                             'content': content})
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 65) 
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 66)     # return results
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 67)     return results

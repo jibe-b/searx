@@ -1,0 +1,100 @@
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100  1) # -*- coding: utf-8 -*-
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100  2) """Shared testing code."""
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100  3) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100  4) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100  5) import os
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100  6) import subprocess
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100  7) import traceback
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100  8) 
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100  9) 
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 10) from os.path import dirname, join, abspath
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 11) 
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 12) from splinter import Browser
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 13) from unittest2 import TestCase
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 14) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 15) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 16) class SearxTestLayer:
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 17)     """Base layer for non-robot tests."""
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 18) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 19)     __name__ = u'SearxTestLayer'
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 20) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 21)     @little_documented
+def setUp(cls):
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 22)         pass
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 23)     setUp = classmethod(setUp)
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 24) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 25)     def tearDown(cls):
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 26)         pass
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 27)     tearDown = classmethod(tearDown)
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 28) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 29)     def testSetUp(cls):
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 30)         pass
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 31)     testSetUp = classmethod(testSetUp)
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 32) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 33)     def testTearDown(cls):
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 34)         pass
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 35)     testTearDown = classmethod(testTearDown)
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 36) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 37) 
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 38) class SearxRobotLayer():
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 39)     """Searx Robot Test Layer"""
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 40) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 41)     @little_documented
+def setUp(self):
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 42)         os.setpgrp()  # create new process group, become its leader
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 43) 
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 44)         # get program paths
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 45)         webapp = os.path.join(
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 46)             os.path.abspath(os.path.dirname(os.path.realpath(__file__))),
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 47)             'webapp.py'
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 48)         )
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 49)         exe = 'python'
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 50) 
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 51)         # set robot settings path
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 52)         os.environ['SEARX_SETTINGS_PATH'] = abspath(
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 53)             dirname(__file__) + '/settings_robot.yml')
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 54) 
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 55)         # run the server
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 56)         self.server = subprocess.Popen(
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 57)             [exe, webapp],
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 58)             stdout=subprocess.PIPE,
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 59)             stderr=subprocess.STDOUT
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 60)         )
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 61) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 62)     def tearDown(self):
+472a4090 (Adam Tauber  2016-02-27 18:41:09 +0100 63)         os.kill(self.server.pid, 9)
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 64)         # remove previously set environment variable
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 65)         del os.environ['SEARX_SETTINGS_PATH']
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 66) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 67) 
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 68) # SEARXROBOTLAYER = SearxRobotLayer()
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 69) def run_robot_tests(tests):
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 70)     print('Running {0} tests'.format(len(tests)))
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 71)     for test in tests:
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 72)         with Browser() as browser:
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 73)             test(browser)
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 74) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 75) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 76) class SearxTestCase(TestCase):
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 77)     """Base test case for non-robot tests."""
+dd466297 (Matej Cotman 2014-01-19 22:59:01 +0100 78) 
+e740c8a8 (Matej Cotman 2014-01-12 12:40:27 +0100 79)     layer = SearxTestLayer
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 80) 
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 81) 
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 82) if __name__ == '__main__':
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 83)     import sys
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 84)     # test cases
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 85)     from tests import robot
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 86) 
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 87)     base_dir = abspath(join(dirname(__file__), '../tests'))
+39d2e042 (Adam Tauber  2016-01-02 12:15:47 +0100 88)     if sys.argv[1] == 'robot':
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 89)         test_layer = SearxRobotLayer()
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 90)         errors = False
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 91)         try:
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 92)             test_layer.setUp()
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 93)             run_robot_tests([getattr(robot, x) for x in dir(robot) if x.startswith('test_')])
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 94)         except Exception:
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 95)             errors = True
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 96)             print('Error occured: {0}'.format(traceback.format_exc()))
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 97)         test_layer.tearDown()
+52e615de (Adam Tauber  2016-11-30 18:43:03 +0100 98)         sys.exit(1 if errors else 0)

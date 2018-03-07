@@ -1,0 +1,68 @@
+05be069f (Adam Tauber       2015-01-07 11:48:36 +0100  1) #  Vimeo (Videos)
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  2) #
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200  3) # @website     https://vimeo.com/
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  4) # @provide-api yes (http://developer.vimeo.com/api),
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  5) #              they have a maximum count of queries/hour
+7c13d630 (dalf              2014-12-07 16:37:56 +0100  6) #
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200  7) # @using-api   no (TODO, rewrite to api)
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200  8) # @results     HTML (using search portal)
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200  9) # @stable      no (HTML can change)
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 10) # @parse       url, title, publishedDate,  thumbnail, embedded
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 11) #
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 12) # @todo        rewrite to api
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 13) # @todo        set content-parameter with correct data
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 14) 
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 15) from json import loads
+993271be (Thomas Pointhuber 2014-03-18 15:56:22 +0100 16) from dateutil import parser
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 17) from searx.url_utils import urlencode
+68364df3 (pw3t              2014-01-05 22:10:46 +0100 18) 
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 19) # engine dependent config
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 20) categories = ['videos']
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 21) paging = True
+68364df3 (pw3t              2014-01-05 22:10:46 +0100 22) 
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 23) # search-url
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 24) base_url = 'https://vimeo.com/'
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 25) search_url = base_url + '/search/page:{pageno}?{query}'
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 26) 
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 27) embedded_url = '<iframe data-src="//player.vimeo.com/video/{videoid}" ' +\
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 28)     'width="540" height="304" frameborder="0" ' +\
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 29)     'webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 30) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 31) 
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 32) # do search-request
+68364df3 (pw3t              2014-01-05 22:10:46 +0100 33) @little_documented
+def request(query, params):
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 34)     params['url'] = search_url.format(pageno=params['pageno'],
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 35)                                       query=urlencode({'q': query}))
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 36) 
+68364df3 (pw3t              2014-01-05 22:10:46 +0100 37)     return params
+68364df3 (pw3t              2014-01-05 22:10:46 +0100 38) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 39) 
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 40) # get response from search-request
+68364df3 (pw3t              2014-01-05 22:10:46 +0100 41) def response(resp):
+68364df3 (pw3t              2014-01-05 22:10:46 +0100 42)     results = []
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 43)     data_start_pos = resp.text.find('{"filtered"')
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 44)     data_end_pos = resp.text.find(';\n', data_start_pos + 1)
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 45)     data = loads(resp.text[data_start_pos:data_end_pos])
+0eb3cdf6 (asciimoo          2014-01-11 11:14:46 +0100 46) 
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 47)     # parse results
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 48)     for result in data['filtered']['data']:
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 49)         result = result[result['type']]
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 50)         videoid = result['uri'].split('/')[-1]
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 51)         url = base_url + videoid
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 52)         title = result['name']
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 53)         thumbnail = result['pictures']['sizes'][-1]['link']
+f6e9c074 (Adam Tauber       2016-12-11 02:33:04 +0100 54)         publishedDate = parser.parse(result['created_time'])
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 55)         embedded = embedded_url.format(videoid=videoid)
+993271be (Thomas Pointhuber 2014-03-18 15:56:22 +0100 56) 
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 57)         # append result
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 58)         results.append({'url': url,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 59)                         'title': title,
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 60)                         'content': '',
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 61)                         'template': 'videos.html',
+993271be (Thomas Pointhuber 2014-03-18 15:56:22 +0100 62)                         'publishedDate': publishedDate,
+4a195e0b (Cqoicebordel      2015-01-05 02:04:23 +0100 63)                         'embedded': embedded,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 64)                         'thumbnail': thumbnail})
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 65) 
+58a443be (Thomas Pointhuber 2014-09-01 17:10:25 +0200 66)     # return results
+68364df3 (pw3t              2014-01-05 22:10:46 +0100 67)     return results

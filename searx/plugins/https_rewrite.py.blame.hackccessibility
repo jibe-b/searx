@@ -1,0 +1,235 @@
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   1) '''
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   2) searx is free software: you can redistribute it and/or modify
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   3) it under the terms of the GNU Affero General Public License as published by
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   4) the Free Software Foundation, either version 3 of the License, or
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   5) (at your option) any later version.
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   6) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   7) searx is distributed in the hope that it will be useful,
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   8) but WITHOUT ANY WARRANTY; without even the implied warranty of
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200   9) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  10) GNU Affero General Public License for more details.
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  11) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  12) You should have received a copy of the GNU Affero General Public License
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  13) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  14) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  15) (C) 2013- by Adam Tauber, <asciimoo@gmail.com>
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  16) '''
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  17) 
+96c8b20a searx/https_rewrite.py         (Adam Tauber       2014-06-24 16:30:04 +0200  18) import re
+52e615de searx/plugins/https_rewrite.py (Adam Tauber       2016-11-30 18:43:03 +0100  19) import sys
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  20) from lxml import etree
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  21) from os import listdir, environ
+6ecf03c7 searx/https_rewrite.py         (Thomas Pointhuber 2014-10-19 21:39:30 +0200  22) from os.path import isfile, isdir, join
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  23) from searx.plugins import logger
+257e5295 searx/plugins/https_rewrite.py (Adam Tauber       2016-07-04 22:46:43 +0200  24) from flask_babel import gettext
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  25) from searx import searx_dir
+52e615de searx/plugins/https_rewrite.py (Adam Tauber       2016-11-30 18:43:03 +0100  26) from searx.url_utils import urlparse
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  27) 
+52e615de searx/plugins/https_rewrite.py (Adam Tauber       2016-11-30 18:43:03 +0100  28) if sys.version_info[0] == 3:
+52e615de searx/plugins/https_rewrite.py (Adam Tauber       2016-11-30 18:43:03 +0100  29)     unicode = str
+96c8b20a searx/https_rewrite.py         (Adam Tauber       2014-06-24 16:30:04 +0200  30) 
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  31) name = "HTTPS rewrite"
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  32) description = gettext('Rewrite HTTP links to HTTPS if possible')
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  33) default_on = True
+10a24bdc searx/plugins/https_rewrite.py (Alexandre Flament 2017-02-12 15:06:01 +0100  34) preference_section = 'privacy'
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  35) 
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  36) if 'SEARX_HTTPS_REWRITE_PATH' in environ:
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  37)     rules_path = environ['SEARX_rules_path']
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  38) else:
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  39)     rules_path = join(searx_dir, 'plugins/https_rules')
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  40) 
+299a80a1 searx/https_rewrite.py         (Adam Tauber       2015-01-09 04:13:05 +0100  41) logger = logger.getChild("https_rewrite")
+299a80a1 searx/https_rewrite.py         (Adam Tauber       2015-01-09 04:13:05 +0100  42) 
+96c8b20a searx/https_rewrite.py         (Adam Tauber       2014-06-24 16:30:04 +0200  43) # https://gitweb.torproject.org/\
+96c8b20a searx/https_rewrite.py         (Adam Tauber       2014-06-24 16:30:04 +0200  44) # pde/https-everywhere.git/tree/4.0:/src/chrome/content/rules
+96c8b20a searx/https_rewrite.py         (Adam Tauber       2014-06-24 16:30:04 +0200  45) 
+96c8b20a searx/https_rewrite.py         (Adam Tauber       2014-06-24 16:30:04 +0200  46) # HTTPS rewrite rules
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  47) https_rules = []
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  48) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  49) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  50) # load single ruleset from a xml file
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  51) @little_documented
+def load_single_https_ruleset(rules_path):
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  52)     ruleset = ()
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  53) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  54)     # init parser
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  55)     parser = etree.XMLParser()
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  56) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  57)     # load and parse xml-file
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  58)     try:
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200  59)         tree = etree.parse(rules_path, parser)
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  60)     except:
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  61)         # TODO, error message
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  62)         return ()
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  63) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  64)     # get root node
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  65)     root = tree.getroot()
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  66) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  67)     # check if root is a node with the name ruleset
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  68)     # TODO improve parsing
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200  69)     if root.tag != 'ruleset':
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  70)         return ()
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  71) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  72)     # check if rule is deactivated by default
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  73)     if root.attrib.get('default_off'):
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  74)         return ()
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  75) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  76)     # check if rule does only work for specific platforms
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  77)     if root.attrib.get('platform'):
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  78)         return ()
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  79) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  80)     hosts = []
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  81)     rules = []
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  82)     exclusions = []
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  83) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  84)     # parse childs from ruleset
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  85)     for ruleset in root:
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  86)         # this child define a target
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  87)         if ruleset.tag == 'target':
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200  88)             # check if required tags available
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  89)             if not ruleset.attrib.get('host'):
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  90)                 continue
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  91) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  92)             # convert host-rule to valid regex
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200  93)             host = ruleset.attrib.get('host')\
+b3ab221b searx/plugins/https_rewrite.py (stepshal          2016-07-11 20:29:47 +0700  94)                 .replace('.', r'\.').replace('*', '.*')
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  95) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  96)             # append to host list
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  97)             hosts.append(host)
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  98) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200  99)         # this child define a rule
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 100)         elif ruleset.tag == 'rule':
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 101)             # check if required tags available
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 102)             if not ruleset.attrib.get('from')\
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 103)                or not ruleset.attrib.get('to'):
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 104)                 continue
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 105) 
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 106)             # TODO hack, which convert a javascript regex group
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 107)             # into a valid python regex group
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 108)             rule_from = ruleset.attrib['from'].replace('$', '\\')
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 109)             if rule_from.endswith('\\'):
+bd22e9a3 searx/plugins/https_rewrite.py (Adam Tauber       2016-01-18 12:47:31 +0100 110)                 rule_from = rule_from[:-1] + '$'
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 111)             rule_to = ruleset.attrib['to'].replace('$', '\\')
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 112)             if rule_to.endswith('\\'):
+bd22e9a3 searx/plugins/https_rewrite.py (Adam Tauber       2016-01-18 12:47:31 +0100 113)                 rule_to = rule_to[:-1] + '$'
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 114) 
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 115)             # TODO, not working yet because of the hack above,
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 116)             # currently doing that in webapp.py
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 117)             # rule_from_rgx = re.compile(rule_from, re.I)
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 118) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 119)             # append rule
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 120)             try:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 121)                 rules.append((re.compile(rule_from, re.I | re.U), rule_to))
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 122)             except:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 123)                 # TODO log regex error
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 124)                 continue
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 125) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 126)         # this child define an exclusion
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 127)         elif ruleset.tag == 'exclusion':
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 128)             # check if required tags available
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 129)             if not ruleset.attrib.get('pattern'):
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 130)                 continue
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 131) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 132)             exclusion_rgx = re.compile(ruleset.attrib.get('pattern'))
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 133) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 134)             # append exclusion
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 135)             exclusions.append(exclusion_rgx)
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 136) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 137)     # convert list of possible hosts to a simple regex
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 138)     # TODO compress regex to improve performance
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 139)     try:
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 140)         target_hosts = re.compile('^(' + '|'.join(hosts) + ')', re.I | re.U)
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 141)     except:
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 142)         return ()
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 143) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 144)     # return ruleset
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 145)     return (target_hosts, rules, exclusions)
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 146) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 147) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 148) # load all https rewrite rules
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 149) def load_https_rules(rules_path):
+6ecf03c7 searx/https_rewrite.py         (Thomas Pointhuber 2014-10-19 21:39:30 +0200 150)     # check if directory exists
+6ecf03c7 searx/https_rewrite.py         (Thomas Pointhuber 2014-10-19 21:39:30 +0200 151)     if not isdir(rules_path):
+299a80a1 searx/https_rewrite.py         (Adam Tauber       2015-01-09 04:13:05 +0100 152)         logger.error("directory not found: '" + rules_path + "'")
+6ecf03c7 searx/https_rewrite.py         (Thomas Pointhuber 2014-10-19 21:39:30 +0200 153)         return
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 154) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 155)     # search all xml files which are stored in the https rule directory
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 156)     xml_files = [join(rules_path, f)
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 157)                  for f in listdir(rules_path)
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 158)                  if isfile(join(rules_path, f)) and f[-4:] == '.xml']
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 159) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 160)     # load xml-files
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 161)     for ruleset_file in xml_files:
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 162)         # calculate rewrite-rules
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 163)         ruleset = load_single_https_ruleset(ruleset_file)
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 164) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 165)         # skip if no ruleset returned
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 166)         if not ruleset:
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 167)             continue
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 168) 
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 169)         # append ruleset
+9b9f097a searx/https_rewrite.py         (Thomas Pointhuber 2014-09-14 11:09:44 +0200 170)         https_rules.append(ruleset)
+b0fd71b7 searx/https_rewrite.py         (Adam Tauber       2014-10-19 12:18:21 +0200 171) 
+299a80a1 searx/https_rewrite.py         (Adam Tauber       2015-01-09 04:13:05 +0100 172)     logger.info('{n} rules loaded'.format(n=len(https_rules)))
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 173) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 174) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 175) @little_documented
+def https_url_rewrite(result):
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 176)     skip_https_rewrite = False
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 177)     # check if HTTPS rewrite is possible
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 178)     for target, rules, exclusions in https_rules:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 179) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 180)         # check if target regex match with url
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 181)         if target.match(result['parsed_url'].netloc):
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 182)             # process exclusions
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 183)             for exclusion in exclusions:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 184)                 # check if exclusion match with url
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 185)                 if exclusion.match(result['url']):
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 186)                     skip_https_rewrite = True
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 187)                     break
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 188) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 189)             # skip https rewrite if required
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 190)             if skip_https_rewrite:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 191)                 break
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 192) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 193)             # process rules
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 194)             for rule in rules:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 195)                 try:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 196)                     new_result_url = rule[0].sub(rule[1], result['url'])
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 197)                 except:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 198)                     break
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 199) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 200)                 # parse new url
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 201)                 new_parsed_url = urlparse(new_result_url)
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 202) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 203)                 # continiue if nothing was rewritten
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 204)                 if result['url'] == new_result_url:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 205)                     continue
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 206) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 207)                 # get domainname from result
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 208)                 # TODO, does only work correct with TLD's like
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 209)                 #  asdf.com, not for asdf.com.de
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 210)                 # TODO, using publicsuffix instead of this rewrite rule
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 211)                 old_result_domainname = '.'.join(
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 212)                     result['parsed_url'].hostname.split('.')[-2:])
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 213)                 new_result_domainname = '.'.join(
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 214)                     new_parsed_url.hostname.split('.')[-2:])
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 215) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 216)                 # check if rewritten hostname is the same,
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 217)                 # to protect against wrong or malicious rewrite rules
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 218)                 if old_result_domainname == new_result_domainname:
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 219)                     # set new url
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 220)                     result['url'] = new_result_url
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 221) 
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 222)             # target has matched, do not search over the other rules
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 223)             break
+f1417738 searx/https_rewrite.py         (Adam Tauber       2014-12-19 22:40:37 +0100 224)     return result
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200 225) 
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200 226) 
+fbb080f3 searx/plugins/https_rewrite.py (dalf              2016-10-22 14:01:53 +0200 227) def on_result(request, search, result):
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200 228)     if result['parsed_url'].scheme == 'http':
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200 229)         https_url_rewrite(result)
+d2a636f7 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:30:12 +0200 230)     return True
+33516256 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:40:44 +0200 231) 
+33516256 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:40:44 +0200 232) 
+33516256 searx/plugins/https_rewrite.py (Adam Tauber       2015-04-13 00:40:44 +0200 233) load_https_rules(rules_path)

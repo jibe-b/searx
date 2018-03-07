@@ -1,0 +1,92 @@
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  1) # -*- coding: utf-8 -*-
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  2) from collections import defaultdict
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  3) import mock
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  4) from searx.engines import base
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  5) from searx.testing import SearxTestCase
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  6) 
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  7) 
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  8) class TestBaseEngine(SearxTestCase):
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200  9) 
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 10)     @little_documented
+def test_request(self):
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 11)         query = 'test_query'
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 12)         dicto = defaultdict(dict)
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 13)         dicto['pageno'] = 1
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 14)         params = base.request(query, dicto)
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 15)         self.assertIn('url', params)
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 16)         self.assertIn('base-search.net', params['url'])
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 17) 
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 18)     def test_response(self):
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 19)         self.assertRaises(AttributeError, base.response, None)
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 20)         self.assertRaises(AttributeError, base.response, [])
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 21)         self.assertRaises(AttributeError, base.response, '')
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 22)         self.assertRaises(AttributeError, base.response, '[]')
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 23) 
+5954a8e1 (NoÃ©mi VÃ¡nyi 2017-11-01 16:50:27 +0100 24)         response = mock.Mock(content=b'<response></response>')
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 25)         self.assertEqual(base.response(response), [])
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 26) 
+5954a8e1 (NoÃ©mi VÃ¡nyi 2017-11-01 16:50:27 +0100 27)         xml_mock = b"""<?xml version="1.0"?>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 28) <response>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 29)   <lst name="responseHeader">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 30)     <int name="status">0</int>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 31)     <int name="QTime">1</int>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 32)   </lst>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 33)   <result name="response" numFound="1" start="0">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 34)     <doc>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 35)       <date name="dchdate">2000-01-01T01:01:01Z</date>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 36)       <str name="dcdocid">1</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 37)       <str name="dccontinent">cna</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 38)       <str name="dccountry">us</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 39)       <str name="dccollection">ftciteseerx</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 40)       <str name="dcprovider">CiteSeerX</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 41)       <str name="dctitle">Science and more</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 42)       <arr name="dccreator">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 43)         <str>Someone</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 44)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 45)       <arr name="dcperson">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 46)         <str>Someone</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 47)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 48)       <arr name="dcsubject">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 49)         <str>Science and more</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 50)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 51)       <str name="dcdescription">Science, and even more.</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 52)       <arr name="dccontributor">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 53)         <str>The neighbour</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 54)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 55)       <str name="dcdate">2001</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 56)       <int name="dcyear">2001</int>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 57)       <arr name="dctype">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 58)         <str>text</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 59)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 60)       <arr name="dctypenorm">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 61)         <str>1</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 62)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 63)       <arr name="dcformat">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 64)         <str>application/pdf</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 65)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 66)       <arr name="dccontenttype">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 67)         <str>application/pdf</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 68)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 69)       <arr name="dcidentifier">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 70)         <str>http://example.org/</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 71)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 72)       <str name="dclink">http://example.org</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 73)       <str name="dcsource">http://example.org</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 74)       <arr name="dclanguage">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 75)         <str>en</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 76)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 77)       <str name="dcrights">Under the example.org licence</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 78)       <int name="dcoa">1</int>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 79)       <arr name="dclang">
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 80)         <str>eng</str>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 81)       </arr>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 82)     </doc>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 83)   </result>
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 84) </response>"""
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 85) 
+5954a8e1 (NoÃ©mi VÃ¡nyi 2017-11-01 16:50:27 +0100 86)         response = mock.Mock(content=xml_mock)
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 87)         results = base.response(response)
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 88)         self.assertEqual(type(results), list)
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 89)         self.assertEqual(len(results), 1)
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 90)         self.assertEqual(results[0]['title'], 'Science and more')
+d081eee3 (jibe-b        2017-09-22 22:26:37 +0200 91)         self.assertEqual(results[0]['content'], 'Science, and even more.')

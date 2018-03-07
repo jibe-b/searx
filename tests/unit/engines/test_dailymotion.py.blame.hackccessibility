@@ -1,0 +1,108 @@
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600   1) # -*- coding: utf-8 -*-
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100   2) from collections import defaultdict
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100   3) import mock
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100   4) from searx.engines import dailymotion
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100   5) from searx.testing import SearxTestCase
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100   6) 
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100   7) 
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100   8) class TestDailymotionEngine(SearxTestCase):
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100   9) 
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  10)     @little_documented
+def test_request(self):
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  11)         query = 'test_query'
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  12)         dicto = defaultdict(dict)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  13)         dicto['pageno'] = 0
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  14)         dicto['language'] = 'fr_FR'
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  15)         params = dailymotion.request(query, dicto)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  16)         self.assertTrue('url' in params)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  17)         self.assertTrue(query in params['url'])
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  18)         self.assertTrue('dailymotion.com' in params['url'])
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  19)         self.assertTrue('fr' in params['url'])
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  20) 
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  21)     def test_response(self):
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  22)         self.assertRaises(AttributeError, dailymotion.response, None)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  23)         self.assertRaises(AttributeError, dailymotion.response, [])
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  24)         self.assertRaises(AttributeError, dailymotion.response, '')
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  25)         self.assertRaises(AttributeError, dailymotion.response, '[]')
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  26) 
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  27)         response = mock.Mock(text='{}')
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  28)         self.assertEqual(dailymotion.response(response), [])
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  29) 
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  30)         response = mock.Mock(text='{"data": []}')
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  31)         self.assertEqual(dailymotion.response(response), [])
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  32) 
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  33)         json = """
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  34)         {
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  35)         "page": 1,
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  36)         "limit": 5,
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  37)         "explicit": false,
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  38)         "total": 289487,
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  39)         "has_more": true,
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  40)         "list": [
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  41)             {
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  42)             "created_time": 1422173451,
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  43)             "title": "Title",
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  44)             "description": "Description",
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  45)             "duration": 81,
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  46)             "url": "http://www.url",
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  47)             "thumbnail_360_url": "http://thumbnail",
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  48)             "id": "x2fit7q"
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  49)             }
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  50)         ]
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  51)         }
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  52)         """
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  53)         response = mock.Mock(text=json)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  54)         results = dailymotion.response(response)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  55)         self.assertEqual(type(results), list)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  56)         self.assertEqual(len(results), 1)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  57)         self.assertEqual(results[0]['title'], 'Title')
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  58)         self.assertEqual(results[0]['url'], 'http://www.url')
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  59)         self.assertEqual(results[0]['content'], 'Description')
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  60)         self.assertIn('x2fit7q', results[0]['embedded'])
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  61) 
+b3ab221b tests/unit/engines/test_dailymotion.py  (stepshal     2016-07-11 20:29:47 +0700  62)         json = r"""
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  63)         {"toto":[
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  64)             {"id":200,"name":"Artist Name",
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  65)             "link":"http:\/\/www.dailymotion.com\/artist\/1217","type":"artist"}
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  66)         ]}
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  67)         """
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  68)         response = mock.Mock(text=json)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  69)         results = dailymotion.response(response)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  70)         self.assertEqual(type(results), list)
+92368a41 searx/tests/engines/test_dailymotion.py (Cqoicebordel 2015-01-27 23:20:57 +0100  71)         self.assertEqual(len(results), 0)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  72) 
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  73)     def test_fetch_supported_languages(self):
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  74)         json = r"""
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  75)         {"list":[{"code":"af","name":"Afrikaans","native_name":"Afrikaans",
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  76)                   "localized_name":"Afrikaans","display_name":"Afrikaans"},
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  77)                  {"code":"ar","name":"Arabic","native_name":"\u0627\u0644\u0639\u0631\u0628\u064a\u0629",
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  78)                   "localized_name":"Arabic","display_name":"Arabic"},
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  79)                  {"code":"la","name":"Latin","native_name":null,
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  80)                   "localized_name":"Latin","display_name":"Latin"}
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  81)         ]}
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  82)         """
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  83)         response = mock.Mock(text=json)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  84)         languages = dailymotion._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  85)         self.assertEqual(type(languages), dict)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  86)         self.assertEqual(len(languages), 3)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  87)         self.assertIn('af', languages)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  88)         self.assertIn('ar', languages)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  89)         self.assertIn('la', languages)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  90) 
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  91)         self.assertEqual(type(languages['af']), dict)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  92)         self.assertEqual(type(languages['ar']), dict)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  93)         self.assertEqual(type(languages['la']), dict)
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  94) 
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  95)         self.assertIn('name', languages['af'])
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  96)         self.assertIn('name', languages['ar'])
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  97)         self.assertNotIn('name', languages['la'])
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  98) 
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600  99)         self.assertIn('english_name', languages['af'])
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600 100)         self.assertIn('english_name', languages['ar'])
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600 101)         self.assertIn('english_name', languages['la'])
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600 102) 
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600 103)         self.assertEqual(languages['af']['name'], 'Afrikaans')
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600 104)         self.assertEqual(languages['af']['english_name'], 'Afrikaans')
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600 105)         self.assertEqual(languages['ar']['name'], u'العربية')
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600 106)         self.assertEqual(languages['ar']['english_name'], 'Arabic')
+af35eee1 tests/unit/engines/test_dailymotion.py  (marc         2016-12-15 00:34:43 -0600 107)         self.assertEqual(languages['la']['english_name'], 'Latin')

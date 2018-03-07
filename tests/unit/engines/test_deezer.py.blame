@@ -1,0 +1,57 @@
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  1) from collections import defaultdict
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  2) import mock
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  3) from searx.engines import deezer
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  4) from searx.testing import SearxTestCase
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  5) 
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  6) 
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  7) class TestDeezerEngine(SearxTestCase):
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  8) 
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100  9)     def test_request(self):
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 10)         query = 'test_query'
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 11)         dicto = defaultdict(dict)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 12)         dicto['pageno'] = 0
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 13)         params = deezer.request(query, dicto)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 14)         self.assertTrue('url' in params)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 15)         self.assertTrue(query in params['url'])
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 16)         self.assertTrue('deezer.com' in params['url'])
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 17) 
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 18)     def test_response(self):
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 19)         self.assertRaises(AttributeError, deezer.response, None)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 20)         self.assertRaises(AttributeError, deezer.response, [])
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 21)         self.assertRaises(AttributeError, deezer.response, '')
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 22)         self.assertRaises(AttributeError, deezer.response, '[]')
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 23) 
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 24)         response = mock.Mock(text='{}')
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 25)         self.assertEqual(deezer.response(response), [])
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 26) 
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 27)         response = mock.Mock(text='{"data": []}')
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 28)         self.assertEqual(deezer.response(response), [])
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 29) 
+b3ab221b tests/unit/engines/test_deezer.py  (stepshal     2016-07-11 20:29:47 +0700 30)         json = r"""
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 31)         {"data":[
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 32)             {"id":100, "title":"Title of track",
+4cc79533 searx/tests/engines/test_deezer.py (Adam Tauber  2015-03-03 11:44:12 +0100 33)             "link":"https:\/\/www.deezer.com\/track\/1094042","duration":232,
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 34)             "artist":{"id":200,"name":"Artist Name",
+4cc79533 searx/tests/engines/test_deezer.py (Adam Tauber  2015-03-03 11:44:12 +0100 35)                 "link":"https:\/\/www.deezer.com\/artist\/1217","type":"artist"},
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 36)             "album":{"id":118106,"title":"Album Title","type":"album"},"type":"track"}
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 37)         ]}
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 38)         """
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 39)         response = mock.Mock(text=json)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 40)         results = deezer.response(response)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 41)         self.assertEqual(type(results), list)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 42)         self.assertEqual(len(results), 1)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 43)         self.assertEqual(results[0]['title'], 'Title of track')
+4cc79533 searx/tests/engines/test_deezer.py (Adam Tauber  2015-03-03 11:44:12 +0100 44)         self.assertEqual(results[0]['url'], 'https://www.deezer.com/track/1094042')
+fdf63940 tests/unit/engines/test_deezer.py  (Adam Tauber  2016-12-09 19:10:57 +0100 45)         self.assertEqual(results[0]['content'], 'Artist Name - Album Title - Title of track')
+192f255e searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:33:02 +0100 46)         self.assertTrue('100' in results[0]['embedded'])
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 47) 
+b3ab221b tests/unit/engines/test_deezer.py  (stepshal     2016-07-11 20:29:47 +0700 48)         json = r"""
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 49)         {"data":[
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 50)             {"id":200,"name":"Artist Name",
+4cc79533 searx/tests/engines/test_deezer.py (Adam Tauber  2015-03-03 11:44:12 +0100 51)             "link":"https:\/\/www.deezer.com\/artist\/1217","type":"artist"}
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 52)         ]}
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 53)         """
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 54)         response = mock.Mock(text=json)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 55)         results = deezer.response(response)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 56)         self.assertEqual(type(results), list)
+0f52cc75 searx/tests/engines/test_deezer.py (Cqoicebordel 2015-01-25 22:12:34 +0100 57)         self.assertEqual(len(results), 0)

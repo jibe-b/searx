@@ -1,0 +1,84 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Deviantart (Images)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://www.deviantart.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (https://www.deviantart.com/developers/) (RSS)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no (TODO, rewrite to api)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, thumbnail_src, img_src
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 12)  @todo        rewrite to api
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 13) """
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 14) 
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100 15) from lxml import html
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 16) import re
+d4957045 (Cqoicebordel      2015-01-29 01:13:33 +0100 17) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 18) from searx.url_utils import urlencode
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 19) 
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 20) # engine dependent config
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 21) categories = ['images']
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 22) paging = True
+e7baf24e (Noemi Vanyi       2016-07-19 10:06:47 +0200 23) time_range_support = True
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 24) 
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 25) # search-url
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 26) base_url = 'https://www.deviantart.com/'
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 27) search_url = base_url + 'browse/all/?offset={offset}&{query}'
+e7baf24e (Noemi Vanyi       2016-07-19 10:06:47 +0200 28) time_range_url = '&order={range}'
+e7baf24e (Noemi Vanyi       2016-07-19 10:06:47 +0200 29) 
+e7baf24e (Noemi Vanyi       2016-07-19 10:06:47 +0200 30) time_range_dict = {'day': 11,
+e7baf24e (Noemi Vanyi       2016-07-19 10:06:47 +0200 31)                    'week': 14,
+e7baf24e (Noemi Vanyi       2016-07-19 10:06:47 +0200 32)                    'month': 15}
+1fd91bd9 (asciimoo          2014-01-30 00:09:47 +0100 33) 
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 34) 
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 35) # do search-request
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 36) def request(query, params):
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100 37)     if params['time_range'] and params['time_range'] not in time_range_dict:
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100 38)         return params
+b0343568 (Noémi Ványi       2016-12-11 16:41:14 +0100 39) 
+1fd91bd9 (asciimoo          2014-01-30 00:09:47 +0100 40)     offset = (params['pageno'] - 1) * 24
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 41) 
+1fd91bd9 (asciimoo          2014-01-30 00:09:47 +0100 42)     params['url'] = search_url.format(offset=offset,
+1fd91bd9 (asciimoo          2014-01-30 00:09:47 +0100 43)                                       query=urlencode({'q': query}))
+350a8452 (Adam Tauber       2016-07-26 00:22:05 +0200 44)     if params['time_range'] in time_range_dict:
+e7baf24e (Noemi Vanyi       2016-07-19 10:06:47 +0200 45)         params['url'] += time_range_url.format(range=time_range_dict[params['time_range']])
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 46) 
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 47)     return params
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 48) 
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 49) 
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 50) # get response from search-request
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 51) def response(resp):
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 52)     results = []
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 53) 
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 54)     # return empty array if a redirection code is returned
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 55)     if resp.status_code == 302:
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 56)         return []
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 57) 
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 58)     dom = html.fromstring(resp.text)
+4238812a (Cqoicebordel      2015-01-17 19:24:35 +0100 59) 
+b3ab221b (stepshal          2016-07-11 20:29:47 +0700 60)     regex = re.compile(r'\/200H\/')
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 61) 
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 62)     # parse results
+ba590de7 (Noemi Vanyi       2016-07-19 09:37:02 +0200 63)     for result in dom.xpath('.//span[@class="thumb wide"]'):
+ba590de7 (Noemi Vanyi       2016-07-19 09:37:02 +0200 64)         link = result.xpath('.//a[@class="torpedo-thumb-link"]')[0]
+ba590de7 (Noemi Vanyi       2016-07-19 09:37:02 +0200 65)         url = link.attrib.get('href')
+ba590de7 (Noemi Vanyi       2016-07-19 09:37:02 +0200 66)         title = extract_text(result.xpath('.//span[@class="title"]'))
+d4957045 (Cqoicebordel      2015-01-29 01:13:33 +0100 67)         thumbnail_src = link.xpath('.//img')[0].attrib.get('src')
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 68)         img_src = regex.sub('/', thumbnail_src)
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 69) 
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 70)         # http to https, remove domain sharding
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 71)         thumbnail_src = re.sub(r"https?://(th|fc)\d+.", "https://th01.", thumbnail_src)
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 72)         thumbnail_src = re.sub(r"http://", "https://", thumbnail_src)
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 73) 
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 74)         url = re.sub(r"http://(.*)\.deviantart\.com/", "https://\\1.deviantart.com/", url)
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 75) 
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 76)         # append result
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 77)         results.append({'url': url,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 78)                         'title': title,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 79)                         'img_src': img_src,
+cb4a3fe5 (Cqoicebordel      2015-01-17 19:21:09 +0100 80)                         'thumbnail_src': thumbnail_src,
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 81)                         'template': 'images.html'})
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 82) 
+16d15268 (Thomas Pointhuber 2014-09-02 16:48:18 +0200 83)     # return results
+f56649e3 (asciimoo          2013-10-20 11:12:10 +0200 84)     return results

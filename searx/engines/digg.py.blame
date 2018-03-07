@@ -1,0 +1,81 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Digg (News, Social media)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://digg.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML (using search portal)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content, publishedDate, thumbnail
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 12) 
+a49cc18f (misnyo            2017-08-30 18:20:43 +0200 13) import random
+a49cc18f (misnyo            2017-08-30 18:20:43 +0200 14) import string
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 15) from dateutil import parser
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 16) from json import loads
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 17) from lxml import html
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 18) from searx.url_utils import quote_plus
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 19) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 20) # engine dependent config
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 21) categories = ['news', 'social media']
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 22) paging = True
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 23) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 24) # search-url
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 25) base_url = 'https://digg.com/'
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 26) search_url = base_url + 'api/search/{query}.json?position={position}&format=html'
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 27) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 28) # specific xpath variables
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 29) results_xpath = '//article'
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 30) link_xpath = './/small[@class="time"]//a'
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 31) title_xpath = './/h2//a//text()'
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 32) content_xpath = './/p//text()'
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 33) pubdate_xpath = './/time'
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 34) 
+6e92fb38 (misnyo            2017-08-30 21:14:12 +0200 35) digg_cookie_chars = string.ascii_uppercase + string.ascii_lowercase +\
+6e92fb38 (misnyo            2017-08-30 21:14:12 +0200 36)     string.digits + "+_"
+6e92fb38 (misnyo            2017-08-30 21:14:12 +0200 37) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 38) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 39) # do search-request
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 40) def request(query, params):
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 41)     offset = (params['pageno'] - 1) * 10
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 42)     params['url'] = search_url.format(position=offset,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 43)                                       query=quote_plus(query))
+a49cc18f (misnyo            2017-08-30 18:20:43 +0200 44)     params['cookies']['frontend.auid'] = ''.join(random.choice(
+6e92fb38 (misnyo            2017-08-30 21:14:12 +0200 45)         digg_cookie_chars) for _ in range(22))
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 46)     return params
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 47) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 48) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 49) # get response from search-request
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 50) def response(resp):
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 51)     results = []
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 52) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 53)     search_result = loads(resp.text)
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 54) 
+1d255061 (Cqoicebordel      2015-01-29 00:26:12 +0100 55)     if 'html' not in search_result or search_result['html'] == '':
+4450ed55 (Cqoicebordel      2015-01-03 23:54:02 +0100 56)         return results
+4450ed55 (Cqoicebordel      2015-01-03 23:54:02 +0100 57) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 58)     dom = html.fromstring(search_result['html'])
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 59) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 60)     # parse results
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 61)     for result in dom.xpath(results_xpath):
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 62)         url = result.attrib.get('data-contenturl')
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 63)         thumbnail = result.xpath('.//img')[0].attrib.get('src')
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 64)         title = ''.join(result.xpath(title_xpath))
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 65)         content = ''.join(result.xpath(content_xpath))
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 66)         pubdate = result.xpath(pubdate_xpath)[0].attrib.get('datetime')
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 67)         publishedDate = parser.parse(pubdate)
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 68) 
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 69)         # http to https
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 70)         thumbnail = thumbnail.replace("http://static.digg.com", "https://static.digg.com")
+78edc16e (Alexandre Flament 2015-05-02 11:43:12 +0200 71) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 72)         # append result
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 73)         results.append({'url': url,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 74)                         'title': title,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 75)                         'content': content,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 76)                         'template': 'videos.html',
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 77)                         'publishedDate': publishedDate,
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 78)                         'thumbnail': thumbnail})
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 79) 
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 80)     # return results
+e7e29815 (Cqoicebordel      2014-12-28 22:57:59 +0100 81)     return results

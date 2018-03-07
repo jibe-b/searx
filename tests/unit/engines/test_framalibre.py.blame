@@ -1,0 +1,103 @@
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   1) # -*- coding: utf-8 -*-
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   2) from collections import defaultdict
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   3) import mock
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   4) from searx.engines import framalibre
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   5) from searx.testing import SearxTestCase
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   6) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   7) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   8) class TestFramalibreEngine(SearxTestCase):
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100   9) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  10)     def test_request(self):
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  11)         query = 'test_query'
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  12)         dicto = defaultdict(dict)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  13)         dicto['pageno'] = 0
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  14)         params = framalibre.request(query, dicto)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  15)         self.assertTrue('url' in params)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  16)         self.assertTrue(query in params['url'])
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  17)         self.assertTrue('framalibre.org' in params['url'])
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  18) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  19)     def test_response(self):
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  20)         self.assertRaises(AttributeError, framalibre.response, None)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  21)         self.assertRaises(AttributeError, framalibre.response, [])
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  22)         self.assertRaises(AttributeError, framalibre.response, '')
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  23)         self.assertRaises(AttributeError, framalibre.response, '[]')
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  24) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  25)         response = mock.Mock(text='{}')
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  26)         self.assertEqual(framalibre.response(response), [])
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  27) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  28)         response = mock.Mock(text='{"data": []}')
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  29)         self.assertEqual(framalibre.response(response), [])
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  30) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  31)         html = u"""
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  32)         <div class="nodes-list-row">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  33)           <div id="node-431"
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  34)               class="node node-logiciel-annuaires node-promoted node-teaser node-teaser node-sheet clearfix nodes-list"
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  35)               about="/content/gogs" typeof="sioc:Item foaf:Document">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  36)             <header class="media">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  37)               <div class="media-left">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  38)                 <div class="field field-name-field-logo field-type-image field-label-hidden">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  39)                   <div class="field-items">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  40)                     <div class="field-item even">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  41)                       <a href="/content/gogs">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  42)                         <img class="media-object img-responsive" typeof="foaf:Image"
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  43)  src="https://framalibre.org/sites/default/files/styles/teaser_logo/public/leslogos/gogs-lg.png?itok=rrCxKKBy"
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  44)  width="70" height="70" alt="" />
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  45)                       </a>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  46)                     </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  47)                   </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  48)                 </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  49)               </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  50)               <div class="media-body">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  51)                 <h3 class="node-title"><a href="/content/gogs">Gogs</a></h3>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  52)                 <span property="dc:title" content="Gogs" class="rdf-meta element-hidden"></span>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  53)                 <div class="field field-name-field-annuaires field-type-taxonomy-term-reference field-label-hidden">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  54)                   <div class="field-items">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  55)                     <div class="field-item even">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  56)                       <a href="/annuaires/cloudwebapps"
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  57)  typeof="skos:Concept" property="rdfs:label skos:prefLabel"
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  58)  datatype="" class="label label-primary">Cloud/webApps</a>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  59)                     </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  60)                   </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  61)                 </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  62)               </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  63)             </header>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  64)             <div class="content">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  65)               <div class="field field-name-field-votre-appr-ciation field-type-fivestar field-label-hidden">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  66)                 <div class="field-items">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  67)                   <div class="field-item even">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  68)                   </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  69)                 </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  70)               </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  71)               <div class="field field-name-body field-type-text-with-summary field-label-hidden">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  72)                 <div class="field-items">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  73)                   <div class="field-item even" property="content:encoded">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  74)                     <p>Gogs est une interface web basée sur git et une bonne alternative à GitHub.</p>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  75)                   </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  76)                 </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  77)               </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  78)             </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  79)             <footer>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  80)               <a href="/content/gogs" class="read-more btn btn-default btn-sm">Voir la notice</a>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  81)               <div class="field field-name-field-lien-officiel field-type-link-field field-label-hidden">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  82)                 <div class="field-items">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  83)                   <div class="field-item even">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  84)                     <a href="https://gogs.io/" target="_blank" title="Voir le site officiel">
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  85)                       <span class="glyphicon glyphicon-globe"></span>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  86)                       <span class="sr-only">Lien officiel</span>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  87)                     </a>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  88)                   </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  89)                 </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  90)               </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  91)             </footer>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  92)           </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  93)         </div>
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  94)         """
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  95)         response = mock.Mock(text=html)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  96)         results = framalibre.response(response)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  97)         self.assertEqual(type(results), list)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  98)         self.assertEqual(len(results), 1)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  99)         self.assertEqual(results[0]['title'], 'Gogs')
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 100)         self.assertEqual(results[0]['url'],
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 101)                          'https://framalibre.org/content/gogs')
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 102)         self.assertEqual(results[0]['content'],
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 103)                          u"Gogs est une interface web basée sur git et une bonne alternative à GitHub.")

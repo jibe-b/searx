@@ -1,0 +1,484 @@
+a0a12849 (marc        2016-06-06 01:08:36 -0500   1) # -*- coding: utf-8 -*-
+a0a12849 (marc        2016-06-06 01:08:36 -0500   2) """
+a0a12849 (marc        2016-06-06 01:08:36 -0500   3)  Wikidata
+a0a12849 (marc        2016-06-06 01:08:36 -0500   4) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500   5)  @website     https://wikidata.org
+a0a12849 (marc        2016-06-06 01:08:36 -0500   6)  @provide-api yes (https://wikidata.org/w/api.php)
+a0a12849 (marc        2016-06-06 01:08:36 -0500   7) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500   8)  @using-api   partially (most things require scraping)
+a0a12849 (marc        2016-06-06 01:08:36 -0500   9)  @results     JSON, HTML
+a0a12849 (marc        2016-06-06 01:08:36 -0500  10)  @stable      no (html can change)
+a0a12849 (marc        2016-06-06 01:08:36 -0500  11)  @parse       url, infobox
+a0a12849 (marc        2016-06-06 01:08:36 -0500  12) """
+362c8497 (Adam Tauber 2015-09-07 22:39:33 +0200  13) 
+362c8497 (Adam Tauber 2015-09-07 22:39:33 +0200  14) from searx import logger
+d07cfd90 (dalf        2015-01-21 11:33:16 +0100  15) from searx.poolrequests import get
+a0a12849 (marc        2016-06-06 01:08:36 -0500  16) from searx.engines.xpath import extract_text
+af35eee1 (marc        2016-12-15 00:34:43 -0600  17) from searx.engines.wikipedia import _fetch_supported_languages, supported_languages_url
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  18) from searx.url_utils import urlencode
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  19) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500  20) from json import loads
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  21) from lxml.html import fromstring
+362c8497 (Adam Tauber 2015-09-07 22:39:33 +0200  22) 
+362c8497 (Adam Tauber 2015-09-07 22:39:33 +0200  23) logger = logger.getChild('wikidata')
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  24) result_count = 1
+a0a12849 (marc        2016-06-06 01:08:36 -0500  25) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500  26) # urls
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  27) wikidata_host = 'https://www.wikidata.org'
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  28) url_search = wikidata_host \
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  29)     + '/wiki/Special:ItemDisambiguation?{query}'
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  30) 
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  31) wikidata_api = wikidata_host + '/w/api.php'
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  32) url_detail = wikidata_api\
+a0a12849 (marc        2016-06-06 01:08:36 -0500  33)     + '?action=parse&format=json&{query}'\
+a0a12849 (marc        2016-06-06 01:08:36 -0500  34)     + '&redirects=1&prop=text%7Cdisplaytitle%7Clanglinks%7Crevid'\
+a0a12849 (marc        2016-06-06 01:08:36 -0500  35)     + '&disableeditsection=1&disabletidy=1&preview=1&sectionpreview=1&disabletoc=1&utf8=1&formatversion=2'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  36) 
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  37) url_map = 'https://www.openstreetmap.org/'\
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  38)     + '?lat={latitude}&lon={longitude}&zoom={zoom}&layers=M'
+ad58b14b (marc        2016-06-27 23:35:43 -0500  39) url_image = 'https://commons.wikimedia.org/wiki/Special:FilePath/{filename}?width=500&height=400'
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  40) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500  41) # xpaths
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  42) wikidata_ids_xpath = '//div/ul[@class="wikibase-disambiguation"]/li/a/@title'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  43) title_xpath = '//*[contains(@class,"wikibase-title-label")]'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  44) description_xpath = '//div[contains(@class,"wikibase-entitytermsview-heading-description")]'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  45) property_xpath = '//div[@id="{propertyid}"]'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  46) label_xpath = './/div[contains(@class,"wikibase-statementgroupview-property-label")]/a'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  47) url_xpath = './/a[contains(@class,"external free") or contains(@class, "wb-external-id")]'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  48) wikilink_xpath = './/ul[contains(@class,"wikibase-sitelinklistview-listview")]'\
+a0a12849 (marc        2016-06-06 01:08:36 -0500  49)     + '/li[contains(@data-wb-siteid,"{wikiid}")]//a/@href'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  50) property_row_xpath = './/div[contains(@class,"wikibase-statementview")]'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  51) preferred_rank_xpath = './/span[contains(@class,"wikibase-rankselector-preferred")]'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  52) value_xpath = './/div[contains(@class,"wikibase-statementview-mainsnak")]'\
+a0a12849 (marc        2016-06-06 01:08:36 -0500  53)     + '/*/div[contains(@class,"wikibase-snakview-value")]'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  54) language_fallback_xpath = '//sup[contains(@class,"wb-language-fallback-indicator")]'
+a0a12849 (marc        2016-06-06 01:08:36 -0500  55) calendar_name_xpath = './/sup[contains(@class,"wb-calendar-name")]'
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  56) 
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  57) 
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  58) def request(query, params):
+f62ce21f (marc        2016-11-05 20:51:38 -0600  59)     language = params['language'].split('-')[0]
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  60) 
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  61)     params['url'] = url_search.format(
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  62)         query=urlencode({'label': query, 'language': language}))
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  63)     return params
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  64) 
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  65) 
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  66) def response(resp):
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  67)     results = []
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  68)     html = fromstring(resp.text)
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  69)     wikidata_ids = html.xpath(wikidata_ids_xpath)
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  70) 
+f62ce21f (marc        2016-11-05 20:51:38 -0600  71)     language = resp.search_params['language'].split('-')[0]
+cc4e17b6 (Adam Tauber 2015-01-02 12:33:40 +0100  72) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500  73)     # TODO: make requests asynchronous to avoid timeout when result_count > 1
+93ef11ad (a01200356   2016-06-03 22:39:41 -0500  74)     for wikidata_id in wikidata_ids[:result_count]:
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  75)         url = url_detail.format(query=urlencode({'page': wikidata_id, 'uselang': language}))
+a0a12849 (marc        2016-06-06 01:08:36 -0500  76)         htmlresponse = get(url)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  77)         jsonresponse = loads(htmlresponse.text)
+a0a12849 (marc        2016-06-06 01:08:36 -0500  78)         results += getDetail(jsonresponse, wikidata_id, language, resp.search_params['language'])
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  79) 
+0a71525a (Dalf        2014-09-28 16:53:30 +0200  80)     return results
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  81) 
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  82) 
+d7ea44ab (Adam Tauber 2015-01-11 13:26:42 +0100  83) def getDetail(jsonresponse, wikidata_id, language, locale):
+cac1761a (dalf        2014-10-11 15:49:50 +0200  84)     results = []
+cac1761a (dalf        2014-10-11 15:49:50 +0200  85)     urls = []
+cac1761a (dalf        2014-10-11 15:49:50 +0200  86)     attributes = []
+cac1761a (dalf        2014-10-11 15:49:50 +0200  87) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500  88)     title = jsonresponse.get('parse', {}).get('displaytitle', {})
+a0a12849 (marc        2016-06-06 01:08:36 -0500  89)     result = jsonresponse.get('parse', {}).get('text', {})
+727c7226 (Adam Tauber 2014-10-04 22:53:54 +0200  90) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500  91)     if not title or not result:
+cac1761a (dalf        2014-10-11 15:49:50 +0200  92)         return results
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200  93) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500  94)     title = fromstring(title)
+a0a12849 (marc        2016-06-06 01:08:36 -0500  95)     for elem in title.xpath(language_fallback_xpath):
+a0a12849 (marc        2016-06-06 01:08:36 -0500  96)         elem.getparent().remove(elem)
+a0a12849 (marc        2016-06-06 01:08:36 -0500  97)     title = extract_text(title.xpath(title_xpath))
+ffcec383 (dalf        2014-12-07 16:36:20 +0100  98) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500  99)     result = fromstring(result)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 100)     for elem in result.xpath(language_fallback_xpath):
+a0a12849 (marc        2016-06-06 01:08:36 -0500 101)         elem.getparent().remove(elem)
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 102) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 103)     description = extract_text(result.xpath(description_xpath))
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 104) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 105)     # URLS
+b0bb94fd (Adam Tauber 2014-10-12 14:33:03 +0200 106) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 107)     # official website
+a0a12849 (marc        2016-06-06 01:08:36 -0500 108)     add_url(urls, result, 'P856', results=results)
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 109) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 110)     # wikipedia
+a0a12849 (marc        2016-06-06 01:08:36 -0500 111)     wikipedia_link_count = 0
+a0a12849 (marc        2016-06-06 01:08:36 -0500 112)     wikipedia_link = get_wikilink(result, language + 'wiki')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 113)     if wikipedia_link:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 114)         wikipedia_link_count += 1
+a0a12849 (marc        2016-06-06 01:08:36 -0500 115)         urls.append({'title': 'Wikipedia (' + language + ')',
+a0a12849 (marc        2016-06-06 01:08:36 -0500 116)                      'url': wikipedia_link})
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 117) 
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 118)     if language != 'en':
+a0a12849 (marc        2016-06-06 01:08:36 -0500 119)         wikipedia_en_link = get_wikilink(result, 'enwiki')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 120)         if wikipedia_en_link:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 121)             wikipedia_link_count += 1
+a0a12849 (marc        2016-06-06 01:08:36 -0500 122)             urls.append({'title': 'Wikipedia (en)',
+a0a12849 (marc        2016-06-06 01:08:36 -0500 123)                          'url': wikipedia_en_link})
+a0a12849 (marc        2016-06-06 01:08:36 -0500 124) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 125)     # TODO: get_wiki_firstlanguage
+a0a12849 (marc        2016-06-06 01:08:36 -0500 126)     # if wikipedia_link_count == 0:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 127) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 128)     # more wikis
+a0a12849 (marc        2016-06-06 01:08:36 -0500 129)     add_url(urls, result, default_label='Wikivoyage (' + language + ')', link_type=language + 'wikivoyage')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 130)     add_url(urls, result, default_label='Wikiquote (' + language + ')', link_type=language + 'wikiquote')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 131)     add_url(urls, result, default_label='Wikimedia Commons', link_type='commonswiki')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 132) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 133)     add_url(urls, result, 'P625', 'OpenStreetMap', link_type='geo')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 134) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 135)     # musicbrainz
+a0a12849 (marc        2016-06-06 01:08:36 -0500 136)     add_url(urls, result, 'P434', 'MusicBrainz', 'http://musicbrainz.org/artist/')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 137)     add_url(urls, result, 'P435', 'MusicBrainz', 'http://musicbrainz.org/work/')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 138)     add_url(urls, result, 'P436', 'MusicBrainz', 'http://musicbrainz.org/release-group/')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 139)     add_url(urls, result, 'P966', 'MusicBrainz', 'http://musicbrainz.org/label/')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 140) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 141)     # IMDb
+a0a12849 (marc        2016-06-06 01:08:36 -0500 142)     add_url(urls, result, 'P345', 'IMDb', 'https://www.imdb.com/', link_type='imdb')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 143)     # source code repository
+a0a12849 (marc        2016-06-06 01:08:36 -0500 144)     add_url(urls, result, 'P1324')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 145)     # blog
+a0a12849 (marc        2016-06-06 01:08:36 -0500 146)     add_url(urls, result, 'P1581')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 147)     # social media links
+a0a12849 (marc        2016-06-06 01:08:36 -0500 148)     add_url(urls, result, 'P2397', 'YouTube', 'https://www.youtube.com/channel/')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 149)     add_url(urls, result, 'P1651', 'YouTube', 'https://www.youtube.com/watch?v=')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 150)     add_url(urls, result, 'P2002', 'Twitter', 'https://twitter.com/')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 151)     add_url(urls, result, 'P2013', 'Facebook', 'https://facebook.com/')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 152)     add_url(urls, result, 'P2003', 'Instagram', 'https://instagram.com/')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 153) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 154)     urls.append({'title': 'Wikidata',
+a0a12849 (marc        2016-06-06 01:08:36 -0500 155)                  'url': 'https://www.wikidata.org/wiki/'
+a0a12849 (marc        2016-06-06 01:08:36 -0500 156)                  + wikidata_id + '?uselang=' + language})
+a0a12849 (marc        2016-06-06 01:08:36 -0500 157) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 158)     # INFOBOX ATTRIBUTES (ROWS)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 159) 
+ad58b14b (marc        2016-06-27 23:35:43 -0500 160)     # DATES
+a0a12849 (marc        2016-06-06 01:08:36 -0500 161)     # inception date
+a0a12849 (marc        2016-06-06 01:08:36 -0500 162)     add_attribute(attributes, result, 'P571', date=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 163)     # dissolution date
+a0a12849 (marc        2016-06-06 01:08:36 -0500 164)     add_attribute(attributes, result, 'P576', date=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 165)     # start date
+a0a12849 (marc        2016-06-06 01:08:36 -0500 166)     add_attribute(attributes, result, 'P580', date=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 167)     # end date
+a0a12849 (marc        2016-06-06 01:08:36 -0500 168)     add_attribute(attributes, result, 'P582', date=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 169)     # date of birth
+a0a12849 (marc        2016-06-06 01:08:36 -0500 170)     add_attribute(attributes, result, 'P569', date=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 171)     # date of death
+a0a12849 (marc        2016-06-06 01:08:36 -0500 172)     add_attribute(attributes, result, 'P570', date=True)
+ad58b14b (marc        2016-06-27 23:35:43 -0500 173)     # date of spacecraft launch
+ad58b14b (marc        2016-06-27 23:35:43 -0500 174)     add_attribute(attributes, result, 'P619', date=True)
+ad58b14b (marc        2016-06-27 23:35:43 -0500 175)     # date of spacecraft landing
+ad58b14b (marc        2016-06-27 23:35:43 -0500 176)     add_attribute(attributes, result, 'P620', date=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 177) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 178)     # nationality
+a0a12849 (marc        2016-06-06 01:08:36 -0500 179)     add_attribute(attributes, result, 'P27')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 180)     # country of origin
+a0a12849 (marc        2016-06-06 01:08:36 -0500 181)     add_attribute(attributes, result, 'P495')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 182)     # country
+a0a12849 (marc        2016-06-06 01:08:36 -0500 183)     add_attribute(attributes, result, 'P17')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 184)     # headquarters
+a0a12849 (marc        2016-06-06 01:08:36 -0500 185)     add_attribute(attributes, result, 'Q180')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 186) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 187)     # PLACES
+a0a12849 (marc        2016-06-06 01:08:36 -0500 188)     # capital
+a0a12849 (marc        2016-06-06 01:08:36 -0500 189)     add_attribute(attributes, result, 'P36', trim=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 190)     # head of state
+a0a12849 (marc        2016-06-06 01:08:36 -0500 191)     add_attribute(attributes, result, 'P35', trim=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 192)     # head of government
+a0a12849 (marc        2016-06-06 01:08:36 -0500 193)     add_attribute(attributes, result, 'P6', trim=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 194)     # type of government
+a0a12849 (marc        2016-06-06 01:08:36 -0500 195)     add_attribute(attributes, result, 'P122')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 196)     # official language
+a0a12849 (marc        2016-06-06 01:08:36 -0500 197)     add_attribute(attributes, result, 'P37')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 198)     # population
+a0a12849 (marc        2016-06-06 01:08:36 -0500 199)     add_attribute(attributes, result, 'P1082', trim=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 200)     # area
+a0a12849 (marc        2016-06-06 01:08:36 -0500 201)     add_attribute(attributes, result, 'P2046')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 202)     # currency
+ad58b14b (marc        2016-06-27 23:35:43 -0500 203)     add_attribute(attributes, result, 'P38', trim=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 204)     # heigth (building)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 205)     add_attribute(attributes, result, 'P2048')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 206) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 207)     # MEDIA
+a0a12849 (marc        2016-06-06 01:08:36 -0500 208)     # platform (videogames)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 209)     add_attribute(attributes, result, 'P400')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 210)     # author
+a0a12849 (marc        2016-06-06 01:08:36 -0500 211)     add_attribute(attributes, result, 'P50')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 212)     # creator
+a0a12849 (marc        2016-06-06 01:08:36 -0500 213)     add_attribute(attributes, result, 'P170')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 214)     # director
+a0a12849 (marc        2016-06-06 01:08:36 -0500 215)     add_attribute(attributes, result, 'P57')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 216)     # performer
+a0a12849 (marc        2016-06-06 01:08:36 -0500 217)     add_attribute(attributes, result, 'P175')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 218)     # developer
+a0a12849 (marc        2016-06-06 01:08:36 -0500 219)     add_attribute(attributes, result, 'P178')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 220)     # producer
+a0a12849 (marc        2016-06-06 01:08:36 -0500 221)     add_attribute(attributes, result, 'P162')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 222)     # manufacturer
+a0a12849 (marc        2016-06-06 01:08:36 -0500 223)     add_attribute(attributes, result, 'P176')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 224)     # screenwriter
+a0a12849 (marc        2016-06-06 01:08:36 -0500 225)     add_attribute(attributes, result, 'P58')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 226)     # production company
+a0a12849 (marc        2016-06-06 01:08:36 -0500 227)     add_attribute(attributes, result, 'P272')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 228)     # record label
+a0a12849 (marc        2016-06-06 01:08:36 -0500 229)     add_attribute(attributes, result, 'P264')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 230)     # publisher
+a0a12849 (marc        2016-06-06 01:08:36 -0500 231)     add_attribute(attributes, result, 'P123')
+ad58b14b (marc        2016-06-27 23:35:43 -0500 232)     # original network
+ad58b14b (marc        2016-06-27 23:35:43 -0500 233)     add_attribute(attributes, result, 'P449')
+ad58b14b (marc        2016-06-27 23:35:43 -0500 234)     # distributor
+ad58b14b (marc        2016-06-27 23:35:43 -0500 235)     add_attribute(attributes, result, 'P750')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 236)     # composer
+a0a12849 (marc        2016-06-06 01:08:36 -0500 237)     add_attribute(attributes, result, 'P86')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 238)     # publication date
+a0a12849 (marc        2016-06-06 01:08:36 -0500 239)     add_attribute(attributes, result, 'P577', date=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 240)     # genre
+a0a12849 (marc        2016-06-06 01:08:36 -0500 241)     add_attribute(attributes, result, 'P136')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 242)     # original language
+a0a12849 (marc        2016-06-06 01:08:36 -0500 243)     add_attribute(attributes, result, 'P364')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 244)     # isbn
+a0a12849 (marc        2016-06-06 01:08:36 -0500 245)     add_attribute(attributes, result, 'Q33057')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 246)     # software license
+a0a12849 (marc        2016-06-06 01:08:36 -0500 247)     add_attribute(attributes, result, 'P275')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 248)     # programming language
+a0a12849 (marc        2016-06-06 01:08:36 -0500 249)     add_attribute(attributes, result, 'P277')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 250)     # version
+a0a12849 (marc        2016-06-06 01:08:36 -0500 251)     add_attribute(attributes, result, 'P348', trim=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 252)     # narrative location
+a0a12849 (marc        2016-06-06 01:08:36 -0500 253)     add_attribute(attributes, result, 'P840')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 254) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 255)     # LANGUAGES
+a0a12849 (marc        2016-06-06 01:08:36 -0500 256)     # number of speakers
+a0a12849 (marc        2016-06-06 01:08:36 -0500 257)     add_attribute(attributes, result, 'P1098')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 258)     # writing system
+a0a12849 (marc        2016-06-06 01:08:36 -0500 259)     add_attribute(attributes, result, 'P282')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 260)     # regulatory body
+a0a12849 (marc        2016-06-06 01:08:36 -0500 261)     add_attribute(attributes, result, 'P1018')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 262)     # language code
+a0a12849 (marc        2016-06-06 01:08:36 -0500 263)     add_attribute(attributes, result, 'P218')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 264) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 265)     # OTHER
+a0a12849 (marc        2016-06-06 01:08:36 -0500 266)     # ceo
+a0a12849 (marc        2016-06-06 01:08:36 -0500 267)     add_attribute(attributes, result, 'P169', trim=True)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 268)     # founder
+a0a12849 (marc        2016-06-06 01:08:36 -0500 269)     add_attribute(attributes, result, 'P112')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 270)     # legal form (company/organization)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 271)     add_attribute(attributes, result, 'P1454')
+ad58b14b (marc        2016-06-27 23:35:43 -0500 272)     # operator
+ad58b14b (marc        2016-06-27 23:35:43 -0500 273)     add_attribute(attributes, result, 'P137')
+ad58b14b (marc        2016-06-27 23:35:43 -0500 274)     # crew members (tripulation)
+ad58b14b (marc        2016-06-27 23:35:43 -0500 275)     add_attribute(attributes, result, 'P1029')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 276)     # taxon
+a0a12849 (marc        2016-06-06 01:08:36 -0500 277)     add_attribute(attributes, result, 'P225')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 278)     # chemical formula
+a0a12849 (marc        2016-06-06 01:08:36 -0500 279)     add_attribute(attributes, result, 'P274')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 280)     # winner (sports/contests)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 281)     add_attribute(attributes, result, 'P1346')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 282)     # number of deaths
+a0a12849 (marc        2016-06-06 01:08:36 -0500 283)     add_attribute(attributes, result, 'P1120')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 284)     # currency code
+a0a12849 (marc        2016-06-06 01:08:36 -0500 285)     add_attribute(attributes, result, 'P498')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 286) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 287)     image = add_image(result)
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 288) 
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 289)     if len(attributes) == 0 and len(urls) == 2 and len(description) == 0:
+cac1761a (dalf        2014-10-11 15:49:50 +0200 290)         results.append({
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 291)                        'url': urls[0]['url'],
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 292)                        'title': title,
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 293)                        'content': description
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 294)                        })
+cac1761a (dalf        2014-10-11 15:49:50 +0200 295)     else:
+cac1761a (dalf        2014-10-11 15:49:50 +0200 296)         results.append({
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 297)                        'infobox': title,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 298)                        'id': wikipedia_link,
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 299)                        'content': description,
+a0a12849 (marc        2016-06-06 01:08:36 -0500 300)                        'img_src': image,
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 301)                        'attributes': attributes,
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 302)                        'urls': urls
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 303)                        })
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 304) 
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 305)     return results
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 306) 
+0a71525a (Dalf        2014-09-28 16:53:30 +0200 307) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 308) # only returns first match
+a0a12849 (marc        2016-06-06 01:08:36 -0500 309) def add_image(result):
+ad58b14b (marc        2016-06-27 23:35:43 -0500 310)     # P15: route map, P242: locator map, P154: logo, P18: image, P242: map, P41: flag, P2716: collage, P2910: icon
+ad58b14b (marc        2016-06-27 23:35:43 -0500 311)     property_ids = ['P15', 'P242', 'P154', 'P18', 'P242', 'P41', 'P2716', 'P2910']
+a0a12849 (marc        2016-06-06 01:08:36 -0500 312) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 313)     for property_id in property_ids:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 314)         image = result.xpath(property_xpath.replace('{propertyid}', property_id))
+a0a12849 (marc        2016-06-06 01:08:36 -0500 315)         if image:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 316)             image_name = image[0].xpath(value_xpath)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 317)             image_src = url_image.replace('{filename}', extract_text(image_name[0]))
+a0a12849 (marc        2016-06-06 01:08:36 -0500 318)             return image_src
+a0a12849 (marc        2016-06-06 01:08:36 -0500 319) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 320) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 321) # setting trim will only returned high ranked rows OR the first row
+a0a12849 (marc        2016-06-06 01:08:36 -0500 322) def add_attribute(attributes, result, property_id, default_label=None, date=False, trim=False):
+a0a12849 (marc        2016-06-06 01:08:36 -0500 323)     attribute = result.xpath(property_xpath.replace('{propertyid}', property_id))
+a0a12849 (marc        2016-06-06 01:08:36 -0500 324)     if attribute:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 325) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 326)         if default_label:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 327)             label = default_label
+a0a12849 (marc        2016-06-06 01:08:36 -0500 328)         else:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 329)             label = extract_text(attribute[0].xpath(label_xpath))
+ad58b14b (marc        2016-06-27 23:35:43 -0500 330)             label = label[0].upper() + label[1:]
+a0a12849 (marc        2016-06-06 01:08:36 -0500 331) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 332)         if date:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 333)             trim = True
+a0a12849 (marc        2016-06-06 01:08:36 -0500 334)             # remove calendar name
+a0a12849 (marc        2016-06-06 01:08:36 -0500 335)             calendar_name = attribute[0].xpath(calendar_name_xpath)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 336)             for calendar in calendar_name:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 337)                 calendar.getparent().remove(calendar)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 338) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 339)         concat_values = ""
+a0a12849 (marc        2016-06-06 01:08:36 -0500 340)         values = []
+a0a12849 (marc        2016-06-06 01:08:36 -0500 341)         first_value = None
+a0a12849 (marc        2016-06-06 01:08:36 -0500 342)         for row in attribute[0].xpath(property_row_xpath):
+a0a12849 (marc        2016-06-06 01:08:36 -0500 343)             if not first_value or not trim or row.xpath(preferred_rank_xpath):
+a0a12849 (marc        2016-06-06 01:08:36 -0500 344) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 345)                 value = row.xpath(value_xpath)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 346)                 if not value:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 347)                     continue
+a0a12849 (marc        2016-06-06 01:08:36 -0500 348)                 value = extract_text(value)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 349) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 350)                 # save first value in case no ranked row is found
+a0a12849 (marc        2016-06-06 01:08:36 -0500 351)                 if trim and not first_value:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 352)                     first_value = value
+a0a12849 (marc        2016-06-06 01:08:36 -0500 353)                 else:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 354)                     # to avoid duplicate values
+a0a12849 (marc        2016-06-06 01:08:36 -0500 355)                     if value not in values:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 356)                         concat_values += value + ", "
+a0a12849 (marc        2016-06-06 01:08:36 -0500 357)                         values.append(value)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 358) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 359)         if trim and not values:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 360)             attributes.append({'label': label,
+a0a12849 (marc        2016-06-06 01:08:36 -0500 361)                                'value': first_value})
+a0a12849 (marc        2016-06-06 01:08:36 -0500 362)         else:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 363)             attributes.append({'label': label,
+a0a12849 (marc        2016-06-06 01:08:36 -0500 364)                                'value': concat_values[:-2]})
+a0a12849 (marc        2016-06-06 01:08:36 -0500 365) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 366) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 367) # requires property_id unless it's a wiki link (defined in link_type)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 368) def add_url(urls, result, property_id=None, default_label=None, url_prefix=None, results=None, link_type=None):
+a0a12849 (marc        2016-06-06 01:08:36 -0500 369)     links = []
+a0a12849 (marc        2016-06-06 01:08:36 -0500 370) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 371)     # wiki links don't have property in wikidata page
+a0a12849 (marc        2016-06-06 01:08:36 -0500 372)     if link_type and 'wiki' in link_type:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 373)             links.append(get_wikilink(result, link_type))
+cac1761a (dalf        2014-10-11 15:49:50 +0200 374)     else:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 375)         dom_element = result.xpath(property_xpath.replace('{propertyid}', property_id))
+a0a12849 (marc        2016-06-06 01:08:36 -0500 376)         if dom_element:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 377)             dom_element = dom_element[0]
+a0a12849 (marc        2016-06-06 01:08:36 -0500 378)             if not default_label:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 379)                 label = extract_text(dom_element.xpath(label_xpath))
+ad58b14b (marc        2016-06-27 23:35:43 -0500 380)                 label = label[0].upper() + label[1:]
+a0a12849 (marc        2016-06-06 01:08:36 -0500 381) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 382)             if link_type == 'geo':
+a0a12849 (marc        2016-06-06 01:08:36 -0500 383)                 links.append(get_geolink(dom_element))
+a0a12849 (marc        2016-06-06 01:08:36 -0500 384) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 385)             elif link_type == 'imdb':
+a0a12849 (marc        2016-06-06 01:08:36 -0500 386)                 links.append(get_imdblink(dom_element, url_prefix))
+a0a12849 (marc        2016-06-06 01:08:36 -0500 387) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 388)             else:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 389)                 url_results = dom_element.xpath(url_xpath)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 390)                 for link in url_results:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 391)                     if link is not None:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 392)                         if url_prefix:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 393)                             link = url_prefix + extract_text(link)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 394)                         else:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 395)                             link = extract_text(link)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 396)                         links.append(link)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 397) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 398)     # append urls
+a0a12849 (marc        2016-06-06 01:08:36 -0500 399)     for url in links:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 400)         if url is not None:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 401)             urls.append({'title': default_label or label,
+a0a12849 (marc        2016-06-06 01:08:36 -0500 402)                          'url': url})
+a0a12849 (marc        2016-06-06 01:08:36 -0500 403)             if results is not None:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 404)                 results.append({'title': default_label or label,
+a0a12849 (marc        2016-06-06 01:08:36 -0500 405)                                 'url': url})
+a0a12849 (marc        2016-06-06 01:08:36 -0500 406) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 407) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 408) def get_imdblink(result, url_prefix):
+a0a12849 (marc        2016-06-06 01:08:36 -0500 409)     imdb_id = result.xpath(value_xpath)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 410)     if imdb_id:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 411)         imdb_id = extract_text(imdb_id)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 412)         id_prefix = imdb_id[:2]
+a0a12849 (marc        2016-06-06 01:08:36 -0500 413)         if id_prefix == 'tt':
+a0a12849 (marc        2016-06-06 01:08:36 -0500 414)             url = url_prefix + 'title/' + imdb_id
+a0a12849 (marc        2016-06-06 01:08:36 -0500 415)         elif id_prefix == 'nm':
+a0a12849 (marc        2016-06-06 01:08:36 -0500 416)             url = url_prefix + 'name/' + imdb_id
+a0a12849 (marc        2016-06-06 01:08:36 -0500 417)         elif id_prefix == 'ch':
+a0a12849 (marc        2016-06-06 01:08:36 -0500 418)             url = url_prefix + 'character/' + imdb_id
+a0a12849 (marc        2016-06-06 01:08:36 -0500 419)         elif id_prefix == 'co':
+a0a12849 (marc        2016-06-06 01:08:36 -0500 420)             url = url_prefix + 'company/' + imdb_id
+a0a12849 (marc        2016-06-06 01:08:36 -0500 421)         elif id_prefix == 'ev':
+a0a12849 (marc        2016-06-06 01:08:36 -0500 422)             url = url_prefix + 'event/' + imdb_id
+a0a12849 (marc        2016-06-06 01:08:36 -0500 423)         else:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 424)             url = None
+a0a12849 (marc        2016-06-06 01:08:36 -0500 425)         return url
+0a71525a (Dalf        2014-09-28 16:53:30 +0200 426) 
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 427) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 428) def get_geolink(result):
+a0a12849 (marc        2016-06-06 01:08:36 -0500 429)     coordinates = result.xpath(value_xpath)
+a0a12849 (marc        2016-06-06 01:08:36 -0500 430)     if not coordinates:
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 431)         return None
+a0a12849 (marc        2016-06-06 01:08:36 -0500 432)     coordinates = extract_text(coordinates[0])
+a0a12849 (marc        2016-06-06 01:08:36 -0500 433)     latitude, longitude = coordinates.split(',')
+a0a12849 (marc        2016-06-06 01:08:36 -0500 434) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 435)     # convert to decimal
+a0a12849 (marc        2016-06-06 01:08:36 -0500 436)     lat = int(latitude[:latitude.find(u'°')])
+a0a12849 (marc        2016-06-06 01:08:36 -0500 437)     if latitude.find('\'') >= 0:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 438)         lat += int(latitude[latitude.find(u'°') + 1:latitude.find('\'')] or 0) / 60.0
+a0a12849 (marc        2016-06-06 01:08:36 -0500 439)     if latitude.find('"') >= 0:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 440)         lat += float(latitude[latitude.find('\'') + 1:latitude.find('"')] or 0) / 3600.0
+a0a12849 (marc        2016-06-06 01:08:36 -0500 441)     if latitude.find('S') >= 0:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 442)         lat *= -1
+a0a12849 (marc        2016-06-06 01:08:36 -0500 443)     lon = int(longitude[:longitude.find(u'°')])
+a0a12849 (marc        2016-06-06 01:08:36 -0500 444)     if longitude.find('\'') >= 0:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 445)         lon += int(longitude[longitude.find(u'°') + 1:longitude.find('\'')] or 0) / 60.0
+a0a12849 (marc        2016-06-06 01:08:36 -0500 446)     if longitude.find('"') >= 0:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 447)         lon += float(longitude[longitude.find('\'') + 1:longitude.find('"')] or 0) / 3600.0
+a0a12849 (marc        2016-06-06 01:08:36 -0500 448)     if longitude.find('W') >= 0:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 449)         lon *= -1
+a0a12849 (marc        2016-06-06 01:08:36 -0500 450) 
+a0a12849 (marc        2016-06-06 01:08:36 -0500 451)     # TODO: get precision
+a0a12849 (marc        2016-06-06 01:08:36 -0500 452)     precision = 0.0002
+727c7226 (Adam Tauber 2014-10-04 22:53:54 +0200 453)     # there is no zoom information, deduce from precision (error prone)
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 454)     # samples :
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 455)     # 13 --> 5
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 456)     # 1 --> 6
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 457)     # 0.016666666666667 --> 9
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 458)     # 0.00027777777777778 --> 19
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 459)     # wolframalpha :
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 460)     # quadratic fit { {13, 5}, {1, 6}, {0.0166666, 9}, {0.0002777777,19}}
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 461)     # 14.1186-8.8322 x+0.625447 x^2
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 462)     if precision < 0.0003:
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 463)         zoom = 19
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 464)     else:
+bd22e9a3 (Adam Tauber 2016-01-18 12:47:31 +0100 465)         zoom = int(15 - precision * 8.8322 + precision * precision * 0.625447)
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 466) 
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 467)     url = url_map\
+a0a12849 (marc        2016-06-06 01:08:36 -0500 468)         .replace('{latitude}', str(lat))\
+a0a12849 (marc        2016-06-06 01:08:36 -0500 469)         .replace('{longitude}', str(lon))\
+ffcec383 (dalf        2014-12-07 16:36:20 +0100 470)         .replace('{zoom}', str(zoom))
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 471) 
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 472)     return url
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 473) 
+0a71525a (Dalf        2014-09-28 16:53:30 +0200 474) 
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 475) def get_wikilink(result, wikiid):
+a0a12849 (marc        2016-06-06 01:08:36 -0500 476)     url = result.xpath(wikilink_xpath.replace('{wikiid}', wikiid))
+a0a12849 (marc        2016-06-06 01:08:36 -0500 477)     if not url:
+a0a12849 (marc        2016-06-06 01:08:36 -0500 478)         return None
+a0a12849 (marc        2016-06-06 01:08:36 -0500 479)     url = url[0]
+a0a12849 (marc        2016-06-06 01:08:36 -0500 480)     if url.startswith('http://'):
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 481)         url = url.replace('http://', 'https://')
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 482)     elif url.startswith('//'):
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 483)         url = 'https:' + url
+6bfd5663 (Dalf        2014-09-28 16:51:41 +0200 484)     return url

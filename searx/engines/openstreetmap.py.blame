@@ -1,0 +1,95 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  OpenStreetMap (Map)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://openstreetmap.org/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (http://wiki.openstreetmap.org/wiki/Nominatim)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 12) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 13) from json import loads
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 14) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 15) # engine dependent config
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 16) categories = ['map']
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 17) paging = False
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 18) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 19) # search-url
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100 20) base_url = 'https://nominatim.openstreetmap.org/'
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100 21) search_string = 'search/{query}?format=json&polygon_geojson=1&addressdetails=1'
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 22) result_base_url = 'https://openstreetmap.org/{osm_type}/{osm_id}'
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 23) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 24) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 25) # do search-request
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 26) def request(query, params):
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100 27)     params['url'] = base_url + search_string.format(query=query)
+5ae38baf (Thomas Pointhuber 2014-12-16 15:01:05 +0100 28) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 29)     return params
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 30) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 31) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 32) # get response from search-request
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 33) def response(resp):
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 34)     results = []
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 35)     json = loads(resp.text)
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 36) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 37)     # parse results
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 38)     for r in json:
+d0a1df88 (Cqoicebordel      2015-02-07 01:15:04 +0100 39)         if 'display_name' not in r:
+d0a1df88 (Cqoicebordel      2015-02-07 01:15:04 +0100 40)             continue
+d0a1df88 (Cqoicebordel      2015-02-07 01:15:04 +0100 41) 
+72a217f9 (Adam Tauber       2016-12-09 19:52:49 +0100 42)         title = r['display_name'] or u''
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 43)         osm_type = r.get('osm_type', r.get('type'))
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 44)         url = result_base_url.format(osm_type=osm_type,
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 45)                                      osm_id=r['osm_id'])
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 46) 
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 47)         osm = {'type': osm_type,
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 48)                'id': r['osm_id']}
+4b75d41f (Thomas Pointhuber 2014-11-19 14:59:30 +0100 49) 
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 50)         geojson = r.get('geojson')
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 51) 
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 52)         # if no geojson is found and osm_type is a node, add geojson Point
+d0a1df88 (Cqoicebordel      2015-02-07 01:15:04 +0100 53)         if not geojson and osm_type == 'node':
+d0a1df88 (Cqoicebordel      2015-02-07 01:15:04 +0100 54)             geojson = {u'type': u'Point', u'coordinates': [r['lon'], r['lat']]}
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 55) 
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 56)         address_raw = r.get('address')
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 57)         address = {}
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 58) 
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 59)         # get name
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 60)         if r['class'] == 'amenity' or\
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 61)            r['class'] == 'shop' or\
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 62)            r['class'] == 'tourism' or\
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 63)            r['class'] == 'leisure':
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 64)             if address_raw.get('address29'):
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 65)                 address = {'name': address_raw.get('address29')}
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 66)             else:
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 67)                 address = {'name': address_raw.get(r['type'])}
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 68) 
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 69)         # add rest of adressdata, if something is already found
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 70)         if address.get('name'):
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 71)             address.update({'house_number': address_raw.get('house_number'),
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 72)                            'road': address_raw.get('road'),
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 73)                            'locality': address_raw.get('city',
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100 74)                                        address_raw.get('town',          # noqa
+672f1c67 (Thomas Pointhuber 2014-12-16 17:01:25 +0100 75)                                        address_raw.get('village'))),    # noqa
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 76)                            'postcode': address_raw.get('postcode'),
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 77)                            'country': address_raw.get('country'),
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 78)                            'country_code': address_raw.get('country_code')})
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 79)         else:
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 80)             address = None
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 81) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 82)         # append result
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 83)         results.append({'template': 'map.html',
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 84)                         'title': title,
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 85)                         'content': '',
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 86)                         'longitude': r['lon'],
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 87)                         'latitude': r['lat'],
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 88)                         'boundingbox': r['boundingbox'],
+740594a4 (Thomas Pointhuber 2014-11-02 13:00:28 +0100 89)                         'geojson': geojson,
+c38917bb (Thomas Pointhuber 2014-11-03 18:46:58 +0100 90)                         'address': address,
+4b75d41f (Thomas Pointhuber 2014-11-19 14:59:30 +0100 91)                         'osm': osm,
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 92)                         'url': url})
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 93) 
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 94)     # return results
+33190914 (Adam Tauber       2014-09-06 14:09:03 +0200 95)     return results

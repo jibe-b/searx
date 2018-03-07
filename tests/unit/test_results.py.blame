@@ -1,0 +1,41 @@
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  1) # -*- coding: utf-8 -*-
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  2) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  3) from searx.results import ResultContainer
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  4) from searx.testing import SearxTestCase
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  5) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  6) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  7) def fake_result(url='https://aa.bb/cc?dd=ee#ff',
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  8)                 title='aaa',
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200  9)                 content='bbb',
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 10)                 engine='wikipedia', **kwargs):
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 11)     result = {'url': url,
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 12)               'title': title,
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 13)               'content': content,
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 14)               'engine': engine}
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 15)     result.update(kwargs)
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 16)     return result
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 17) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 18) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 19) #  TODO
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 20) class ResultContainerTestCase(SearxTestCase):
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 21) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 22)     def test_empty(self):
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 23)         c = ResultContainer()
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 24)         self.assertEqual(c.get_ordered_results(), [])
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 25) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 26)     def test_one_result(self):
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 27)         c = ResultContainer()
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 28)         c.extend('wikipedia', [fake_result()])
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 29)         self.assertEqual(c.results_length(), 1)
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 30) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 31)     def test_one_suggestion(self):
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 32)         c = ResultContainer()
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 33)         c.extend('wikipedia', [fake_result(suggestion=True)])
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 34)         self.assertEqual(len(c.suggestions), 1)
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 35)         self.assertEqual(c.results_length(), 0)
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 36) 
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 37)     def test_result_merge(self):
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 38)         c = ResultContainer()
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 39)         c.extend('wikipedia', [fake_result()])
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 40)         c.extend('wikidata', [fake_result(), fake_result(url='https://example.com/')])
+b6c3cb0b searx/tests/test_results.py (Adam Tauber 2015-10-03 17:26:07 +0200 41)         self.assertEqual(c.results_length(), 2)

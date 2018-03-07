@@ -1,0 +1,384 @@
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   1) # -*- coding: utf-8 -*-
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   2) from collections import defaultdict
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   3) import mock
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   4) from searx.engines import btdigg
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   5) from searx.testing import SearxTestCase
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   6) 
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   7) 
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   8) class TestBtdiggEngine(SearxTestCase):
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100   9) 
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  10)     def test_request(self):
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  11)         query = 'test_query'
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  12)         dicto = defaultdict(dict)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  13)         dicto['pageno'] = 0
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  14)         params = btdigg.request(query, dicto)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  15)         self.assertIn('url', params)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  16)         self.assertIn(query, params['url'])
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  17)         self.assertIn('btdigg.org', params['url'])
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  18) 
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  19)     def test_response(self):
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  20)         self.assertRaises(AttributeError, btdigg.response, None)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  21)         self.assertRaises(AttributeError, btdigg.response, [])
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  22)         self.assertRaises(AttributeError, btdigg.response, '')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  23)         self.assertRaises(AttributeError, btdigg.response, '[]')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  24) 
+52e615de tests/unit/engines/test_btdigg.py  (Adam Tauber  2016-11-30 18:43:03 +0100  25)         response = mock.Mock(text='<html></html>')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  26)         self.assertEqual(btdigg.response(response), [])
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  27) 
+52e615de tests/unit/engines/test_btdigg.py  (Adam Tauber  2016-11-30 18:43:03 +0100  28)         html = u"""
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  29)         <div id="search_res">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  30)             <table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  31)                 <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  32)                     <td class="idx">1</td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  33)                     <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  34)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  35)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  36)                                 <td class="torrent_name">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  37)                                     <a href="/url">Should be the title</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  38)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  39)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  40)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  41)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  42)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  43)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  44)                                     <a onclick="fclck(this.href)" href="magnet:?xt=urn:btih:magnet&amp;dn=Test"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  45)                                     title="Télécharger des liens Magnet">[magnet]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  46)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  47)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  48)                                     <a href="https://btcloud.io/manager?cmd=add&amp;info_hash=hash"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  49)                                     target="_blank" title="Ajouter à BTCloud">[cloud]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  50)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  51)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  52)                                     <span class="attr_name">Taille:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  53)                                     <span class="attr_val">8 B</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  54)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  55)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  56)                                     <span class="attr_name">Fichiers:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  57)                                     <span class="attr_val">710</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  58)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  59)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  60)                                     <span class="attr_name">Téléchargements:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  61)                                     <span class="attr_val">5</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  62)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  63)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  64)                                     <span class="attr_name">Temps:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  65)                                     <span class="attr_val">417.8&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  66)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  67)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  68)                                     <span class="attr_name">Dernière&nbsp;mise&nbsp;à&nbsp;jour:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  69)                                     <span class="attr_val">5.3&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  70)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  71)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  72)                                     <span class="attr_name">Faux:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  73)                                     <span class="attr_val">Aucun</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  74)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  75)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  76)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  77)                         <pre class="snippet">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  78)                             Content
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  79)                         </pre>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  80)                     </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  81)                 </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  82)             </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  83)         </div>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  84)         """
+52e615de tests/unit/engines/test_btdigg.py  (Adam Tauber  2016-11-30 18:43:03 +0100  85)         response = mock.Mock(text=html.encode('utf-8'))
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  86)         results = btdigg.response(response)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  87)         self.assertEqual(type(results), list)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  88)         self.assertEqual(len(results), 1)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  89)         self.assertEqual(results[0]['title'], 'Should be the title')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  90)         self.assertEqual(results[0]['url'], 'https://btdigg.org/url')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  91)         self.assertEqual(results[0]['content'], 'Content')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  92)         self.assertEqual(results[0]['seed'], 5)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  93)         self.assertEqual(results[0]['leech'], 0)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  94)         self.assertEqual(results[0]['filesize'], 8)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  95)         self.assertEqual(results[0]['files'], 710)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  96)         self.assertEqual(results[0]['magnetlink'], 'magnet:?xt=urn:btih:magnet&dn=Test')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  97) 
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  98)         html = """
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100  99)         <div id="search_res">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 100)             <table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 101)             </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 102)         </div>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 103)         """
+52e615de tests/unit/engines/test_btdigg.py  (Adam Tauber  2016-11-30 18:43:03 +0100 104)         response = mock.Mock(text=html.encode('utf-8'))
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 105)         results = btdigg.response(response)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 106)         self.assertEqual(type(results), list)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 107)         self.assertEqual(len(results), 0)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 108) 
+52e615de tests/unit/engines/test_btdigg.py  (Adam Tauber  2016-11-30 18:43:03 +0100 109)         html = u"""
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 110)         <div id="search_res">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 111)             <table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 112)                 <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 113)                     <td class="idx">1</td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 114)                     <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 115)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 116)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 117)                                 <td class="torrent_name">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 118)                                     <a href="/url">Should be the title</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 119)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 120)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 121)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 122)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 123)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 124)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 125)                                     <a onclick="fclck(this.href)" href="magnet:?xt=urn:btih:magnet&amp;dn=Test"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 126)                                     title="Télécharger des liens Magnet">[magnet]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 127)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 128)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 129)                                     <a href="https://btcloud.io/manager?cmd=add&amp;info_hash=hash"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 130)                                     target="_blank" title="Ajouter à BTCloud">[cloud]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 131)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 132)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 133)                                     <span class="attr_name">Taille:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 134)                                     <span class="attr_val">1 KB</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 135)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 136)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 137)                                     <span class="attr_name">Fichiers:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 138)                                     <span class="attr_val">710</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 139)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 140)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 141)                                     <span class="attr_name">Téléchargements:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 142)                                     <span class="attr_val">5</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 143)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 144)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 145)                                     <span class="attr_name">Temps:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 146)                                     <span class="attr_val">417.8&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 147)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 148)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 149)                                     <span class="attr_name">Dernière&nbsp;mise&nbsp;à&nbsp;jour:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 150)                                     <span class="attr_val">5.3&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 151)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 152)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 153)                                     <span class="attr_name">Faux:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 154)                                     <span class="attr_val">Aucun</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 155)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 156)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 157)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 158)                         <pre class="snippet">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 159)                             Content
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 160)                         </pre>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 161)                     </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 162)                 </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 163)                 <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 164)                     <td class="idx">1</td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 165)                     <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 166)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 167)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 168)                                 <td class="torrent_name">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 169)                                     <a href="/url">Should be the title</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 170)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 171)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 172)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 173)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 174)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 175)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 176)                                     <a onclick="fclck(this.href)" href="magnet:?xt=urn:btih:magnet&amp;dn=Test"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 177)                                     title="Télécharger des liens Magnet">[magnet]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 178)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 179)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 180)                                     <a href="https://btcloud.io/manager?cmd=add&amp;info_hash=hash"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 181)                                     target="_blank" title="Ajouter à BTCloud">[cloud]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 182)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 183)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 184)                                     <span class="attr_name">Taille:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 185)                                     <span class="attr_val">1 MB</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 186)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 187)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 188)                                     <span class="attr_name">Fichiers:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 189)                                     <span class="attr_val">a</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 190)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 191)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 192)                                     <span class="attr_name">Téléchargements:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 193)                                     <span class="attr_val">4</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 194)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 195)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 196)                                     <span class="attr_name">Temps:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 197)                                     <span class="attr_val">417.8&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 198)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 199)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 200)                                     <span class="attr_name">Dernière&nbsp;mise&nbsp;à&nbsp;jour:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 201)                                     <span class="attr_val">5.3&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 202)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 203)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 204)                                     <span class="attr_name">Faux:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 205)                                     <span class="attr_val">Aucun</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 206)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 207)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 208)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 209)                         <pre class="snippet">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 210)                             Content
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 211)                         </pre>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 212)                     </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 213)                 </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 214)                 <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 215)                     <td class="idx">1</td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 216)                     <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 217)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 218)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 219)                                 <td class="torrent_name">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 220)                                     <a href="/url">Should be the title</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 221)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 222)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 223)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 224)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 225)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 226)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 227)                                     <a onclick="fclck(this.href)" href="magnet:?xt=urn:btih:magnet&amp;dn=Test"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 228)                                     title="Télécharger des liens Magnet">[magnet]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 229)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 230)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 231)                                     <a href="https://btcloud.io/manager?cmd=add&amp;info_hash=hash"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 232)                                     target="_blank" title="Ajouter à BTCloud">[cloud]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 233)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 234)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 235)                                     <span class="attr_name">Taille:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 236)                                     <span class="attr_val">1 GB</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 237)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 238)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 239)                                     <span class="attr_name">Fichiers:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 240)                                     <span class="attr_val">710</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 241)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 242)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 243)                                     <span class="attr_name">Téléchargements:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 244)                                     <span class="attr_val">3</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 245)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 246)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 247)                                     <span class="attr_name">Temps:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 248)                                     <span class="attr_val">417.8&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 249)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 250)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 251)                                     <span class="attr_name">Dernière&nbsp;mise&nbsp;à&nbsp;jour:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 252)                                     <span class="attr_val">5.3&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 253)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 254)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 255)                                     <span class="attr_name">Faux:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 256)                                     <span class="attr_val">Aucun</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 257)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 258)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 259)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 260)                         <pre class="snippet">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 261)                             Content
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 262)                         </pre>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 263)                     </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 264)                 </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 265)                 <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 266)                     <td class="idx">1</td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 267)                     <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 268)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 269)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 270)                                 <td class="torrent_name">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 271)                                     <a href="/url">Should be the title</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 272)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 273)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 274)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 275)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 276)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 277)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 278)                                     <a onclick="fclck(this.href)" href="magnet:?xt=urn:btih:magnet&amp;dn=Test"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 279)                                     title="Télécharger des liens Magnet">[magnet]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 280)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 281)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 282)                                     <a href="https://btcloud.io/manager?cmd=add&amp;info_hash=hash"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 283)                                     target="_blank" title="Ajouter à BTCloud">[cloud]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 284)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 285)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 286)                                     <span class="attr_name">Taille:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 287)                                     <span class="attr_val">1 TB</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 288)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 289)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 290)                                     <span class="attr_name">Fichiers:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 291)                                     <span class="attr_val">710</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 292)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 293)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 294)                                     <span class="attr_name">Téléchargements:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 295)                                     <span class="attr_val">2</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 296)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 297)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 298)                                     <span class="attr_name">Temps:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 299)                                     <span class="attr_val">417.8&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 300)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 301)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 302)                                     <span class="attr_name">Dernière&nbsp;mise&nbsp;à&nbsp;jour:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 303)                                     <span class="attr_val">5.3&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 304)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 305)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 306)                                     <span class="attr_name">Faux:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 307)                                     <span class="attr_val">Aucun</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 308)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 309)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 310)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 311)                         <pre class="snippet">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 312)                             Content
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 313)                         </pre>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 314)                     </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 315)                 </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 316)                 <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 317)                     <td class="idx">1</td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 318)                     <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 319)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 320)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 321)                                 <td class="torrent_name">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 322)                                     <a href="/url">Should be the title</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 323)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 324)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 325)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 326)                         <table class="torrent_name_tbl">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 327)                             <tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 328)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 329)                                     <a onclick="fclck(this.href)" href="magnet:?xt=urn:btih:magnet&amp;dn=Test"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 330)                                     title="Télécharger des liens Magnet">[magnet]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 331)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 332)                                 <td class="ttth">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 333)                                     <a href="https://btcloud.io/manager?cmd=add&amp;info_hash=hash"
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 334)                                     target="_blank" title="Ajouter à BTCloud">[cloud]</a>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 335)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 336)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 337)                                     <span class="attr_name">Taille:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 338)                                     <span class="attr_val">a TB</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 339)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 340)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 341)                                     <span class="attr_name">Fichiers:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 342)                                     <span class="attr_val">710</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 343)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 344)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 345)                                     <span class="attr_name">Téléchargements:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 346)                                     <span class="attr_val">z</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 347)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 348)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 349)                                     <span class="attr_name">Temps:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 350)                                     <span class="attr_val">417.8&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 351)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 352)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 353)                                     <span class="attr_name">Dernière&nbsp;mise&nbsp;à&nbsp;jour:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 354)                                     <span class="attr_val">5.3&nbsp;jours</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 355)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 356)                                 <td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 357)                                     <span class="attr_name">Faux:</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 358)                                     <span class="attr_val">Aucun</span>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 359)                                 </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 360)                             </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 361)                         </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 362)                         <pre class="snippet">
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 363)                             Content
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 364)                         </pre>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 365)                     </td>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 366)                 </tr>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 367)             </table>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 368)         </div>
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 369)         """
+52e615de tests/unit/engines/test_btdigg.py  (Adam Tauber  2016-11-30 18:43:03 +0100 370)         response = mock.Mock(text=html.encode('utf-8'))
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 371)         results = btdigg.response(response)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 372)         self.assertEqual(type(results), list)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 373)         self.assertEqual(len(results), 5)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 374)         self.assertEqual(results[0]['title'], 'Should be the title')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 375)         self.assertEqual(results[0]['url'], 'https://btdigg.org/url')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 376)         self.assertEqual(results[0]['content'], 'Content')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 377)         self.assertEqual(results[0]['seed'], 5)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 378)         self.assertEqual(results[0]['leech'], 0)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 379)         self.assertEqual(results[0]['files'], 710)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 380)         self.assertEqual(results[0]['magnetlink'], 'magnet:?xt=urn:btih:magnet&dn=Test')
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 381)         self.assertEqual(results[0]['filesize'], 1024)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 382)         self.assertEqual(results[1]['filesize'], 1048576)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 383)         self.assertEqual(results[2]['filesize'], 1073741824)
+a3d444ab searx/tests/engines/test_btdigg.py (Cqoicebordel 2015-01-30 19:52:44 +0100 384)         self.assertEqual(results[3]['filesize'], 1099511627776)

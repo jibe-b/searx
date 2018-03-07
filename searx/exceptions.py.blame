@@ -1,0 +1,32 @@
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  1) '''
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  2) searx is free software: you can redistribute it and/or modify
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  3) it under the terms of the GNU Affero General Public License as published by
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  4) the Free Software Foundation, either version 3 of the License, or
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  5) (at your option) any later version.
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  6) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  7) searx is distributed in the hope that it will be useful,
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  8) but WITHOUT ANY WARRANTY; without even the implied warranty of
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100  9) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 10) GNU Affero General Public License for more details.
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 11) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 12) You should have received a copy of the GNU Affero General Public License
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 13) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 14) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 15) (C) 2017- by Alexandre Flament, <alex@al-f.net>
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 16) '''
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 17) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 18) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 19) class SearxException(Exception):
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 20)     pass
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 21) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 22) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 23) class SearxParameterException(SearxException):
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 24) 
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 25)     def __init__(self, name, value):
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 26)         if value == '' or value is None:
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 27)             message = 'Empty ' + name + ' parameter'
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 28)         else:
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 29)             message = 'Invalid value "' + value + '" for parameter ' + name
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 30)         super(SearxParameterException, self).__init__(message)
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 31)         self.parameter_name = name
+15eef0eb (Alexandre Flament 2017-01-20 18:52:47 +0100 32)         self.parameter_value = value

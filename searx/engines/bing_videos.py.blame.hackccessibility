@@ -1,0 +1,88 @@
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  1) """
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  2)  Bing (Videos)
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  3) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  4)  @website     https://www.bing.com/videos
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  5)  @provide-api yes (http://datamarket.azure.com/dataset/bing/search)
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  6) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  7)  @using-api   no
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  8)  @results     HTML
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500  9)  @stable      no
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 10)  @parse       url, title, content, thumbnail
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 11) """
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 12) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 13) from json import loads
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 14) from lxml import html
+a524dbb8 (marc        2017-10-10 16:49:49 -0500 15) from searx.engines.bing_images import _fetch_supported_languages, supported_languages_url, get_region_code
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 16) from searx.engines.xpath import extract_text
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 17) from searx.url_utils import urlencode
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 18) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 19) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 20) categories = ['videos']
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 21) paging = True
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 22) safesearch = True
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 23) time_range_support = True
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 24) number_of_results = 10
+a524dbb8 (marc        2017-10-10 16:49:49 -0500 25) language_support = True
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 26) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 27) search_url = 'https://www.bing.com/videos/asyncv2?{query}&async=content&'\
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 28)              'first={offset}&count={number_of_results}&CW=1366&CH=25&FORM=R5VR5'
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 29) time_range_string = '&qft=+filterui:videoage-lt{interval}'
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 30) time_range_dict = {'day': '1440',
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 31)                    'week': '10080',
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 32)                    'month': '43200',
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 33)                    'year': '525600'}
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 34) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 35) # safesearch definitions
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 36) safesearch_types = {2: 'STRICT',
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 37)                     1: 'DEMOTE',
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 38)                     0: 'OFF'}
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 39) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 40) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 41) # do search-request
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 42) @little_documented
+def request(query, params):
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 43)     offset = (params['pageno'] - 1) * 10 + 1
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 44) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 45)     # safesearch cookie
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 46)     params['cookies']['SRCHHPGUSR'] = \
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 47)         'ADLT=' + safesearch_types.get(params['safesearch'], 'DEMOTE')
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 48) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 49)     # language cookie
+a524dbb8 (marc        2017-10-10 16:49:49 -0500 50)     region = get_region_code(params['language'], lang_list=supported_languages)
+a524dbb8 (marc        2017-10-10 16:49:49 -0500 51)     params['cookies']['_EDGE_S'] = 'mkt=' + region + '&F=1'
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 52) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 53)     # query and paging
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 54)     params['url'] = search_url.format(query=urlencode({'q': query}),
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 55)                                       offset=offset,
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 56)                                       number_of_results=number_of_results)
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 57) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 58)     # time range
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 59)     if params['time_range'] in time_range_dict:
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 60)         params['url'] += time_range_string.format(interval=time_range_dict[params['time_range']])
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 61) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 62)     return params
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 63) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 64) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 65) # get response from search-request
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 66) def response(resp):
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 67)     results = []
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 68) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 69)     dom = html.fromstring(resp.text)
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 70) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 71)     for result in dom.xpath('//div[@class="dg_u"]'):
+c6459151 (Noémi Ványi 2018-02-10 19:44:07 +0100 72)         url = result.xpath('./div[@class="mc_vtvc"]/a/@href')[0]
+c6459151 (Noémi Ványi 2018-02-10 19:44:07 +0100 73)         url = 'https://bing.com' + url
+c6459151 (Noémi Ványi 2018-02-10 19:44:07 +0100 74)         title = extract_text(result.xpath('./div/a/div/div[@class="mc_vtvc_title"]/@title'))
+c6459151 (Noémi Ványi 2018-02-10 19:44:07 +0100 75)         content = extract_text(result.xpath('./div/a/div/div/div/div/text()'))
+c6459151 (Noémi Ványi 2018-02-10 19:44:07 +0100 76)         thumbnail = result.xpath('./div/a/div/div/img/@src')[0]
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 77) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 78)         results.append({'url': url,
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 79)                         'title': title,
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 80)                         'content': content,
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 81)                         'thumbnail': thumbnail,
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 82)                         'template': 'videos.html'})
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 83) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 84)         if len(results) >= number_of_results:
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 85)             break
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 86) 
+3ca9cad9 (marc        2017-08-05 14:48:07 -0500 87)     return results

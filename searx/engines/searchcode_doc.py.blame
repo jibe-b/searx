@@ -1,0 +1,49 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Searchcode (It)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://searchcode.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (https://searchcode.com/api/)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 12) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 13) from json import loads
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 14) from searx.url_utils import urlencode
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 15) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 16) # engine dependent config
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 17) categories = ['it']
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 18) paging = True
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 19) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 20) # search-url
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 21) url = 'https://searchcode.com/'
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 22) search_url = url + 'api/search_IV/?{query}&p={pageno}'
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 23) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 24) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 25) # do search-request
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 26) def request(query, params):
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 27)     params['url'] = search_url.format(query=urlencode({'q': query}), pageno=params['pageno'] - 1)
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 28) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 29)     return params
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 30) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 31) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 32) # get response from search-request
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 33) def response(resp):
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 34)     results = []
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 35) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 36)     search_results = loads(resp.text)
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 37) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 38)     # parse results
+3282e62f (Cqoicebordel      2015-01-27 22:39:25 +0100 39)     for result in search_results.get('results', []):
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 40)         href = result['url']
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 41)         title = "[{}] {} {}".format(result['type'], result['namespace'], result['name'])
+5d977056 (Cqoicebordel      2014-12-29 21:31:04 +0100 42) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 43)         # append result
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 44)         results.append({'url': href,
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 45)                         'title': title,
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 46)                         'content': result['description']})
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 47) 
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 48)     # return results
+56399cf1 (Cqoicebordel      2014-12-20 07:07:32 +0100 49)     return results

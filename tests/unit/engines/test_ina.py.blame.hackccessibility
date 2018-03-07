@@ -1,0 +1,65 @@
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  1) from collections import defaultdict
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  2) import mock
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  3) from searx.engines import ina
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  4) from searx.testing import SearxTestCase
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  5) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  6) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  7) class TestInaEngine(SearxTestCase):
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  8) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200  9)     @little_documented
+def test_request(self):
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 10)         query = 'test_query'
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 11)         dicto = defaultdict(dict)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 12)         dicto['pageno'] = 0
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 13)         params = ina.request(query, dicto)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 14)         self.assertTrue('url' in params)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 15)         self.assertTrue(query in params['url'])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 16)         self.assertTrue('ina.fr' in params['url'])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 17) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 18)     def test_response(self):
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 19)         self.assertRaises(AttributeError, ina.response, None)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 20)         self.assertRaises(AttributeError, ina.response, [])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 21)         self.assertRaises(AttributeError, ina.response, '')
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 22)         self.assertRaises(AttributeError, ina.response, '[]')
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 23) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 24)         response = mock.Mock(text='{}')
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 25)         self.assertEqual(ina.response(response), [])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 26) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 27)         response = mock.Mock(text='{"data": []}')
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 28)         self.assertEqual(ina.response(response), [])
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 29) 
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 30)         json = """
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 31)         {"content":"\\t<div class=\\"container\\">\\n\\t\\n\
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 32)         <!-- DEBUT CONTENU PRINCIPAL -->\\n<div class=\\"row\\">\\n\
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 33)         <div class=\\"search-results--list\\"><div class=\\"media\\">\\n\
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 34)         \\t\\t\\t\\t<a class=\\"media-left  media-video  premium    xiti_click_action\\" \
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 35)         data-xiti-params=\\"recherche_v4::resultats_conference_de_presse_du_general_de_gaulle::N\\" \
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 36)         href=\\"\\/video\\/CAF89035682\\/conference-de-presse-du-general-de-gaulle-video.html\\">\\n\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 37)         <img src=\\"https:\\/\\/www.ina.fr\\/images_v2\\/140x105\\/CAF89035682.jpeg\\" \
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 38)         alt=\\"Conf\\u00e9rence de presse du G\\u00e9n\\u00e9ral de Gaulle \\">\\n\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 39)         \\t\\t\\t\\t\\t<\\/a>\\n\
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 40)         \\t\\t\\t\\t\\t<div class=\\"media-body\\">\\n\\t\\t\\t\\t\\t\\t<h3 class=\\"h3--title media-heading\\">\\n\
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 41)         \\t\\t\\t\\t\\t\\t\\t<a class=\\"xiti_click_action\\" \
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 42)         data-xiti-params=\\"recherche_v4::resultats_conference_de_presse_du_general_de_gaulle::N\\" \
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 43)         href=\\"\\/video\\/CAF89035682\\/conference-de-presse-du-general-de-gaulle-video.html\\">\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 44)         Conf\\u00e9rence de presse du G\\u00e9n\\u00e9ral de Gaulle <\\/a>\\n\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 45)         <\\/h3>\\n\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 46)         <div class=\\"media-body__info\\">\\n<span class=\\"broadcast\\">27\\/11\\/1967<\\/span>\\n\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 47)         <span class=\\"views\\">29321 vues<\\/span>\\n\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 48)         <span class=\\"duration\\">01h 33m 07s<\\/span>\\n\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 49)         <\\/div>\\n\
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 50)         <p class=\\"media-body__summary\\">VERSION INTEGRALE DE LA CONFERENCE DE PRESSE DU GENERAL DE GAULLE . \
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 51)               - PA le Pr\\u00e9sident DE GAULLE : il ouvre les bras et s'assied. DP journalis...<\\/p>\\n\
+b3ab221b (stepshal       2016-07-11 20:29:47 +0700 52)         <\\/div>\\n<\\/div><!-- \\/.media -->\\n"
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 53)         }
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 54)         """
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 55)         response = mock.Mock(text=json)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 56)         results = ina.response(response)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 57)         self.assertEqual(type(results), list)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 58)         self.assertEqual(len(results), 1)
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 59)         self.assertEqual(results[0]['title'], u'Conf\xe9rence de presse du G\xe9n\xe9ral de Gaulle')
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 60)         self.assertEqual(results[0]['url'],
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 61)                          'https://www.ina.fr/video/CAF89035682/conference-de-presse-du-general-de-gaulle-video.html')
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 62)         self.assertEqual(results[0]['content'],
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 63)                          u"VERSION INTEGRALE DE LA CONFERENCE DE PRESSE DU GENERAL DE GAULLE ."
+b538de56 (François Revol 2016-07-09 17:44:27 +0200 64)                          u" - PA le Pr\u00e9sident DE GAULLE : il ouvre les bras et s'assied. DP journalis...")

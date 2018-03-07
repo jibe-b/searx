@@ -1,0 +1,137 @@
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   1) # -*- coding: utf-8 -*-
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   2) from collections import defaultdict
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   3) import mock
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   4) from searx.engines import startpage
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   5) from searx.testing import SearxTestCase
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   6) 
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   7) 
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   8) class TestStartpageEngine(SearxTestCase):
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100   9) 
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  10)     @little_documented
+def test_request(self):
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  11)         query = 'test_query'
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  12)         dicto = defaultdict(dict)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  13)         dicto['pageno'] = 1
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  14)         dicto['language'] = 'fr_FR'
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  15)         params = startpage.request(query, dicto)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  16)         self.assertIn('url', params)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  17)         self.assertIn('startpage.com', params['url'])
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  18)         self.assertIn('data', params)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  19)         self.assertIn('query', params['data'])
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  20)         self.assertIn(query, params['data']['query'])
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  21)         self.assertIn('with_language', params['data'])
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  22)         self.assertIn('lang_fr', params['data']['with_language'])
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  23) 
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  24)     def test_response(self):
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  25)         self.assertRaises(AttributeError, startpage.response, None)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  26)         self.assertRaises(AttributeError, startpage.response, [])
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  27)         self.assertRaises(AttributeError, startpage.response, '')
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  28)         self.assertRaises(AttributeError, startpage.response, '[]')
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  29) 
+52e615de tests/unit/engines/test_startpage.py  (Adam Tauber       2016-11-30 18:43:03 +0100  30)         response = mock.Mock(text='<html></html>')
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  31)         self.assertEqual(startpage.response(response), [])
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  32) 
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  33)         html = """
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  34)         <div class='result' style=' *width : auto; *margin-right : 10%;'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  35)             <h3>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  36)                 <a href='http://this.should.be.the.link/' id='title_2' name='title_2' >
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  37)                     This should be the title
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  38)                 </a>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  39)                 <span id='title_stars_2' name='title_stars_2'>  </span>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  40)             </h3>
+4508c966 searx/tests/engines/test_startpage.py (Thomas Pointhuber 2015-10-24 16:15:30 +0200  41)             <p class='desc clk'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  42)                 This should be the content.
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  43)             </p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  44)             <p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  45)                 <span class='url'>www.speed<b>test</b>.net/fr/
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  46)                 </span>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  47)                   -
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  48)                 <A class="proxy" id="proxy_link" HREF="https://ixquick-proxy.com/do/spg/proxy?ep=&edata=&ek=&ekdata="
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  49)                     class='proxy'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  50)                     Navigation avec Ixquick Proxy
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  51)                 </A>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  52)                     -
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  53)                 <A HREF="https://ixquick-proxy.com/do/spg/highlight.pl?l=francais&c=hf&cat=web&q=test&rl=NONE&rid=
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  54)                     &hlq=https://startpage.com/do/search&mtabp=-1&mtcmd=process_search&mtlanguage=francais&mtengine0=
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  55)                     &mtcat=web&u=http:%2F%2Fwww.speedtest.net%2Ffr%2F" class='proxy'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  56)                     Mis en surbrillance
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  57)                 </A>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  58)             </p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  59)         </div>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  60)         """
+52e615de tests/unit/engines/test_startpage.py  (Adam Tauber       2016-11-30 18:43:03 +0100  61)         response = mock.Mock(text=html.encode('utf-8'))
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  62)         results = startpage.response(response)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  63)         self.assertEqual(type(results), list)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  64)         self.assertEqual(len(results), 1)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  65)         self.assertEqual(results[0]['title'], 'This should be the title')
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  66)         self.assertEqual(results[0]['url'], 'http://this.should.be.the.link/')
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  67)         self.assertEqual(results[0]['content'], 'This should be the content.')
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  68) 
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  69)         html = """
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  70)         <div class='result' style=' *width : auto; *margin-right : 10%;'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  71)             <h3>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  72)                 <a href='http://www.google.com/aclk?sa=l&ai=C' id='title_2' name='title_2' >
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  73)                     This should be the title
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  74)                 </a>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  75)                 <span id='title_stars_2' name='title_stars_2'>  </span>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  76)             </h3>
+4508c966 searx/tests/engines/test_startpage.py (Thomas Pointhuber 2015-10-24 16:15:30 +0200  77)             <p class='desc clk'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  78)                 This should be the content.
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  79)             </p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  80)             <p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  81)                 <span class='url'>www.speed<b>test</b>.net/fr/
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  82)                 </span>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  83)                   -
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  84)                 <A class="proxy" id="proxy_link" HREF="https://ixquick-proxy.com/do/spg/proxy?ep=&edata=&ek=&ekdata="
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  85)                     class='proxy'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  86)                     Navigation avec Ixquick Proxy
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  87)                 </A>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  88)                     -
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  89)                 <A HREF="https://ixquick-proxy.com/do/spg/highlight.pl?l=francais&c=hf&cat=web&q=test&rl=NONE&rid=
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  90)                     &hlq=https://startpage.com/do/search&mtabp=-1&mtcmd=process_search&mtlanguage=francais&mtengine0=
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  91)                     &mtcat=web&u=http:%2F%2Fwww.speedtest.net%2Ffr%2F" class='proxy'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  92)                     Mis en surbrillance
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  93)                 </A>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  94)             </p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  95)         </div>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  96)         <div class='result' style=' *width : auto; *margin-right : 10%;'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  97)             <h3>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  98)                 <span id='title_stars_2' name='title_stars_2'>  </span>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100  99)             </h3>
+4508c966 searx/tests/engines/test_startpage.py (Thomas Pointhuber 2015-10-24 16:15:30 +0200 100)             <p class='desc clk'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 101)                 This should be the content.
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 102)             </p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 103)             <p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 104)                 <span class='url'>www.speed<b>test</b>.net/fr/
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 105)                 </span>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 106)             </p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 107)         </div>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 108)         <div class='result' style=' *width : auto; *margin-right : 10%;'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 109)             <h3>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 110)                 <a href='http://this.should.be.the.link/' id='title_2' name='title_2' >
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 111)                     This should be the title
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 112)                 </a>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 113)                 <span id='title_stars_2' name='title_stars_2'>  </span>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 114)             </h3>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 115)             <p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 116)                 <span class='url'>www.speed<b>test</b>.net/fr/
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 117)                 </span>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 118)                   -
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 119)                 <A class="proxy" id="proxy_link" HREF="https://ixquick-proxy.com/do/spg/proxy?ep=&edata=&ek=&ekdata="
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 120)                     class='proxy'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 121)                     Navigation avec Ixquick Proxy
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 122)                 </A>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 123)                     -
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 124)                 <A HREF="https://ixquick-proxy.com/do/spg/highlight.pl?l=francais&c=hf&cat=web&q=test&rl=NONE&rid=
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 125)                     &hlq=https://startpage.com/do/search&mtabp=-1&mtcmd=process_search&mtlanguage=francais&mtengine0=
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 126)                     &mtcat=web&u=http:%2F%2Fwww.speedtest.net%2Ffr%2F" class='proxy'>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 127)                     Mis en surbrillance
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 128)                 </A>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 129)             </p>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 130)         </div>
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 131)         """
+52e615de tests/unit/engines/test_startpage.py  (Adam Tauber       2016-11-30 18:43:03 +0100 132)         response = mock.Mock(text=html.encode('utf-8'))
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 133)         results = startpage.response(response)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 134)         self.assertEqual(type(results), list)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 135)         self.assertEqual(len(results), 1)
+f1c10f4f searx/tests/engines/test_startpage.py (Cqoicebordel      2015-02-06 17:31:10 +0100 136)         self.assertEqual(results[0]['content'], '')

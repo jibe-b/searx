@@ -1,0 +1,100 @@
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  1) """
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  2)  Tokyo Toshokan (A BitTorrent Library for Japanese Media)
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  3) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  4)  @website      https://www.tokyotosho.info/
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  5)  @provide-api  no
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  6)  @using-api    no
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  7)  @results      HTML
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  8)  @stable       no (HTML can change)
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600  9)  @parse        url, title, publishedDate, seed, leech,
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 10)                filesize, magnetlink, content
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 11) """
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 12) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 13) import re
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 14) from lxml import html
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 15) from searx.engines.xpath import extract_text
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 16) from datetime import datetime
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 17) from searx.url_utils import urlencode
+33fd9380 (misnyo        2017-09-04 20:05:04 +0200 18) from searx.utils import get_torrent_size, int_or_zero
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 19) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 20) # engine dependent config
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 21) categories = ['files', 'videos', 'music']
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 22) paging = True
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 23) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 24) # search-url
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 25) base_url = 'https://www.tokyotosho.info/'
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 26) search_url = base_url + 'search.php?{query}'
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 27) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 28) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 29) # do search-request
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 30) @little_documented
+def request(query, params):
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 31)     query = urlencode({'page': params['pageno'], 'terms': query})
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 32)     params['url'] = search_url.format(query=query)
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 33)     return params
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 34) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 35) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 36) # get response from search-request
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 37) def response(resp):
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 38)     results = []
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 39) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 40)     dom = html.fromstring(resp.text)
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 41)     rows = dom.xpath('//table[@class="listing"]//tr[contains(@class, "category_0")]')
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 42) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 43)     # check if there are no results or page layout was changed so we cannot parse it
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 44)     # currently there are two rows for each result, so total count must be even
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 45)     if len(rows) == 0 or len(rows) % 2 != 0:
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 46)         return []
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 47) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 48)     # regular expression for parsing torrent size strings
+b3ab221b (stepshal      2016-07-11 20:29:47 +0700 49)     size_re = re.compile(r'Size:\s*([\d.]+)(TB|GB|MB|B)', re.IGNORECASE)
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 50) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 51)     # processing the results, two rows at a time
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 52)     for i in range(0, len(rows), 2):
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 53)         # parse the first row
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 54)         name_row = rows[i]
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 55) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 56)         links = name_row.xpath('./td[@class="desc-top"]/a')
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 57)         params = {
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 58)             'template': 'torrent.html',
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 59)             'url': links[-1].attrib.get('href'),
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 60)             'title': extract_text(links[-1])
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 61)         }
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 62)         # I have not yet seen any torrents without magnet links, but
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 63)         # it's better to be prepared to stumble upon one some day
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 64)         if len(links) == 2:
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 65)             magnet = links[0].attrib.get('href')
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 66)             if magnet.startswith('magnet'):
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 67)                 # okay, we have a valid magnet link, let's add it to the result
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 68)                 params['magnetlink'] = magnet
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 69) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 70)         # no more info in the first row, start parsing the second one
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 71)         info_row = rows[i + 1]
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 72)         desc = extract_text(info_row.xpath('./td[@class="desc-bot"]')[0])
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 73)         for item in desc.split('|'):
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 74)             item = item.strip()
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 75)             if item.startswith('Size:'):
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 76)                 try:
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 77)                     # ('1.228', 'GB')
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 78)                     groups = size_re.match(item).groups()
+1e2b60f3 (misnyo        2017-08-31 21:31:40 +0200 79)                     params['filesize'] = get_torrent_size(groups[0], groups[1])
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 80)                 except:
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 81)                     pass
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 82)             elif item.startswith('Date:'):
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 83)                 try:
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 84)                     # Date: 2016-02-21 21:44 UTC
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 85)                     date = datetime.strptime(item, 'Date: %Y-%m-%d %H:%M UTC')
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 86)                     params['publishedDate'] = date
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 87)                 except:
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 88)                     pass
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 89)             elif item.startswith('Comment:'):
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 90)                 params['content'] = item
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 91)         stats = info_row.xpath('./td[@class="stats"]/span')
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 92)         # has the layout not changed yet?
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 93)         if len(stats) == 3:
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 94)             params['seed'] = int_or_zero(extract_text(stats[0]))
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 95)             params['leech'] = int_or_zero(extract_text(stats[1]))
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 96) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 97)         results.append(params)
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 98) 
+547b8a87 (Kirill Isakov 2016-03-27 00:49:57 +0600 99)     return results

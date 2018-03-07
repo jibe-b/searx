@@ -1,0 +1,70 @@
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  1) """
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  2)  FramaLibre (It)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  3) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  4)  @website     https://framalibre.org/
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  5)  @provide-api no
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  6) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  7)  @using-api   no
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  8)  @results     HTML
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100  9)  @stable      no (HTML can change)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 10)  @parse       url, title, content, thumbnail, img_src
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 11) """
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 12) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 13) from cgi import escape
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 14) from lxml import html
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 15) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber    2016-11-30 18:43:03 +0100 16) from searx.url_utils import urljoin, urlencode
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 17) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 18) # engine dependent config
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 19) categories = ['it']
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 20) paging = True
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 21) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 22) # search-url
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 23) base_url = 'https://framalibre.org/'
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 24) search_url = base_url + 'recherche-par-crit-res?{query}&page={offset}'
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 25) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 26) # specific xpath variables
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 27) results_xpath = '//div[@class="nodes-list-row"]/div[contains(@typeof,"sioc:Item")]'
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 28) link_xpath = './/h3[@class="node-title"]/a[@href]'
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 29) thumbnail_xpath = './/img[@class="media-object img-responsive"]/@src'
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 30) content_xpath = './/div[@class="content"]//p'
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 31) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 32) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 33) # do search-request
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 34) @little_documented
+def request(query, params):
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 35)     offset = (params['pageno'] - 1)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 36)     params['url'] = search_url.format(query=urlencode({'keys': query}),
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 37)                                       offset=offset)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 38) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 39)     return params
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 40) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 41) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 42) # get response from search-request
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 43) def response(resp):
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 44)     results = []
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 45) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 46)     dom = html.fromstring(resp.text)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 47) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 48)     # parse results
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 49)     for result in dom.xpath(results_xpath):
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 50)         link = result.xpath(link_xpath)[0]
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 51)         href = urljoin(base_url, link.attrib.get('href'))
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 52)         # there's also a span (class="rdf-meta element-hidden" property="dc:title")'s content property for this...
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 53)         title = escape(extract_text(link))
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 54)         thumbnail_tags = result.xpath(thumbnail_xpath)
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 55)         thumbnail = None
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 56)         if len(thumbnail_tags) > 0:
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 57)             thumbnail = extract_text(thumbnail_tags[0])
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 58)             if thumbnail[0] == '/':
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 59)                 thumbnail = base_url + thumbnail
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 60)         content = escape(extract_text(result.xpath(content_xpath)))
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 61) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 62)         # append result
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 63)         results.append({'url': href,
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 64)                         'title': title,
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 65)                         'img_src': thumbnail,
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 66)                         'content': content})
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 67) 
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 68)     # return results
+45d15bd6 (François Revol 2017-01-06 00:22:43 +0100 69)     return results

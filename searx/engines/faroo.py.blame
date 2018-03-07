@@ -1,0 +1,93 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Faroo (Web, News)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     http://www.faroo.com
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (http://www.faroo.com/hp/api/api.html), require API-key
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+0607b167 (misnyo            2017-08-30 18:53:00 +0200  7)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content, publishedDate, img_src
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 12) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 13) from json import loads
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 14) import datetime
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 15) from searx.utils import searx_useragent
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 16) from searx.url_utils import urlencode
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 17) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 18) # engine dependent config
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 19) categories = ['general', 'news']
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 20) paging = True
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 21) language_support = True
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 22) number_of_results = 10
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 23) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 24) # search-url
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 25) url = 'http://www.faroo.com/'
+0607b167 (misnyo            2017-08-30 18:53:00 +0200 26) search_url = url + 'instant.json?{query}'\
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 27)     '&start={offset}'\
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 28)     '&length={number_of_results}'\
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 29)     '&l={language}'\
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 30)     '&src={categorie}'\
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 31)     '&i=false'\
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 32)     '&c=false'
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 33) 
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 34) search_category = {'general': 'web',
+a508d540 (Thomas Pointhuber 2014-12-16 17:26:16 +0100 35)                    'news': 'news'}
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 36) 
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 37) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 38) # do search-request
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 39) def request(query, params):
+fb04f766 (Cqoicebordel      2015-02-07 15:35:12 +0100 40)     offset = (params['pageno'] - 1) * number_of_results + 1
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 41)     categorie = search_category.get(params['category'], 'web')
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 42) 
+4d177039 (marc              2017-07-20 15:47:20 -0500 43)     language = params['language'].split('-')[0]
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 44) 
+fb04f766 (Cqoicebordel      2015-02-07 15:35:12 +0100 45)     # if language is not supported, put it in english
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 46)     if language != 'en' and\
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 47)        language != 'de' and\
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 48)        language != 'zh':
+fb04f766 (Cqoicebordel      2015-02-07 15:35:12 +0100 49)         language = 'en'
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 50) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 51)     params['url'] = search_url.format(offset=offset,
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 52)                                       number_of_results=number_of_results,
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 53)                                       query=urlencode({'q': query}),
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 54)                                       language=language,
+0607b167 (misnyo            2017-08-30 18:53:00 +0200 55)                                       categorie=categorie)
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 56) 
+0607b167 (misnyo            2017-08-30 18:53:00 +0200 57)     params['headers']['Referer'] = url
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 58) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 59)     return params
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 60) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 61) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 62) # get response from search-request
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 63) def response(resp):
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 64)     # HTTP-Code 429: rate limit exceeded
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 65)     if resp.status_code == 429:
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 66)         raise Exception("rate limit has been exceeded!")
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 67) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 68)     results = []
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 69) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 70)     search_res = loads(resp.text)
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 71) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 72)     # return empty array if there are no results
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 73)     if not search_res.get('results', {}):
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 74)         return []
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 75) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 76)     # parse results
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 77)     for result in search_res['results']:
+0607b167 (misnyo            2017-08-30 18:53:00 +0200 78)         publishedDate = None
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 79)         result_json = {'url': result['url'], 'title': result['title'],
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 80)                        'content': result['kwic']}
+db4ca478 (Thomas Pointhuber 2014-10-17 12:54:22 +0200 81)         if result['news']:
+0607b167 (misnyo            2017-08-30 18:53:00 +0200 82)             result_json['publishedDate'] = \
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 83)                 datetime.datetime.fromtimestamp(result['date'] / 1000.0)
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 84) 
+db4ca478 (Thomas Pointhuber 2014-10-17 12:54:22 +0200 85)         # append image result if image url is set
+db4ca478 (Thomas Pointhuber 2014-10-17 12:54:22 +0200 86)         if result['iurl']:
+20d2d4da (misnyo            2017-08-30 19:48:57 +0200 87)             result_json['template'] = 'videos.html'
+0607b167 (misnyo            2017-08-30 18:53:00 +0200 88)             result_json['thumbnail'] = result['iurl']
+0607b167 (misnyo            2017-08-30 18:53:00 +0200 89) 
+0607b167 (misnyo            2017-08-30 18:53:00 +0200 90)         results.append(result_json)
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 91) 
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 92)     # return results
+8af2184a (Thomas Pointhuber 2014-10-17 12:34:51 +0200 93)     return results

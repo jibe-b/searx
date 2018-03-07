@@ -1,0 +1,52 @@
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  1) """
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  2)  F-Droid (a repository of FOSS applications for Android)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  3) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  4)  @website      https://f-droid.org/
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  5)  @provide-api  no
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  6)  @using-api    no
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  7)  @results      HTML
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  8)  @stable       no (HTML can change)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600  9)  @parse        url, title, content
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 10) """
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 11) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 12) from lxml import html
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 13) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 14) from searx.url_utils import urlencode
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 15) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 16) # engine dependent config
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 17) categories = ['files']
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 18) paging = True
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 19) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 20) # search-url
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 21) base_url = 'https://f-droid.org/'
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 22) search_url = base_url + 'repository/browse/?{query}'
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 23) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 24) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 25) # do search-request
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 26) @little_documented
+def request(query, params):
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 27)     query = urlencode({'fdfilter': query, 'fdpage': params['pageno']})
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 28)     params['url'] = search_url.format(query=query)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 29)     return params
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 30) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 31) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 32) # get response from search-request
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 33) def response(resp):
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 34)     results = []
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 35) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 36)     dom = html.fromstring(resp.text)
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 37) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 38)     for app in dom.xpath('//div[@id="appheader"]'):
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 39)         url = app.xpath('./ancestor::a/@href')[0]
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 40)         title = app.xpath('./p/span/text()')[0]
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 41)         img_src = app.xpath('.//img/@src')[0]
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 42) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 43)         content = extract_text(app.xpath('./p')[0])
+16bdc0ba (Adam Tauber   2016-12-09 11:44:24 +0100 44)         content = content.replace(title, '', 1).strip()
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 45) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 46)         results.append({'url': url,
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 47)                         'title': title,
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 48)                         'content': content,
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 49)                         'img_src': img_src})
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 50) 
+c1d456b1 (Kirill Isakov 2016-03-27 03:50:44 +0600 51)     return results

@@ -1,0 +1,102 @@
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   1) #!/usr/bin/env python
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   2) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   3) """
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   4)  PubMed (Scholar publications)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   5)  @website     https://www.ncbi.nlm.nih.gov/pubmed/
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   6)  @provide-api yes (https://www.ncbi.nlm.nih.gov/home/develop/api/)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   7)  @using-api   yes
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   8)  @results     XML
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200   9)  @stable      yes
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  10)  @parse       url, title, publishedDate, content
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  11)  More info on api: https://www.ncbi.nlm.nih.gov/books/NBK25501/
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  12) """
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  13) 
+d20bba6d (Noémi Ványi 2017-11-01 14:20:47 +0100  14) from flask_babel import gettext
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  15) from lxml import etree
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  16) from datetime import datetime
+d20bba6d (Noémi Ványi 2017-11-01 14:20:47 +0100  17) from searx.url_utils import urlencode
+d20bba6d (Noémi Ványi 2017-11-01 14:20:47 +0100  18) from searx.poolrequests import get
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  19) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  20) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  21) categories = ['science']
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  22) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  23) base_url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi'\
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  24)            + '?db=pubmed&{query}&retstart={offset}&retmax={hits}'
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  25) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  26) # engine dependent config
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  27) number_of_results = 10
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  28) pubmed_url = 'https://www.ncbi.nlm.nih.gov/pubmed/'
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  29) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  30) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  31) @little_documented
+def request(query, params):
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  32)     # basic search
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  33)     offset = (params['pageno'] - 1) * number_of_results
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  34) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  35)     string_args = dict(query=urlencode({'term': query}),
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  36)                        offset=offset,
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  37)                        hits=number_of_results)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  38) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  39)     params['url'] = base_url.format(**string_args)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  40) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  41)     return params
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  42) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  43) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  44) def response(resp):
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  45)     results = []
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  46) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  47)     # First retrieve notice of each result
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  48)     pubmed_retrieve_api_url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?'\
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  49)                               + 'db=pubmed&retmode=xml&id={pmids_string}'
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  50) 
+d20bba6d (Noémi Ványi 2017-11-01 14:20:47 +0100  51)     pmids_results = etree.XML(resp.content)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  52)     pmids = pmids_results.xpath('//eSearchResult/IdList/Id')
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  53)     pmids_string = ''
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  54) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  55)     for item in pmids:
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  56)         pmids_string += item.text + ','
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  57) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  58)     retrieve_notice_args = dict(pmids_string=pmids_string)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  59) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  60)     retrieve_url_encoded = pubmed_retrieve_api_url.format(**retrieve_notice_args)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  61) 
+d20bba6d (Noémi Ványi 2017-11-01 14:20:47 +0100  62)     search_results_xml = get(retrieve_url_encoded).content
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  63)     search_results = etree.XML(search_results_xml).xpath('//PubmedArticleSet/PubmedArticle/MedlineCitation')
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  64) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  65)     for entry in search_results:
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  66)         title = entry.xpath('.//Article/ArticleTitle')[0].text
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  67) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  68)         pmid = entry.xpath('.//PMID')[0].text
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  69)         url = pubmed_url + pmid
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  70) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  71)         try:
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  72)             content = entry.xpath('.//Abstract/AbstractText')[0].text
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  73)         except:
+d20bba6d (Noémi Ványi 2017-11-01 14:20:47 +0100  74)             content = gettext('No abstract is available for this publication.')
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  75) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  76)         #  If a doi is available, add it to the snipppet
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  77)         try:
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  78)             doi = entry.xpath('.//ELocationID[@EIdType="doi"]')[0].text
+d20bba6d (Noémi Ványi 2017-11-01 14:20:47 +0100  79)             content = 'DOI: {doi} Abstract: {content}'.format(doi=doi, content=content)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  80)         except:
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  81)             pass
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  82) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  83)         if len(content) > 300:
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  84)                     content = content[0:300] + "..."
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  85)         # TODO: center snippet on query term
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  86) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  87)         res_dict = {'url': url,
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  88)                     'title': title,
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  89)                     'content': content}
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  90) 
+1088c2a7 (Adam Tauber 2017-12-01 20:48:10 +0100  91)         try:
+1088c2a7 (Adam Tauber 2017-12-01 20:48:10 +0100  92)             publishedDate = datetime.strptime(entry.xpath('.//DateCreated/Year')[0].text
+1088c2a7 (Adam Tauber 2017-12-01 20:48:10 +0100  93)                                               + '-' + entry.xpath('.//DateCreated/Month')[0].text
+1088c2a7 (Adam Tauber 2017-12-01 20:48:10 +0100  94)                                               + '-' + entry.xpath('.//DateCreated/Day')[0].text, '%Y-%m-%d')
+1088c2a7 (Adam Tauber 2017-12-01 20:48:10 +0100  95)             res_dict['publishedDate'] = publishedDate
+1088c2a7 (Adam Tauber 2017-12-01 20:48:10 +0100  96)         except:
+1088c2a7 (Adam Tauber 2017-12-01 20:48:10 +0100  97)             pass
+1088c2a7 (Adam Tauber 2017-12-01 20:48:10 +0100  98) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200  99)         results.append(res_dict)
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200 100) 
+df0d9158 (jibe-b      2017-09-22 22:09:33 +0200 101)         return results

@@ -1,0 +1,107 @@
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   1) from collections import defaultdict
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   2) import mock
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   3) from searx.engines import stackoverflow
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   4) from searx.testing import SearxTestCase
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   5) 
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   6) 
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   7) class TestStackoverflowEngine(SearxTestCase):
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   8) 
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100   9)     @little_documented
+def test_request(self):
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  10)         query = 'test_query'
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  11)         dicto = defaultdict(dict)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  12)         dicto['pageno'] = 0
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  13)         params = stackoverflow.request(query, dicto)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  14)         self.assertTrue('url' in params)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  15)         self.assertTrue(query in params['url'])
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  16)         self.assertTrue('stackoverflow.com' in params['url'])
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  17) 
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  18)     def test_response(self):
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  19)         self.assertRaises(AttributeError, stackoverflow.response, None)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  20)         self.assertRaises(AttributeError, stackoverflow.response, [])
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  21)         self.assertRaises(AttributeError, stackoverflow.response, '')
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  22)         self.assertRaises(AttributeError, stackoverflow.response, '[]')
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  23) 
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  24)         response = mock.Mock(text='<html></html>')
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  25)         self.assertEqual(stackoverflow.response(response), [])
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  26) 
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  27)         html = """
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  28)         <div class="question-summary search-result" id="answer-id-1783426">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  29)             <div class="statscontainer">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  30)                 <div class="statsarrow"></div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  31)                 <div class="stats">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  32)                     <div class="vote">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  33)                         <div class="votes answered">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  34)                             <span class="vote-count-post "><strong>2583</strong></span>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  35)                             <div class="viewcount">votes</div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  36)                         </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  37)                     </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  38)                 </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  39)             </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  40)             <div class="summary">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  41)                 <div class="result-link">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  42)                     <span>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  43)                         <a href="/questions/this.is.the.url"
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  44)                             data-searchsession="/questions"
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  45)                             title="Checkout remote Git branch">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  46)                             This is the title
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  47)                         </a>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  48)                     </span>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  49)                 </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  50)                 <div class="excerpt">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  51)                     This is the content
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  52)                 </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  53)                 <div class="tags user-tags t-git t-git-checkout t-remote-branch">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  54)                 </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  55)                 <div class="started fr">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  56)                     answered <span title="2009-11-23 14:26:08Z" class="relativetime">nov 23 '09</span> by
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  57)                     <a href="/users/214090/hallski">hallski</a>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  58)                 </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  59)             </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  60)         </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  61)         """
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  62)         response = mock.Mock(text=html)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  63)         results = stackoverflow.response(response)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  64)         self.assertEqual(type(results), list)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  65)         self.assertEqual(len(results), 1)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  66)         self.assertEqual(results[0]['title'], 'This is the title')
+043b269c searx/tests/engines/test_stackoverflow.py (Alexandre Flament 2015-04-26 19:23:06 +0200  67)         self.assertEqual(results[0]['url'], 'https://stackoverflow.com/questions/this.is.the.url')
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  68)         self.assertEqual(results[0]['content'], 'This is the content')
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  69) 
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  70)         html = """
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  71)         <div class="statscontainer">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  72)             <div class="statsarrow"></div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  73)             <div class="stats">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  74)                 <div class="vote">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  75)                     <div class="votes answered">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  76)                         <span class="vote-count-post "><strong>2583</strong></span>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  77)                         <div class="viewcount">votes</div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  78)                     </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  79)                 </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  80)             </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  81)         </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  82)         <div class="summary">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  83)             <div class="result-link">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  84)                 <span>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  85)                     <a href="/questions/this.is.the.url"
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  86)                         data-searchsession="/questions"
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  87)                         title="Checkout remote Git branch">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  88)                         This is the title
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  89)                     </a>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  90)                 </span>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  91)             </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  92)             <div class="excerpt">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  93)                 This is the content
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  94)             </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  95)             <div class="tags user-tags t-git t-git-checkout t-remote-branch">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  96)             </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  97)             <div class="started fr">
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  98)                 answered <span title="2009-11-23 14:26:08Z" class="relativetime">nov 23 '09</span> by
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100  99)                 <a href="/users/214090/hallski">hallski</a>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100 100)             </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100 101)         </div>
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100 102)         """
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100 103)         response = mock.Mock(text=html)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100 104)         results = stackoverflow.response(response)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100 105)         self.assertEqual(type(results), list)
+d20ddf9d searx/tests/engines/test_stackoverflow.py (Cqoicebordel      2015-01-31 17:29:22 +0100 106)         self.assertEqual(len(results), 0)

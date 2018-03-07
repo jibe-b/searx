@@ -1,0 +1,166 @@
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600   1) # -*- coding: utf-8 -*-
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600   2) from collections import defaultdict
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600   3) import mock
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600   4) from requests import Request
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600   5) from searx.engines import wolframalpha_api
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600   6) from searx.testing import SearxTestCase
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600   7) 
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600   8) 
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600   9) class TestWolframAlphaAPIEngine(SearxTestCase):
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  10) 
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  11)     def test_request(self):
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  12)         query = 'test_query'
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  13)         dicto = defaultdict(dict)
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  14)         params = wolframalpha_api.request(query, dicto)
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  15) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  16)         # TODO: test api_key
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  17)         self.assertIn('url', params)
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  18)         self.assertIn('https://api.wolframalpha.com/v2/query?', params['url'])
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  19)         self.assertIn(query, params['url'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  20)         self.assertEqual('https://www.wolframalpha.com/input/?i=test_query', params['headers']['Referer'])
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  21) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  22)     def test_replace_pua_chars(self):
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  23)         self.assertEqual('i', wolframalpha_api.replace_pua_chars(u'\uf74e'))
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  24) 
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  25)     def test_response(self):
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  26)         self.assertRaises(AttributeError, wolframalpha_api.response, None)
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  27)         self.assertRaises(AttributeError, wolframalpha_api.response, [])
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  28)         self.assertRaises(AttributeError, wolframalpha_api.response, '')
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  29)         self.assertRaises(AttributeError, wolframalpha_api.response, '[]')
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  30) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  31)         referer_url = 'referer_url'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  32)         request = Request(headers={'Referer': referer_url})
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  33) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  34)         # test failure
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  35)         xml = '''<?xml version='1.0' encoding='UTF-8'?>
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  36)         <queryresult success='false' error='false' />
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  37)         '''
+52e615de tests/unit/engines/test_wolframalpha_api.py  (Adam Tauber 2016-11-30 18:43:03 +0100  38)         response = mock.Mock(text=xml.encode('utf-8'))
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  39)         self.assertEqual(wolframalpha_api.response(response), [])
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  40) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  41)         # test basic case
+52e615de tests/unit/engines/test_wolframalpha_api.py  (Adam Tauber 2016-11-30 18:43:03 +0100  42)         xml = b"""<?xml version='1.0' encoding='UTF-8'?>
+e9d35c13 searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-02 00:41:14 -0600  43)         <queryresult success='true'
+e9d35c13 searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-02 00:41:14 -0600  44)             error='false'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  45)             numpods='3'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  46)             datatypes='Math'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  47)             id='queryresult_id'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  48)             host='http://www4c.wolframalpha.com'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  49)             related='related_url'
+e9d35c13 searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-02 00:41:14 -0600  50)             version='2.6'>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  51)             <pod title='Input'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  52)                  scanner='Identity'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  53)                  id='Input'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  54)                  numsubpods='1'>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  55)                   <subpod title=''>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  56)                        <img src='input_img_src.gif'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  57)                            alt='input_img_alt'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  58)                            title='input_img_title' />
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  59)                        <plaintext>input_plaintext</plaintext>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  60)                   </subpod>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  61)              </pod>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  62)              <pod title='Result'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  63)                  scanner='Simplification'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  64)                  id='Result'
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  65)                  numsubpods='1'
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  66)                  primary='true'>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  67)                   <subpod title=''>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  68)                        <img src='result_img_src.gif'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  69)                            alt='result_img_alt'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  70)                            title='result_img_title' />
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  71)                        <plaintext>result_plaintext</plaintext>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  72)                   </subpod>
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  73)              </pod>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  74)              <pod title='Manipulatives illustration'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  75)                  scanner='Arithmetic'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  76)                  id='Illustration'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  77)                  numsubpods='1'>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  78)                   <subpod title=''>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  79)                        <img src='illustration_img_src.gif'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  80)                            alt='illustration_img_alt' />
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  81)                        <plaintext>illustration_plaintext</plaintext>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  82)                   </subpod>
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  83)              </pod>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  84)         </queryresult>
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  85)         """
+52e615de tests/unit/engines/test_wolframalpha_api.py  (Adam Tauber 2016-11-30 18:43:03 +0100  86)         response = mock.Mock(text=xml, request=request)
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  87)         results = wolframalpha_api.response(response)
+be54e526 searx/tests/engines/test_wolframalpha_api.py (a01200356   2015-12-30 00:53:15 -0600  88)         self.assertEqual(type(results), list)
+8ca57448 searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-05 21:47:31 -0600  89)         self.assertEqual(len(results), 2)
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600  90)         self.assertEqual('input_plaintext', results[0]['infobox'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  91) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600  92)         self.assertEqual(len(results[0]['attributes']), 3)
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600  93)         self.assertEqual('Input', results[0]['attributes'][0]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600  94)         self.assertEqual('input_plaintext', results[0]['attributes'][0]['value'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600  95)         self.assertEqual('Result', results[0]['attributes'][1]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600  96)         self.assertEqual('result_plaintext', results[0]['attributes'][1]['value'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600  97)         self.assertEqual('Manipulatives illustration', results[0]['attributes'][2]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600  98)         self.assertEqual('illustration_img_src.gif', results[0]['attributes'][2]['image']['src'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600  99)         self.assertEqual('illustration_img_alt', results[0]['attributes'][2]['image']['alt'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 100) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 101)         self.assertEqual(len(results[0]['urls']), 1)
+d997265e searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-03 19:57:37 -0600 102) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 103)         self.assertEqual(referer_url, results[0]['urls'][0]['url'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 104)         self.assertEqual('Wolfram|Alpha', results[0]['urls'][0]['title'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 105)         self.assertEqual(referer_url, results[1]['url'])
+f67db1e1 tests/unit/engines/test_wolframalpha_api.py  (firebovine  2016-09-10 18:04:24 -0400 106)         self.assertEqual('Wolfram|Alpha (input_plaintext)', results[1]['title'])
+09ee2aa6 tests/unit/engines/test_wolframalpha_api.py  (marc        2016-07-06 17:29:40 -0500 107)         self.assertIn('result_plaintext', results[1]['content'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 108) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 109)         # test calc
+52e615de tests/unit/engines/test_wolframalpha_api.py  (Adam Tauber 2016-11-30 18:43:03 +0100 110)         xml = b"""<?xml version='1.0' encoding='UTF-8'?>
+d997265e searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-03 19:57:37 -0600 111)         <queryresult success='true'
+d997265e searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-03 19:57:37 -0600 112)             error='false'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 113)             numpods='2'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 114)             datatypes=''
+d997265e searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-03 19:57:37 -0600 115)             parsetimedout='false'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 116)             id='queryresult_id'
+8ca57448 searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-05 21:47:31 -0600 117)             host='http://www5b.wolframalpha.com'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 118)             related='related_url'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 119)             version='2.6' >
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 120)             <pod title='Indefinite integral'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 121)                 scanner='Integral'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 122)                 id='IndefiniteIntegral'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 123)                 error='false'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 124)                 numsubpods='1'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 125)                 primary='true'>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 126)                 <subpod title=''>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 127)                     <img src='integral_image.gif'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 128)                         alt='integral_img_alt'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 129)                         title='integral_img_title' />
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 130)                     <plaintext>integral_plaintext</plaintext>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 131)                 </subpod>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 132)             </pod>
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600 133)             <pod title='Plot of the integral'
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600 134)                 scanner='Integral'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 135)                 id='Plot'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 136)                 error='false'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 137)                 numsubpods='1'>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 138)                 <subpod title=''>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 139)                     <img src='plot.gif'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 140)                         alt='plot_alt'
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 141)                         title='' />
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 142)                     <plaintext></plaintext>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 143)                 </subpod>
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 144)             </pod>
+d997265e searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-03 19:57:37 -0600 145)         </queryresult>
+d997265e searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-03 19:57:37 -0600 146)         """
+52e615de tests/unit/engines/test_wolframalpha_api.py  (Adam Tauber 2016-11-30 18:43:03 +0100 147)         response = mock.Mock(text=xml, request=request)
+d997265e searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-03 19:57:37 -0600 148)         results = wolframalpha_api.response(response)
+d997265e searx/tests/engines/test_wolframalpha_api.py (a01200356   2016-01-03 19:57:37 -0600 149)         self.assertEqual(type(results), list)
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 150)         self.assertEqual(len(results), 2)
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600 151)         self.assertEqual('integral_plaintext', results[0]['infobox'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 152) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 153)         self.assertEqual(len(results[0]['attributes']), 2)
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600 154)         self.assertEqual('Indefinite integral', results[0]['attributes'][0]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600 155)         self.assertEqual('integral_plaintext', results[0]['attributes'][0]['value'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600 156)         self.assertEqual('Plot of the integral', results[0]['attributes'][1]['label'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600 157)         self.assertEqual('plot.gif', results[0]['attributes'][1]['image']['src'])
+8f3b33de tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 02:05:52 -0600 158)         self.assertEqual('plot_alt', results[0]['attributes'][1]['image']['alt'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 159) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 160)         self.assertEqual(len(results[0]['urls']), 1)
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 161) 
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 162)         self.assertEqual(referer_url, results[0]['urls'][0]['url'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 163)         self.assertEqual('Wolfram|Alpha', results[0]['urls'][0]['title'])
+4d8996eb tests/unit/engines/test_wolframalpha_api.py  (a01200356   2016-02-28 00:47:36 -0600 164)         self.assertEqual(referer_url, results[1]['url'])
+f67db1e1 tests/unit/engines/test_wolframalpha_api.py  (firebovine  2016-09-10 18:04:24 -0400 165)         self.assertEqual('Wolfram|Alpha (integral_plaintext)', results[1]['title'])
+09ee2aa6 tests/unit/engines/test_wolframalpha_api.py  (marc        2016-07-06 17:29:40 -0500 166)         self.assertIn('integral_plaintext', results[1]['content'])

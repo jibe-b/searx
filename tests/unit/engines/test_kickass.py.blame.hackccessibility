@@ -1,0 +1,398 @@
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   1) # -*- coding: utf-8 -*-
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   2) from collections import defaultdict
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   3) import mock
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   4) from searx.engines import kickass
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   5) from searx.testing import SearxTestCase
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   6) 
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   7) 
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   8) class TestKickassEngine(SearxTestCase):
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100   9) 
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  10)     @little_documented
+def test_request(self):
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  11)         query = 'test_query'
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  12)         dicto = defaultdict(dict)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  13)         dicto['pageno'] = 1
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  14)         params = kickass.request(query, dicto)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  15)         self.assertIn('url', params)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  16)         self.assertIn(query, params['url'])
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200  17)         self.assertIn('kickass.cd', params['url'])
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  18)         self.assertFalse(params['verify'])
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  19) 
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  20)     def test_response(self):
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  21)         self.assertRaises(AttributeError, kickass.response, None)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  22)         self.assertRaises(AttributeError, kickass.response, [])
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  23)         self.assertRaises(AttributeError, kickass.response, '')
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  24)         self.assertRaises(AttributeError, kickass.response, '[]')
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  25) 
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  26)         response = mock.Mock(text='<html></html>')
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  27)         self.assertEqual(kickass.response(response), [])
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  28) 
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  29)         html = """
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  30)         <table cellpadding="0" cellspacing="0" class="data" style="width: 100%">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  31)             <tr class="firstr">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  32)                 <th class="width100perc nopad">torrent name</th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  33)                 <th class="center">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  34)                     <a href="/search/test/?field=size&sorder=desc" rel="nofollow">size</a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  35)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  36)                 <th class="center"><span class="files">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  37)                     <a href="/search/test/?field=files_count&sorder=desc" rel="nofollow">files</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  38)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  39)                 <th class="center"><span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  40)                     <a href="/search/test/?field=time_add&sorder=desc" rel="nofollow">age</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  41)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  42)                 <th class="center"><span class="seed">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  43)                     <a href="/search/test/?field=seeders&sorder=desc" rel="nofollow">seed</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  44)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  45)                 <th class="lasttd nobr center">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  46)                     <a href="/search/test/?field=leechers&sorder=desc" rel="nofollow">leech</a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  47)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  48)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  49)             <tr class="even" id="torrent_test6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  50)                 <td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  51)                     <div class="iaconbox center floatright">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  52)                         <a rel="6478745,0" class="icommentjs icon16" href="/test-t6478745.html#comment">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  53)                             <em style="font-size: 12px; margin: 0 4px 0 4px;" class="iconvalue">3</em>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  54)                             <i class="ka ka-comment"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  55)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  56)                         <a class="iverify icon16" href="/test-t6478745.html" title="Verified Torrent">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  57)                             <i class="ka ka16 ka-verify ka-green"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  58)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  59)                         <a href="#" onclick="_scq.push([]); return false;" class="partner1Button idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  60)                             <i class="ka ka16 ka-arrow-down partner1Button"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  61)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  62)                         <a title="Torrent magnet link"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  63)                             href="magnet:?xt=urn:btih:MAGNETURL&dn=test" class="imagnet icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  64)                             <i class="ka ka16 ka-magnet"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  65)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  66)                         <a title="Download torrent file"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  67)                             href="http://torcache.net/torrent/53917.torrent?title=test" class="idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  68)                             <i class="ka ka16 ka-arrow-down"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  69)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  70)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  71)                     <div class="torrentname">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  72)                     <a href="/test-t6478745.html" class="torType txtType"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  73)                     <a href="/test-t6478745.html" class="normalgrey font12px plain bold"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  74)                     <div class="markeredBlock torType txtType">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  75)                         <a href="/url.html" class="cellMainLink">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  76)                             <strong class="red">This should be the title</strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  77)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  78)                         <span class="font11px lightgrey block">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  79)                             Posted by <i class="ka ka-verify" style="font-size: 16px;color:orange;"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  80)                             <a class="plain" href="/user/riri/">riri</a> in
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  81)                             <span id="cat_6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  82)                                 <strong><a href="/other/">Other</a> > <a href="/unsorted/">Unsorted</a></strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  83)                             </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  84)                         </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  85)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  86)                 </td>
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200  87)                 <td class="nobr center">449 bytes</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  88)                 <td class="center">4</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  89)                 <td class="center">2&nbsp;years</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  90)                 <td class="green center">10</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  91)                 <td class="red lasttd center">1</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  92)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  93)         </table>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  94)         """
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  95)         response = mock.Mock(text=html)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  96)         results = kickass.response(response)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  97)         self.assertEqual(type(results), list)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  98)         self.assertEqual(len(results), 1)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100  99)         self.assertEqual(results[0]['title'], 'This should be the title')
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 100)         self.assertEqual(results[0]['url'], 'https://kickass.cd/url.html')
+fdf63940 tests/unit/engines/test_kickass.py  (Adam Tauber  2016-12-09 19:10:57 +0100 101)         self.assertEqual(results[0]['content'], 'Posted by riri in Other > Unsorted')
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 102)         self.assertEqual(results[0]['seed'], 10)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 103)         self.assertEqual(results[0]['leech'], 1)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 104)         self.assertEqual(results[0]['filesize'], 449)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 105)         self.assertEqual(results[0]['files'], 4)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 106)         self.assertEqual(results[0]['magnetlink'], 'magnet:?xt=urn:btih:MAGNETURL&dn=test')
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 107)         self.assertEqual(results[0]['torrentfile'], 'http://torcache.net/torrent/53917.torrent?title=test')
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 108) 
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 109)         html = """
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 110)         <table cellpadding="0" cellspacing="0" class="data" style="width: 100%">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 111)             <tr class="firstr">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 112)                 <th class="width100perc nopad">torrent name</th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 113)                 <th class="center">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 114)                     <a href="/search/test/?field=size&sorder=desc" rel="nofollow">size</a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 115)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 116)                 <th class="center"><span class="files">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 117)                     <a href="/search/test/?field=files_count&sorder=desc" rel="nofollow">files</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 118)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 119)                 <th class="center"><span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 120)                     <a href="/search/test/?field=time_add&sorder=desc" rel="nofollow">age</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 121)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 122)                 <th class="center"><span class="seed">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 123)                     <a href="/search/test/?field=seeders&sorder=desc" rel="nofollow">seed</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 124)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 125)                 <th class="lasttd nobr center">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 126)                     <a href="/search/test/?field=leechers&sorder=desc" rel="nofollow">leech</a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 127)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 128)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 129)         </table>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 130)         """
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 131)         response = mock.Mock(text=html)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 132)         results = kickass.response(response)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 133)         self.assertEqual(type(results), list)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 134)         self.assertEqual(len(results), 0)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 135) 
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 136)         html = """
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 137)         <table cellpadding="0" cellspacing="0" class="data" style="width: 100%">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 138)             <tr class="firstr">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 139)                 <th class="width100perc nopad">torrent name</th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 140)                 <th class="center">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 141)                     <a href="/search/test/?field=size&sorder=desc" rel="nofollow">size</a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 142)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 143)                 <th class="center"><span class="files">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 144)                     <a href="/search/test/?field=files_count&sorder=desc" rel="nofollow">files</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 145)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 146)                 <th class="center"><span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 147)                     <a href="/search/test/?field=time_add&sorder=desc" rel="nofollow">age</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 148)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 149)                 <th class="center"><span class="seed">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 150)                     <a href="/search/test/?field=seeders&sorder=desc" rel="nofollow">seed</a></span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 151)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 152)                 <th class="lasttd nobr center">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 153)                     <a href="/search/test/?field=leechers&sorder=desc" rel="nofollow">leech</a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 154)                 </th>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 155)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 156)             <tr class="even" id="torrent_test6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 157)                 <td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 158)                     <div class="iaconbox center floatright">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 159)                         <a rel="6478745,0" class="icommentjs icon16" href="/test-t6478745.html#comment">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 160)                             <em style="font-size: 12px; margin: 0 4px 0 4px;" class="iconvalue">3</em>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 161)                             <i class="ka ka-comment"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 162)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 163)                         <a class="iverify icon16" href="/test-t6478745.html" title="Verified Torrent">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 164)                             <i class="ka ka16 ka-verify ka-green"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 165)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 166)                         <a href="#" onclick="_scq.push([]); return false;" class="partner1Button idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 167)                             <i class="ka ka16 ka-arrow-down partner1Button"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 168)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 169)                         <a title="Torrent magnet link"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 170)                             href="magnet:?xt=urn:btih:MAGNETURL&dn=test" class="imagnet icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 171)                             <i class="ka ka16 ka-magnet"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 172)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 173)                         <a title="Download torrent file"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 174)                             href="http://torcache.net/torrent/53917.torrent?title=test" class="idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 175)                             <i class="ka ka16 ka-arrow-down"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 176)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 177)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 178)                     <div class="torrentname">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 179)                     <a href="/test-t6478745.html" class="torType txtType"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 180)                     <a href="/test-t6478745.html" class="normalgrey font12px plain bold"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 181)                     <div class="markeredBlock torType txtType">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 182)                         <a href="/url.html" class="cellMainLink">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 183)                             <strong class="red">This should be the title</strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 184)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 185)                         <span class="font11px lightgrey block">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 186)                             Posted by <i class="ka ka-verify" style="font-size: 16px;color:orange;"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 187)                             <a class="plain" href="/user/riri/">riri</a> in
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 188)                             <span id="cat_6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 189)                                 <strong><a href="/other/">Other</a> > <a href="/unsorted/">Unsorted</a></strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 190)                             </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 191)                         </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 192)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 193)                 </td>
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 194)                 <td class="nobr center">1 KiB</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 195)                 <td class="center">4</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 196)                 <td class="center">2&nbsp;years</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 197)                 <td class="green center">10</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 198)                 <td class="red lasttd center">1</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 199)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 200)             <tr class="even" id="torrent_test6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 201)                 <td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 202)                     <div class="iaconbox center floatright">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 203)                         <a rel="6478745,0" class="icommentjs icon16" href="/test-t6478745.html#comment">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 204)                             <em style="font-size: 12px; margin: 0 4px 0 4px;" class="iconvalue">3</em>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 205)                             <i class="ka ka-comment"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 206)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 207)                         <a class="iverify icon16" href="/test-t6478745.html" title="Verified Torrent">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 208)                             <i class="ka ka16 ka-verify ka-green"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 209)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 210)                         <a href="#" onclick="_scq.push([]); return false;" class="partner1Button idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 211)                             <i class="ka ka16 ka-arrow-down partner1Button"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 212)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 213)                         <a title="Torrent magnet link"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 214)                             href="magnet:?xt=urn:btih:MAGNETURL&dn=test" class="imagnet icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 215)                             <i class="ka ka16 ka-magnet"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 216)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 217)                         <a title="Download torrent file"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 218)                             href="http://torcache.net/torrent/53917.torrent?title=test" class="idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 219)                             <i class="ka ka16 ka-arrow-down"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 220)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 221)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 222)                     <div class="torrentname">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 223)                     <a href="/test-t6478745.html" class="torType txtType"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 224)                     <a href="/test-t6478745.html" class="normalgrey font12px plain bold"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 225)                     <div class="markeredBlock torType txtType">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 226)                         <a href="/url.html" class="cellMainLink">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 227)                             <strong class="red">This should be the title</strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 228)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 229)                         <span class="font11px lightgrey block">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 230)                             Posted by <i class="ka ka-verify" style="font-size: 16px;color:orange;"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 231)                             <a class="plain" href="/user/riri/">riri</a> in
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 232)                             <span id="cat_6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 233)                                 <strong><a href="/other/">Other</a> > <a href="/unsorted/">Unsorted</a></strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 234)                             </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 235)                         </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 236)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 237)                 </td>
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 238)                 <td class="nobr center">1 MiB</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 239)                 <td class="center">4</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 240)                 <td class="center">2&nbsp;years</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 241)                 <td class="green center">9</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 242)                 <td class="red lasttd center">1</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 243)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 244)             <tr class="even" id="torrent_test6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 245)                 <td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 246)                     <div class="iaconbox center floatright">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 247)                         <a rel="6478745,0" class="icommentjs icon16" href="/test-t6478745.html#comment">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 248)                             <em style="font-size: 12px; margin: 0 4px 0 4px;" class="iconvalue">3</em>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 249)                             <i class="ka ka-comment"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 250)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 251)                         <a class="iverify icon16" href="/test-t6478745.html" title="Verified Torrent">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 252)                             <i class="ka ka16 ka-verify ka-green"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 253)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 254)                         <a href="#" onclick="_scq.push([]); return false;" class="partner1Button idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 255)                             <i class="ka ka16 ka-arrow-down partner1Button"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 256)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 257)                         <a title="Torrent magnet link"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 258)                             href="magnet:?xt=urn:btih:MAGNETURL&dn=test" class="imagnet icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 259)                             <i class="ka ka16 ka-magnet"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 260)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 261)                         <a title="Download torrent file"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 262)                             href="http://torcache.net/torrent/53917.torrent?title=test" class="idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 263)                             <i class="ka ka16 ka-arrow-down"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 264)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 265)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 266)                     <div class="torrentname">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 267)                     <a href="/test-t6478745.html" class="torType txtType"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 268)                     <a href="/test-t6478745.html" class="normalgrey font12px plain bold"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 269)                     <div class="markeredBlock torType txtType">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 270)                         <a href="/url.html" class="cellMainLink">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 271)                             <strong class="red">This should be the title</strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 272)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 273)                         <span class="font11px lightgrey block">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 274)                             Posted by <i class="ka ka-verify" style="font-size: 16px;color:orange;"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 275)                             <a class="plain" href="/user/riri/">riri</a> in
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 276)                             <span id="cat_6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 277)                                 <strong><a href="/other/">Other</a> > <a href="/unsorted/">Unsorted</a></strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 278)                             </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 279)                         </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 280)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 281)                 </td>
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 282)                 <td class="nobr center">1 GiB</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 283)                 <td class="center">4</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 284)                 <td class="center">2&nbsp;years</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 285)                 <td class="green center">8</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 286)                 <td class="red lasttd center">1</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 287)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 288)             <tr class="even" id="torrent_test6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 289)                 <td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 290)                     <div class="iaconbox center floatright">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 291)                         <a rel="6478745,0" class="icommentjs icon16" href="/test-t6478745.html#comment">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 292)                             <em style="font-size: 12px; margin: 0 4px 0 4px;" class="iconvalue">3</em>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 293)                             <i class="ka ka-comment"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 294)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 295)                         <a class="iverify icon16" href="/test-t6478745.html" title="Verified Torrent">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 296)                             <i class="ka ka16 ka-verify ka-green"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 297)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 298)                         <a href="#" onclick="_scq.push([]); return false;" class="partner1Button idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 299)                             <i class="ka ka16 ka-arrow-down partner1Button"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 300)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 301)                         <a title="Torrent magnet link"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 302)                             href="magnet:?xt=urn:btih:MAGNETURL&dn=test" class="imagnet icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 303)                             <i class="ka ka16 ka-magnet"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 304)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 305)                         <a title="Download torrent file"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 306)                             href="http://torcache.net/torrent/53917.torrent?title=test" class="idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 307)                             <i class="ka ka16 ka-arrow-down"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 308)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 309)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 310)                     <div class="torrentname">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 311)                     <a href="/test-t6478745.html" class="torType txtType"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 312)                     <a href="/test-t6478745.html" class="normalgrey font12px plain bold"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 313)                     <div class="markeredBlock torType txtType">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 314)                         <a href="/url.html" class="cellMainLink">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 315)                             <strong class="red">This should be the title</strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 316)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 317)                         <span class="font11px lightgrey block">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 318)                             Posted by <i class="ka ka-verify" style="font-size: 16px;color:orange;"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 319)                             <a class="plain" href="/user/riri/">riri</a> in
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 320)                             <span id="cat_6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 321)                                 <strong><a href="/other/">Other</a> > <a href="/unsorted/">Unsorted</a></strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 322)                             </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 323)                         </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 324)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 325)                 </td>
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 326)                 <td class="nobr center">1 TiB</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 327)                 <td class="center">4</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 328)                 <td class="center">2&nbsp;years</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 329)                 <td class="green center">7</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 330)                 <td class="red lasttd center">1</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 331)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 332)             <tr class="even" id="torrent_test6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 333)                 <td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 334)                     <div class="iaconbox center floatright">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 335)                         <a rel="6478745,0" class="icommentjs icon16" href="/test-t6478745.html#comment">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 336)                             <em style="font-size: 12px; margin: 0 4px 0 4px;" class="iconvalue">3</em>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 337)                             <i class="ka ka-comment"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 338)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 339)                         <a class="iverify icon16" href="/test-t6478745.html" title="Verified Torrent">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 340)                             <i class="ka ka16 ka-verify ka-green"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 341)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 342)                         <a href="#" onclick="_scq.push([]); return false;" class="partner1Button idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 343)                             <i class="ka ka16 ka-arrow-down partner1Button"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 344)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 345)                         <a title="Torrent magnet link"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 346)                             href="magnet:?xt=urn:btih:MAGNETURL&dn=test" class="imagnet icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 347)                             <i class="ka ka16 ka-magnet"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 348)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 349)                         <a title="Download torrent file"
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 350)                             href="http://torcache.net/torrent/53917.torrent?title=test" class="idownload icon16">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 351)                             <i class="ka ka16 ka-arrow-down"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 352)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 353)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 354)                     <div class="torrentname">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 355)                     <a href="/test-t6478745.html" class="torType txtType"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 356)                     <a href="/test-t6478745.html" class="normalgrey font12px plain bold"></a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 357)                     <div class="markeredBlock torType txtType">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 358)                         <a href="/url.html" class="cellMainLink">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 359)                             <strong class="red">This should be the title</strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 360)                         </a>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 361)                         <span class="font11px lightgrey block">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 362)                             Posted by <i class="ka ka-verify" style="font-size: 16px;color:orange;"></i>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 363)                             <a class="plain" href="/user/riri/">riri</a> in
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 364)                             <span id="cat_6478745">
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 365)                                 <strong><a href="/other/">Other</a> > <a href="/unsorted/">Unsorted</a></strong>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 366)                             </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 367)                         </span>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 368)                     </div>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 369)                 </td>
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 370)                 <td class="nobr center">z bytes</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 371)                 <td class="center">r</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 372)                 <td class="center">2&nbsp;years</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 373)                 <td class="green center">a</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 374)                 <td class="red lasttd center">t</td>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 375)             </tr>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 376)         </table>
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 377)         """
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 378)         response = mock.Mock(text=html)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 379)         results = kickass.response(response)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 380)         self.assertEqual(type(results), list)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 381)         self.assertEqual(len(results), 5)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 382)         self.assertEqual(results[0]['title'], 'This should be the title')
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 383)         self.assertEqual(results[0]['url'], 'https://kickass.cd/url.html')
+8116e341 tests/unit/engines/test_kickass.py  (Adam Tauber  2016-12-09 19:20:55 +0100 384)         self.assertEqual(results[0]['content'], 'Posted by riri in Other > Unsorted')
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 385)         self.assertEqual(results[0]['seed'], 10)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 386)         self.assertEqual(results[0]['leech'], 1)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 387)         self.assertEqual(results[0]['files'], 4)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 388)         self.assertEqual(results[0]['magnetlink'], 'magnet:?xt=urn:btih:MAGNETURL&dn=test')
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 389)         self.assertEqual(results[0]['torrentfile'], 'http://torcache.net/torrent/53917.torrent?title=test')
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 390)         self.assertEqual(results[0]['filesize'], 1000)
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 391)         self.assertEqual(results[1]['filesize'], 1000000)
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 392)         self.assertEqual(results[2]['filesize'], 1000000000)
+53c9fde9 tests/unit/engines/test_kickass.py  (Noémi Ványi  2016-10-11 19:31:42 +0200 393)         self.assertEqual(results[3]['filesize'], 1000000000000)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 394)         self.assertEqual(results[4]['seed'], 0)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 395)         self.assertEqual(results[4]['leech'], 0)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 396)         self.assertEqual(results[4]['files'], None)
+8ea749d6 searx/tests/engines/test_kickass.py (Cqoicebordel 2015-01-30 21:02:17 +0100 397)         self.assertEqual(results[4]['filesize'], None)

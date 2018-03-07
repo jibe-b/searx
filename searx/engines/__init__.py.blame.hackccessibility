@@ -1,0 +1,243 @@
+^ae9fb1d (asciimoo           2013-10-14 23:09:13 +0200   1) 
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200   2) '''
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200   3) searx is free software: you can redistribute it and/or modify
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200   4) it under the terms of the GNU Affero General Public License as published by
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200   5) the Free Software Foundation, either version 3 of the License, or
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200   6) (at your option) any later version.
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200   7) 
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200   8) searx is distributed in the hope that it will be useful,
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200   9) but WITHOUT ANY WARRANTY; without even the implied warranty of
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  10) MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  11) GNU Affero General Public License for more details.
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  12) 
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  13) You should have received a copy of the GNU Affero General Public License
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  14) along with searx. If not, see < http://www.gnu.org/licenses/ >.
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  15) 
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  16) (C) 2013- by Adam Tauber, <asciimoo@gmail.com>
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  17) '''
+cf36b20b (asciimoo           2013-10-17 00:32:32 +0200  18) 
+22fd0746 (Gabor Nagy         2014-02-05 20:24:31 +0100  19) import sys
+78365ffb (Adam Tauber        2017-06-06 22:20:20 +0200  20) import threading
+78365ffb (Adam Tauber        2017-06-06 22:20:20 +0200  21) from os.path import realpath, dirname
+829032f3 (Marc Abonce Seguin 2018-01-16 23:05:18 -0600  22) from io import open
+257e5295 (Adam Tauber        2016-07-04 22:46:43 +0200  23) from flask_babel import gettext
+b0ba367a (Adam Tauber        2014-07-07 13:59:27 +0200  24) from operator import itemgetter
+f62ce21f (marc               2016-11-05 20:51:38 -0600  25) from json import loads
+af35eee1 (marc               2016-12-15 00:34:43 -0600  26) from requests import get
+22fd0746 (Gabor Nagy         2014-02-05 20:24:31 +0100  27) from searx import settings
+299a80a1 (Adam Tauber        2015-01-09 04:13:05 +0100  28) from searx import logger
+55dc5383 (Adam Tauber        2016-11-19 17:51:19 +0100  29) from searx.utils import load_module
+299a80a1 (Adam Tauber        2015-01-09 04:13:05 +0100  30) 
+299a80a1 (Adam Tauber        2015-01-09 04:13:05 +0100  31) 
+299a80a1 (Adam Tauber        2015-01-09 04:13:05 +0100  32) logger = logger.getChild('engines')
+^ae9fb1d (asciimoo           2013-10-14 23:09:13 +0200  33) 
+^ae9fb1d (asciimoo           2013-10-14 23:09:13 +0200  34) engine_dir = dirname(realpath(__file__))
+39d229e1 (asciimoo           2013-10-23 23:54:46 +0200  35) 
+d793c273 (asciimoo           2013-10-15 19:11:43 +0200  36) engines = {}
+^ae9fb1d (asciimoo           2013-10-14 23:09:13 +0200  37) 
+f76d80de (asciimoo           2013-10-17 21:06:28 +0200  38) categories = {'general': []}
+f76d80de (asciimoo           2013-10-17 21:06:28 +0200  39) 
+829032f3 (Marc Abonce Seguin 2018-01-16 23:05:18 -0600  40) languages = loads(open(engine_dir + '/../data/engines_languages.json', 'r', encoding='utf-8').read())
+f76d80de (asciimoo           2013-10-17 21:06:28 +0200  41) 
+88425f05 (asciimoo           2014-01-31 15:45:18 +0100  42) engine_shortcuts = {}
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100  43) engine_default_args = {'paging': False,
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100  44)                        'categories': ['general'],
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100  45)                        'language_support': True,
+149802c5 (marc               2016-08-05 23:34:56 -0500  46)                        'supported_languages': [],
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100  47)                        'safesearch': False,
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100  48)                        'timeout': settings['outgoing']['request_timeout'],
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100  49)                        'shortcut': '-',
+10947536 (Adam Tauber        2016-02-20 00:21:56 +0100  50)                        'disabled': False,
+10947536 (Adam Tauber        2016-02-20 00:21:56 +0100  51)                        'suspend_end_time': 0,
+93c0c49e (Noemi Vanyi        2016-07-17 18:42:30 +0200  52)                        'continuous_errors': 0,
+93c0c49e (Noemi Vanyi        2016-07-17 18:42:30 +0200  53)                        'time_range_support': False}
+88425f05 (asciimoo           2014-01-31 15:45:18 +0100  54) 
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100  55) 
+2cfa760b (Adam Tauber        2014-12-13 19:26:40 +0100  56) @little_documented
+def load_engine(engine_data):
+86daef20 (Adam Tauber        2016-09-28 22:30:05 +0200  57) 
+86daef20 (Adam Tauber        2016-09-28 22:30:05 +0200  58)     if '_' in engine_data['name']:
+86daef20 (Adam Tauber        2016-09-28 22:30:05 +0200  59)         logger.error('Engine name conains underscore: "{}"'.format(engine_data['name']))
+86daef20 (Adam Tauber        2016-09-28 22:30:05 +0200  60)         sys.exit(1)
+86daef20 (Adam Tauber        2016-09-28 22:30:05 +0200  61) 
+86daef20 (Adam Tauber        2016-09-28 22:30:05 +0200  62)     engine_module = engine_data['engine']
+86daef20 (Adam Tauber        2016-09-28 22:30:05 +0200  63) 
+54d98763 (Adam Tauber        2016-07-25 23:36:52 +0200  64)     try:
+55dc5383 (Adam Tauber        2016-11-19 17:51:19 +0100  65)         engine = load_module(engine_module + '.py', engine_dir)
+54d98763 (Adam Tauber        2016-07-25 23:36:52 +0200  66)     except:
+86daef20 (Adam Tauber        2016-09-28 22:30:05 +0200  67)         logger.exception('Cannot load engine "{}"'.format(engine_module))
+54d98763 (Adam Tauber        2016-07-25 23:36:52 +0200  68)         return None
+2a788c8f (asciimoo           2014-01-31 04:35:23 +0100  69) 
+39d229e1 (asciimoo           2013-10-23 23:54:46 +0200  70)     for param_name in engine_data:
+39d229e1 (asciimoo           2013-10-23 23:54:46 +0200  71)         if param_name == 'engine':
+39d229e1 (asciimoo           2013-10-23 23:54:46 +0200  72)             continue
+39d229e1 (asciimoo           2013-10-23 23:54:46 +0200  73)         if param_name == 'categories':
+3afdd1d9 (asciimoo           2014-01-19 00:17:02 +0100  74)             if engine_data['categories'] == 'none':
+1a2cf205 (asciimoo           2013-11-04 21:46:23 +0100  75)                 engine.categories = []
+1a2cf205 (asciimoo           2013-11-04 21:46:23 +0100  76)             else:
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100  77)                 engine.categories = list(map(str.strip, engine_data['categories'].split(',')))
+39d229e1 (asciimoo           2013-10-23 23:54:46 +0200  78)             continue
+3afdd1d9 (asciimoo           2014-01-19 00:17:02 +0100  79)         setattr(engine, param_name, engine_data[param_name])
+88425f05 (asciimoo           2014-01-31 15:45:18 +0100  80) 
+52e615de (Adam Tauber        2016-11-30 18:43:03 +0100  81)     for arg_name, arg_value in engine_default_args.items():
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100  82)         if not hasattr(engine, arg_name):
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100  83)             setattr(engine, arg_name, arg_value)
+b19e681c (Adam Tauber        2015-01-31 23:11:45 +0100  84) 
+88425f05 (asciimoo           2014-01-31 15:45:18 +0100  85)     # checking required variables
+34bdeda6 (asciimoo           2013-10-25 23:41:14 +0200  86)     for engine_attr in dir(engine):
+34bdeda6 (asciimoo           2013-10-25 23:41:14 +0200  87)         if engine_attr.startswith('_'):
+34bdeda6 (asciimoo           2013-10-25 23:41:14 +0200  88)             continue
+1794f6a4 (Adam Tauber        2017-07-19 21:30:18 +0200  89)         if engine_attr == 'inactive' and getattr(engine, engine_attr) is True:
+1794f6a4 (Adam Tauber        2017-07-19 21:30:18 +0200  90)             return None
+b2492c94 (asciimoo           2014-01-20 02:31:20 +0100  91)         if getattr(engine, engine_attr) is None:
+299a80a1 (Adam Tauber        2015-01-09 04:13:05 +0100  92)             logger.error('Missing engine config attribute: "{0}.{1}"'
+4689fe34 (Alexandre Flament  2015-05-02 15:45:17 +0200  93)                          .format(engine.name, engine_attr))
+34bdeda6 (asciimoo           2013-10-25 23:41:14 +0200  94)             sys.exit(1)
+88425f05 (asciimoo           2014-01-31 15:45:18 +0100  95) 
+af35eee1 (marc               2016-12-15 00:34:43 -0600  96)     # assign supported languages from json file
+af35eee1 (marc               2016-12-15 00:34:43 -0600  97)     if engine_data['name'] in languages:
+af35eee1 (marc               2016-12-15 00:34:43 -0600  98)         setattr(engine, 'supported_languages', languages[engine_data['name']])
+af35eee1 (marc               2016-12-15 00:34:43 -0600  99) 
+af35eee1 (marc               2016-12-15 00:34:43 -0600 100)     # assign language fetching method if auxiliary method exists
+af35eee1 (marc               2016-12-15 00:34:43 -0600 101)     if hasattr(engine, '_fetch_supported_languages'):
+af35eee1 (marc               2016-12-15 00:34:43 -0600 102)         setattr(engine, 'fetch_supported_languages',
+af35eee1 (marc               2016-12-15 00:34:43 -0600 103)                 lambda: engine._fetch_supported_languages(get(engine.supported_languages_url)))
+af35eee1 (marc               2016-12-15 00:34:43 -0600 104) 
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 105)     engine.stats = {
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 106)         'result_count': 0,
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 107)         'search_count': 0,
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 108)         'page_load_time': 0,
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 109)         'page_load_count': 0,
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 110)         'engine_time': 0,
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 111)         'engine_time_count': 0,
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 112)         'score_count': 0,
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 113)         'errors': 0
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 114)     }
+88425f05 (asciimoo           2014-01-31 15:45:18 +0100 115) 
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100 116)     for category_name in engine.categories:
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100 117)         categories.setdefault(category_name, []).append(engine)
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100 118) 
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100 119)     if engine.shortcut in engine_shortcuts:
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100 120)         logger.error('Engine config error: ambigious shortcut: {0}'.format(engine.shortcut))
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100 121)         sys.exit(1)
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100 122) 
+17b0c9f7 (Adam Tauber        2016-02-19 15:13:01 +0100 123)     engine_shortcuts[engine.shortcut] = engine.name
+d5ec0f43 (asciimoo           2013-10-15 18:19:06 +0200 124) 
+2cfa760b (Adam Tauber        2014-12-13 19:26:40 +0100 125)     return engine
+88425f05 (asciimoo           2014-01-31 15:45:18 +0100 126) 
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 127) 
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 128) @little_documented
+def to_percentage(stats, maxvalue):
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 129)     for engine_stat in stats:
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 130)         if maxvalue:
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 131)             engine_stat['percentage'] = int(engine_stat['avg'] / maxvalue * 100)
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 132)         else:
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 133)             engine_stat['percentage'] = 0
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 134)     return stats
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 135) 
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 136) 
+b8191f43 (asciimoo           2013-10-27 01:02:28 +0200 137) def get_engines_stats():
+a5544ab9 (asciimoo           2014-01-05 23:13:53 +0100 138)     # TODO refactor
+4f4ec44b (asciimoo           2013-10-27 02:50:24 +0200 139)     pageloads = []
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 140)     engine_times = []
+4f4ec44b (asciimoo           2013-10-27 02:50:24 +0200 141)     results = []
+e2c1c106 (asciimoo           2013-10-27 14:21:23 +0100 142)     scores = []
+e13fe033 (asciimoo           2013-10-27 20:45:21 +0100 143)     errors = []
+a5544ab9 (asciimoo           2014-01-05 23:13:53 +0100 144)     scores_per_result = []
+b8191f43 (asciimoo           2013-10-27 01:02:28 +0200 145) 
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 146)     max_pageload = max_engine_times = max_results = max_score = max_errors = max_score_per_result = 0  # noqa
+b8191f43 (asciimoo           2013-10-27 01:02:28 +0200 147)     for engine in engines.values():
+b8191f43 (asciimoo           2013-10-27 01:02:28 +0200 148)         if engine.stats['search_count'] == 0:
+b8191f43 (asciimoo           2013-10-27 01:02:28 +0200 149)             continue
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 150)         results_num = \
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 151)             engine.stats['result_count'] / float(engine.stats['search_count'])
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 152) 
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 153)         if engine.stats['page_load_count'] != 0:
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 154)             load_times = engine.stats['page_load_time'] / float(engine.stats['page_load_count'])  # noqa
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 155)         else:
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 156)             load_times = 0
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 157) 
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 158)         if engine.stats['engine_time_count'] != 0:
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 159)             this_engine_time = engine.stats['engine_time'] / float(engine.stats['engine_time_count'])  # noqa
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 160)         else:
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 161)             this_engine_time = 0
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 162) 
+e2c1c106 (asciimoo           2013-10-27 14:21:23 +0100 163)         if results_num:
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 164)             score = engine.stats['score_count'] / float(engine.stats['search_count'])  # noqa
+a5544ab9 (asciimoo           2014-01-05 23:13:53 +0100 165)             score_per_result = score / results_num
+e2c1c106 (asciimoo           2013-10-27 14:21:23 +0100 166)         else:
+a5544ab9 (asciimoo           2014-01-05 23:13:53 +0100 167)             score = score_per_result = 0.0
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 168) 
+4f4ec44b (asciimoo           2013-10-27 02:50:24 +0200 169)         max_pageload = max(load_times, max_pageload)
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 170)         max_engine_times = max(this_engine_time, max_engine_times)
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 171)         max_results = max(results_num, max_results)
+e2c1c106 (asciimoo           2013-10-27 14:21:23 +0100 172)         max_score = max(score, max_score)
+a5544ab9 (asciimoo           2014-01-05 23:13:53 +0100 173)         max_score_per_result = max(score_per_result, max_score_per_result)
+e13fe033 (asciimoo           2013-10-27 20:45:21 +0100 174)         max_errors = max(max_errors, engine.stats['errors'])
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 175) 
+4f4ec44b (asciimoo           2013-10-27 02:50:24 +0200 176)         pageloads.append({'avg': load_times, 'name': engine.name})
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 177)         engine_times.append({'avg': this_engine_time, 'name': engine.name})
+4f4ec44b (asciimoo           2013-10-27 02:50:24 +0200 178)         results.append({'avg': results_num, 'name': engine.name})
+e2c1c106 (asciimoo           2013-10-27 14:21:23 +0100 179)         scores.append({'avg': score, 'name': engine.name})
+e13fe033 (asciimoo           2013-10-27 20:45:21 +0100 180)         errors.append({'avg': engine.stats['errors'], 'name': engine.name})
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 181)         scores_per_result.append({
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 182)             'avg': score_per_result,
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 183)             'name': engine.name
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 184)         })
+4f4ec44b (asciimoo           2013-10-27 02:50:24 +0200 185) 
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 186)     pageloads = to_percentage(pageloads, max_pageload)
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 187)     engine_times = to_percentage(engine_times, max_engine_times)
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 188)     results = to_percentage(results, max_results)
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 189)     scores = to_percentage(scores, max_score)
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 190)     scores_per_result = to_percentage(scores_per_result, max_score_per_result)
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 191)     erros = to_percentage(errors, max_errors)
+e13fe033 (asciimoo           2013-10-27 20:45:21 +0100 192) 
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 193)     return [
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 194)         (
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 195)             gettext('Engine time (sec)'),
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 196)             sorted(engine_times, key=itemgetter('avg'))
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 197)         ),
+01e2648e (Alexandre Flament  2016-11-05 13:45:20 +0100 198)         (
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 199)             gettext('Page loads (sec)'),
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 200)             sorted(pageloads, key=itemgetter('avg'))
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 201)         ),
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 202)         (
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 203)             gettext('Number of results'),
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 204)             sorted(results, key=itemgetter('avg'), reverse=True)
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 205)         ),
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 206)         (
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 207)             gettext('Scores'),
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 208)             sorted(scores, key=itemgetter('avg'), reverse=True)
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 209)         ),
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 210)         (
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 211)             gettext('Scores per result'),
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 212)             sorted(scores_per_result, key=itemgetter('avg'), reverse=True)
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 213)         ),
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 214)         (
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 215)             gettext('Errors'),
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 216)             sorted(errors, key=itemgetter('avg'), reverse=True)
+2b1d2dbc (asciimoo           2014-01-22 00:17:49 +0100 217)         ),
+dd466297 (Matej Cotman       2014-01-19 22:59:01 +0100 218)     ]
+2cfa760b (Adam Tauber        2014-12-13 19:26:40 +0100 219) 
+2cfa760b (Adam Tauber        2014-12-13 19:26:40 +0100 220) 
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 221) def load_engines(engine_list):
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 222)     global engines
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 223)     engines.clear()
+a605377c (Adam Tauber        2016-12-27 17:25:19 +0100 224)     for engine_data in engine_list:
+a605377c (Adam Tauber        2016-12-27 17:25:19 +0100 225)         engine = load_engine(engine_data)
+12d91c1d (Alexandre Flament  2017-04-01 12:00:54 +0200 226)         if engine is not None:
+12d91c1d (Alexandre Flament  2017-04-01 12:00:54 +0200 227)             engines[engine.name] = engine
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 228)     return engines
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 229) 
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 230) 
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 231) def initialize_engines(engine_list):
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 232)     load_engines(engine_list)
+2f69eaeb (Adam Tauber        2018-02-17 14:30:06 +0100 233)     for engine_name, engine in engines.items():
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 234)         if hasattr(engine, 'init'):
+2f69eaeb (Adam Tauber        2018-02-17 14:30:06 +0100 235)             init_fn = getattr(engine, 'init')
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 236) 
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 237)             def engine_init():
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 238)                 init_fn()
+2f69eaeb (Adam Tauber        2018-02-17 14:30:06 +0100 239)                 logger.debug('%s engine initialized', engine_name)
+2f69eaeb (Adam Tauber        2018-02-17 14:30:06 +0100 240)             logger.debug('Starting background initialization of %s engine', engine_name)
+0f6612bb (Adam Tauber        2017-07-21 14:27:25 +0200 241)             threading.Thread(target=engine_init).start()

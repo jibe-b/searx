@@ -1,0 +1,87 @@
+c65a409f (marc        2017-05-20 22:33:08 -0500  1) """
+c65a409f (marc        2017-05-20 22:33:08 -0500  2)  DuckDuckGo (Images)
+c65a409f (marc        2017-05-20 22:33:08 -0500  3) 
+c65a409f (marc        2017-05-20 22:33:08 -0500  4)  @website     https://duckduckgo.com/
+c65a409f (marc        2017-05-20 22:33:08 -0500  5)  @provide-api yes (https://duckduckgo.com/api),
+c65a409f (marc        2017-05-20 22:33:08 -0500  6)               but images are not supported
+c65a409f (marc        2017-05-20 22:33:08 -0500  7) 
+c65a409f (marc        2017-05-20 22:33:08 -0500  8)  @using-api   no
+c65a409f (marc        2017-05-20 22:33:08 -0500  9)  @results     JSON (site requires js to get images)
+c65a409f (marc        2017-05-20 22:33:08 -0500 10)  @stable      no (JSON can change)
+c65a409f (marc        2017-05-20 22:33:08 -0500 11)  @parse       url, title, img_src
+c65a409f (marc        2017-05-20 22:33:08 -0500 12) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 13)  @todo        avoid extra request
+c65a409f (marc        2017-05-20 22:33:08 -0500 14) """
+c65a409f (marc        2017-05-20 22:33:08 -0500 15) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 16) from json import loads
+c65a409f (marc        2017-05-20 22:33:08 -0500 17) from searx.engines.xpath import extract_text
+c65a409f (marc        2017-05-20 22:33:08 -0500 18) from searx.engines.duckduckgo import _fetch_supported_languages, supported_languages_url, get_region_code
+077d8efe (Adam Tauber 2017-07-21 16:23:20 +0200 19) from searx.poolrequests import get
+c65a409f (marc        2017-05-20 22:33:08 -0500 20) from searx.url_utils import urlencode
+c65a409f (marc        2017-05-20 22:33:08 -0500 21) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 22) # engine dependent config
+c65a409f (marc        2017-05-20 22:33:08 -0500 23) categories = ['images']
+c65a409f (marc        2017-05-20 22:33:08 -0500 24) paging = True
+c65a409f (marc        2017-05-20 22:33:08 -0500 25) language_support = True
+c65a409f (marc        2017-05-20 22:33:08 -0500 26) safesearch = True
+c65a409f (marc        2017-05-20 22:33:08 -0500 27) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 28) # search-url
+c65a409f (marc        2017-05-20 22:33:08 -0500 29) images_url = 'https://duckduckgo.com/i.js?{query}&s={offset}&p={safesearch}&o=json&vqd={vqd}'
+c65a409f (marc        2017-05-20 22:33:08 -0500 30) site_url = 'https://duckduckgo.com/?{query}&iar=images&iax=1&ia=images'
+c65a409f (marc        2017-05-20 22:33:08 -0500 31) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 32) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 33) # run query in site to get vqd number needed for requesting images
+c65a409f (marc        2017-05-20 22:33:08 -0500 34) # TODO: find a way to get this number without an extra request (is it a hash of the query?)
+c65a409f (marc        2017-05-20 22:33:08 -0500 35) def get_vqd(query):
+c65a409f (marc        2017-05-20 22:33:08 -0500 36)     res = get(site_url.format(query=urlencode({'q': query})))
+c65a409f (marc        2017-05-20 22:33:08 -0500 37)     content = res.text
+c65a409f (marc        2017-05-20 22:33:08 -0500 38)     vqd = content[content.find('vqd=\'') + 5:]
+c65a409f (marc        2017-05-20 22:33:08 -0500 39)     vqd = vqd[:vqd.find('\'')]
+c65a409f (marc        2017-05-20 22:33:08 -0500 40)     return vqd
+c65a409f (marc        2017-05-20 22:33:08 -0500 41) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 42) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 43) # do search-request
+c65a409f (marc        2017-05-20 22:33:08 -0500 44) def request(query, params):
+c65a409f (marc        2017-05-20 22:33:08 -0500 45)     # to avoid running actual external requests when testing
+c65a409f (marc        2017-05-20 22:33:08 -0500 46)     if 'is_test' not in params:
+c65a409f (marc        2017-05-20 22:33:08 -0500 47)         vqd = get_vqd(query)
+c65a409f (marc        2017-05-20 22:33:08 -0500 48)     else:
+c65a409f (marc        2017-05-20 22:33:08 -0500 49)         vqd = '12345'
+c65a409f (marc        2017-05-20 22:33:08 -0500 50) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 51)     offset = (params['pageno'] - 1) * 50
+c65a409f (marc        2017-05-20 22:33:08 -0500 52) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 53)     safesearch = params['safesearch'] - 1
+c65a409f (marc        2017-05-20 22:33:08 -0500 54) 
+405e5c8f (marc        2017-07-04 22:29:06 -0500 55)     region_code = get_region_code(params['language'], lang_list=supported_languages)
+4d177039 (marc        2017-07-20 15:47:20 -0500 56)     params['url'] = images_url.format(
+4d177039 (marc        2017-07-20 15:47:20 -0500 57)         query=urlencode({'q': query, 'l': region_code}), offset=offset, safesearch=safesearch, vqd=vqd)
+c65a409f (marc        2017-05-20 22:33:08 -0500 58) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 59)     return params
+c65a409f (marc        2017-05-20 22:33:08 -0500 60) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 61) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 62) # get response from search-request
+c65a409f (marc        2017-05-20 22:33:08 -0500 63) def response(resp):
+c65a409f (marc        2017-05-20 22:33:08 -0500 64)     results = []
+c65a409f (marc        2017-05-20 22:33:08 -0500 65) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 66)     content = resp.text
+c65a409f (marc        2017-05-20 22:33:08 -0500 67)     try:
+c65a409f (marc        2017-05-20 22:33:08 -0500 68)         res_json = loads(content)
+c65a409f (marc        2017-05-20 22:33:08 -0500 69)     except:
+c65a409f (marc        2017-05-20 22:33:08 -0500 70)         return []
+c65a409f (marc        2017-05-20 22:33:08 -0500 71) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 72)     # parse results
+c65a409f (marc        2017-05-20 22:33:08 -0500 73)     for result in res_json['results']:
+c65a409f (marc        2017-05-20 22:33:08 -0500 74)         title = result['title']
+c65a409f (marc        2017-05-20 22:33:08 -0500 75)         url = result['url']
+c65a409f (marc        2017-05-20 22:33:08 -0500 76)         thumbnail = result['thumbnail']
+c65a409f (marc        2017-05-20 22:33:08 -0500 77)         image = result['image']
+c65a409f (marc        2017-05-20 22:33:08 -0500 78) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 79)         # append result
+c65a409f (marc        2017-05-20 22:33:08 -0500 80)         results.append({'template': 'images.html',
+c65a409f (marc        2017-05-20 22:33:08 -0500 81)                         'title': title,
+c65a409f (marc        2017-05-20 22:33:08 -0500 82)                         'content': '',
+c65a409f (marc        2017-05-20 22:33:08 -0500 83)                         'thumbnail_src': thumbnail,
+c65a409f (marc        2017-05-20 22:33:08 -0500 84)                         'img_src': image,
+c65a409f (marc        2017-05-20 22:33:08 -0500 85)                         'url': url})
+c65a409f (marc        2017-05-20 22:33:08 -0500 86) 
+c65a409f (marc        2017-05-20 22:33:08 -0500 87)     return results

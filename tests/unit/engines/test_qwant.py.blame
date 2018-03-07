@@ -1,0 +1,339 @@
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   1) from collections import defaultdict
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   2) import mock
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   3) from searx.engines import qwant
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   4) from searx.testing import SearxTestCase
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   5) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   6) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   7) class TestQwantEngine(SearxTestCase):
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   8) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200   9)     def test_request(self):
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  10)         query = 'test_query'
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  11)         dicto = defaultdict(dict)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  12)         dicto['pageno'] = 0
+a11948c7 tests/unit/engines/test_qwant.py  (marc         2016-10-29 21:04:01 -0500  13)         dicto['language'] = 'fr-FR'
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200  14)         qwant.categories = ['']
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  15)         params = qwant.request(query, dicto)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  16)         self.assertIn('url', params)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  17)         self.assertIn(query, params['url'])
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200  18)         self.assertIn('web', params['url'])
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  19)         self.assertIn('qwant.com', params['url'])
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  20)         self.assertIn('fr_fr', params['url'])
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  21) 
+4d177039 tests/unit/engines/test_qwant.py  (marc         2017-07-20 15:47:20 -0500  22)         dicto['language'] = 'en-US'
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200  23)         qwant.categories = ['news']
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  24)         params = qwant.request(query, dicto)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  25)         self.assertFalse('fr' in params['url'])
+4d177039 tests/unit/engines/test_qwant.py  (marc         2017-07-20 15:47:20 -0500  26)         self.assertIn('en_us', params['url'])
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200  27)         self.assertIn('news', params['url'])
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  28) 
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600  29)         qwant.supported_languages = ['en', 'fr-FR', 'fr-CA']
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600  30)         dicto['language'] = 'fr'
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600  31)         params = qwant.request(query, dicto)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600  32)         self.assertIn('fr_fr', params['url'])
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600  33) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  34)     def test_response(self):
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  35)         self.assertRaises(AttributeError, qwant.response, None)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  36)         self.assertRaises(AttributeError, qwant.response, [])
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  37)         self.assertRaises(AttributeError, qwant.response, '')
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  38)         self.assertRaises(AttributeError, qwant.response, '[]')
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  39) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  40)         response = mock.Mock(text='{}')
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  41)         self.assertEqual(qwant.response(response), [])
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  42) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  43)         response = mock.Mock(text='{"data": {}}')
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  44)         self.assertEqual(qwant.response(response), [])
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  45) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  46)         json = """
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  47)         {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  48)           "status": "success",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  49)           "data": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  50)             "query": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  51)               "locale": "en_us",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  52)               "query": "Test",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  53)               "offset": 10
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  54)             },
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  55)             "result": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  56)               "items": [
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  57)                 {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  58)                   "title": "Title",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  59)                   "score": 9999,
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  60)                   "url": "http://www.url.xyz",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  61)                   "source": "...",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  62)                   "desc": "Description",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  63)                   "date": "",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  64)                   "_id": "db0aadd62c2a8565567ffc382f5c61fa",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  65)                   "favicon": "https://s.qwant.com/fav.ico"
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  66)                 }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  67)               ],
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  68)               "filters": []
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  69)             },
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  70)             "cache": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  71)               "key": "e66aa864c00147a0e3a16ff7a5efafde",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  72)               "created": 1433092754,
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  73)               "expiration": 259200,
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  74)               "status": "miss",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  75)               "age": 0
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  76)             }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  77)           }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  78)         }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  79)         """
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  80)         response = mock.Mock(text=json)
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200  81)         qwant.categories = ['general']
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  82)         results = qwant.response(response)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  83)         self.assertEqual(type(results), list)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  84)         self.assertEqual(len(results), 1)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  85)         self.assertEqual(results[0]['title'], 'Title')
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  86)         self.assertEqual(results[0]['url'], 'http://www.url.xyz')
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  87)         self.assertEqual(results[0]['content'], 'Description')
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  88) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  89)         json = """
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  90)         {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  91)           "status": "success",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  92)           "data": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  93)             "query": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  94)               "locale": "en_us",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  95)               "query": "Test",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  96)               "offset": 10
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  97)             },
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200  98)             "result": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200  99)               "items": [
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 100)                 {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 101)                   "title": "Title",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 102)                   "score": 9999,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 103)                   "url": "http://www.url.xyz",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 104)                   "source": "...",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 105)                   "media": "http://image.jpg",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 106)                   "desc": "",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 107)                   "thumbnail": "http://thumbnail.jpg",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 108)                   "date": "",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 109)                   "_id": "db0aadd62c2a8565567ffc382f5c61fa",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 110)                   "favicon": "https://s.qwant.com/fav.ico"
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 111)                 }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 112)               ],
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 113)               "filters": []
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 114)             },
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 115)             "cache": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 116)               "key": "e66aa864c00147a0e3a16ff7a5efafde",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 117)               "created": 1433092754,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 118)               "expiration": 259200,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 119)               "status": "miss",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 120)               "age": 0
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 121)             }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 122)           }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 123)         }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 124)         """
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 125)         response = mock.Mock(text=json)
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200 126)         qwant.categories = ['images']
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 127)         results = qwant.response(response)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 128)         self.assertEqual(type(results), list)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 129)         self.assertEqual(len(results), 1)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 130)         self.assertEqual(results[0]['title'], 'Title')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 131)         self.assertEqual(results[0]['url'], 'http://www.url.xyz')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 132)         self.assertEqual(results[0]['content'], '')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 133)         self.assertEqual(results[0]['thumbnail_src'], 'http://thumbnail.jpg')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 134)         self.assertEqual(results[0]['img_src'], 'http://image.jpg')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 135) 
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 136)         json = """
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 137)         {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 138)           "status": "success",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 139)           "data": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 140)             "query": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 141)               "locale": "en_us",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 142)               "query": "Test",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 143)               "offset": 10
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 144)             },
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 145)             "result": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 146)               "items": [
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 147)                 {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 148)                   "title": "Title",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 149)                   "score": 9999,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 150)                   "url": "http://www.url.xyz",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 151)                   "source": "...",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 152)                   "desc": "Description",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 153)                   "date": 1433260920,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 154)                   "_id": "db0aadd62c2a8565567ffc382f5c61fa",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 155)                   "favicon": "https://s.qwant.com/fav.ico"
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 156)                 }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 157)               ],
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 158)               "filters": []
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 159)             },
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 160)             "cache": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 161)               "key": "e66aa864c00147a0e3a16ff7a5efafde",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 162)               "created": 1433092754,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 163)               "expiration": 259200,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 164)               "status": "miss",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 165)               "age": 0
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 166)             }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 167)           }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 168)         }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 169)         """
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 170)         response = mock.Mock(text=json)
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200 171)         qwant.categories = ['news']
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 172)         results = qwant.response(response)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 173)         self.assertEqual(type(results), list)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 174)         self.assertEqual(len(results), 1)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 175)         self.assertEqual(results[0]['title'], 'Title')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 176)         self.assertEqual(results[0]['url'], 'http://www.url.xyz')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 177)         self.assertEqual(results[0]['content'], 'Description')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 178)         self.assertIn('publishedDate', results[0])
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 179) 
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 180)         json = """
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 181)         {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 182)           "status": "success",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 183)           "data": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 184)             "query": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 185)               "locale": "en_us",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 186)               "query": "Test",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 187)               "offset": 10
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 188)             },
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 189)             "result": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 190)               "items": [
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 191)                 {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 192)                   "title": "Title",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 193)                   "score": 9999,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 194)                   "url": "http://www.url.xyz",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 195)                   "source": "...",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 196)                   "desc": "Description",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 197)                   "date": 1433260920,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 198)                   "_id": "db0aadd62c2a8565567ffc382f5c61fa",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 199)                   "favicon": "https://s.qwant.com/fav.ico"
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 200)                 }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 201)               ],
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 202)               "filters": []
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 203)             },
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 204)             "cache": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 205)               "key": "e66aa864c00147a0e3a16ff7a5efafde",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 206)               "created": 1433092754,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 207)               "expiration": 259200,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 208)               "status": "miss",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 209)               "age": 0
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 210)             }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 211)           }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 212)         }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 213)         """
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 214)         response = mock.Mock(text=json)
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200 215)         qwant.categories = ['social media']
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 216)         results = qwant.response(response)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 217)         self.assertEqual(type(results), list)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 218)         self.assertEqual(len(results), 1)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 219)         self.assertEqual(results[0]['title'], 'Title')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 220)         self.assertEqual(results[0]['url'], 'http://www.url.xyz')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 221)         self.assertEqual(results[0]['content'], 'Description')
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 222)         self.assertIn('publishedDate', results[0])
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 223) 
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 224)         json = """
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 225)         {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 226)           "status": "success",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 227)           "data": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 228)             "query": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 229)               "locale": "en_us",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 230)               "query": "Test",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 231)               "offset": 10
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 232)             },
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 233)             "result": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 234)               "items": [
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 235)                 {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 236)                   "title": "Title",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 237)                   "score": 9999,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 238)                   "url": "http://www.url.xyz",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 239)                   "source": "...",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 240)                   "desc": "Description",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 241)                   "date": 1433260920,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 242)                   "_id": "db0aadd62c2a8565567ffc382f5c61fa",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 243)                   "favicon": "https://s.qwant.com/fav.ico"
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 244)                 }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 245)               ],
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 246)               "filters": []
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 247)             },
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 248)             "cache": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 249)               "key": "e66aa864c00147a0e3a16ff7a5efafde",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 250)               "created": 1433092754,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 251)               "expiration": 259200,
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 252)               "status": "miss",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 253)               "age": 0
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 254)             }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 255)           }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 256)         }
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 257)         """
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 258)         response = mock.Mock(text=json)
+e0774c84 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 22:11:47 +0200 259)         qwant.categories = ['']
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 260)         results = qwant.response(response)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 261)         self.assertEqual(type(results), list)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 262)         self.assertEqual(len(results), 0)
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 263) 
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 264)         json = """
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 265)         {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 266)           "status": "success",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 267)           "data": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 268)             "query": {
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 269)               "locale": "en_us",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 270)               "query": "Test",
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 271)               "offset": 10
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 272)             },
+f05087b9 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-02 20:36:58 +0200 273)             "result": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 274)               "filters": []
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 275)             },
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 276)             "cache": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 277)               "key": "e66aa864c00147a0e3a16ff7a5efafde",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 278)               "created": 1433092754,
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 279)               "expiration": 259200,
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 280)               "status": "miss",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 281)               "age": 0
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 282)             }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 283)           }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 284)         }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 285)         """
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 286)         response = mock.Mock(text=json)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 287)         results = qwant.response(response)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 288)         self.assertEqual(type(results), list)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 289)         self.assertEqual(len(results), 0)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 290) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 291)         json = """
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 292)         {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 293)           "status": "success",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 294)           "data": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 295)             "query": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 296)               "locale": "en_us",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 297)               "query": "Test",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 298)               "offset": 10
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 299)             },
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 300)             "cache": {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 301)               "key": "e66aa864c00147a0e3a16ff7a5efafde",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 302)               "created": 1433092754,
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 303)               "expiration": 259200,
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 304)               "status": "miss",
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 305)               "age": 0
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 306)             }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 307)           }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 308)         }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 309)         """
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 310)         response = mock.Mock(text=json)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 311)         results = qwant.response(response)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 312)         self.assertEqual(type(results), list)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 313)         self.assertEqual(len(results), 0)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 314) 
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 315)         json = """
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 316)         {
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 317)           "status": "success"
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 318)         }
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 319)         """
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 320)         response = mock.Mock(text=json)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 321)         results = qwant.response(response)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 322)         self.assertEqual(type(results), list)
+884eeb85 searx/tests/engines/test_qwant.py (Cqoicebordel 2015-06-01 00:00:32 +0200 323)         self.assertEqual(len(results), 0)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 324) 
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 325)     def test_fetch_supported_languages(self):
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 326)         page = """some code...
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 327)         config_set('project.regionalisation', {"continents":{},"languages":
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 328)         {"de":{"code":"de","name":"Deutsch","countries":["DE","CH","AT"]},
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 329)         "it":{"code":"it","name":"Italiano","countries":["IT","CH"]}}});
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 330)         some more code..."""
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 331)         response = mock.Mock(text=page)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 332)         languages = qwant._fetch_supported_languages(response)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 333)         self.assertEqual(type(languages), list)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 334)         self.assertEqual(len(languages), 5)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 335)         self.assertIn('de-DE', languages)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 336)         self.assertIn('de-CH', languages)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 337)         self.assertIn('de-AT', languages)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 338)         self.assertIn('it-IT', languages)
+805fb02e tests/unit/engines/test_qwant.py  (marc         2017-02-24 20:21:48 -0600 339)         self.assertIn('it-CH', languages)

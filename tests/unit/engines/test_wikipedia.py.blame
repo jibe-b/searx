@@ -1,0 +1,255 @@
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   1) # -*- coding: utf-8 -*-
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   2) from collections import defaultdict
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   3) import mock
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   4) from searx.engines import wikipedia
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   5) from searx.testing import SearxTestCase
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   6) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   7) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   8) class TestWikipediaEngine(SearxTestCase):
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600   9) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  10)     def test_request(self):
+f62ce21f (marc        2016-11-05 20:51:38 -0600  11)         wikipedia.supported_languages = ['fr', 'en']
+f62ce21f (marc        2016-11-05 20:51:38 -0600  12) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  13)         query = 'test_query'
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  14)         dicto = defaultdict(dict)
+a11948c7 (marc        2016-10-29 21:04:01 -0500  15)         dicto['language'] = 'fr-FR'
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  16)         params = wikipedia.request(query.encode('utf-8'), dicto)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  17)         self.assertIn('url', params)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  18)         self.assertIn(query, params['url'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  19)         self.assertIn('test_query', params['url'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  20)         self.assertIn('Test_Query', params['url'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  21)         self.assertIn('fr.wikipedia.org', params['url'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  22) 
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  23)         query = u'Test_Query'
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  24)         params = wikipedia.request(query.encode('utf-8'), dicto)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  25)         self.assertIn('Test_Query', params['url'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  26)         self.assertNotIn('test_query', params['url'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  27) 
+e0c270bd (marc        2016-12-13 23:51:15 -0600  28)         dicto['language'] = 'xx'
+e0c270bd (marc        2016-12-13 23:51:15 -0600  29)         params = wikipedia.request(query, dicto)
+e0c270bd (marc        2016-12-13 23:51:15 -0600  30)         self.assertIn('en', params['url'])
+e0c270bd (marc        2016-12-13 23:51:15 -0600  31) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  32)     def test_response(self):
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  33)         dicto = defaultdict(dict)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  34)         dicto['language'] = 'fr'
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  35) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  36)         self.assertRaises(AttributeError, wikipedia.response, None)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  37)         self.assertRaises(AttributeError, wikipedia.response, [])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  38)         self.assertRaises(AttributeError, wikipedia.response, '')
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  39)         self.assertRaises(AttributeError, wikipedia.response, '[]')
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  40) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  41)         # page not found
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  42)         json = """
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  43)         {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  44)             "batchcomplete": "",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  45)             "query": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  46)                 "normalized": [],
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  47)                 "pages": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  48)                     "-1": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  49)                         "ns": 0,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  50)                         "title": "",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  51)                         "missing": ""
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  52)                     }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  53)                 }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  54)             }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  55)         }"""
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  56)         response = mock.Mock(text=json, search_params=dicto)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  57)         self.assertEqual(wikipedia.response(response), [])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  58) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  59)         # normal case
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  60)         json = """
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  61)         {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  62)             "batchcomplete": "",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  63)             "query": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  64)                 "normalized": [],
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  65)                 "pages": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  66)                     "12345": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  67)                         "pageid": 12345,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  68)                         "ns": 0,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  69)                         "title": "The Title",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  70)                         "extract": "The Title is...",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  71)                         "thumbnail": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  72)                             "source": "img_src.jpg"
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  73)                         },
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  74)                         "pageimage": "img_name.jpg"
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  75)                     }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  76)                 }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  77)             }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  78)         }"""
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100  79)         response = mock.Mock(text=json, search_params=dicto)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  80)         results = wikipedia.response(response)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  81)         self.assertEqual(type(results), list)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  82)         self.assertEqual(len(results), 2)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  83)         self.assertEqual(results[0]['title'], u'The Title')
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  84)         self.assertIn('fr.wikipedia.org/wiki/The_Title', results[0]['url'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  85)         self.assertEqual(results[1]['infobox'], u'The Title')
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  86)         self.assertIn('fr.wikipedia.org/wiki/The_Title', results[1]['id'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  87)         self.assertIn('The Title is...', results[1]['content'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  88)         self.assertEqual(results[1]['img_src'], 'img_src.jpg')
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  89) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  90)         # disambiguation page
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  91)         json = """
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  92)         {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  93)             "batchcomplete": "",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  94)             "query": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  95)                 "normalized": [],
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  96)                 "pages": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  97)                     "12345": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  98)                         "pageid": 12345,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600  99)                         "ns": 0,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 100)                         "title": "The Title",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 101)                         "extract": "The Title can be:\\nThe Title 1\\nThe Title 2\\nThe Title 3\\nThe Title 4......................................................................................................................................." """  # noqa
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 102)         json += """
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 103)                     }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 104)                 }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 105)             }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 106)         }"""
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 107)         response = mock.Mock(text=json, search_params=dicto)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 108)         results = wikipedia.response(response)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 109)         self.assertEqual(type(results), list)
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 110)         self.assertEqual(len(results), 2)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 111) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 112)         # no image
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 113)         json = """
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 114)         {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 115)             "batchcomplete": "",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 116)             "query": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 117)                 "normalized": [],
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 118)                 "pages": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 119)                     "12345": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 120)                         "pageid": 12345,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 121)                         "ns": 0,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 122)                         "title": "The Title",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 123)                         "extract": "The Title is......................................................................................................................................................................................." """  # noqa
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 124)         json += """
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 125)                     }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 126)                 }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 127)             }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 128)         }"""
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 129)         response = mock.Mock(text=json, search_params=dicto)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 130)         results = wikipedia.response(response)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 131)         self.assertEqual(type(results), list)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 132)         self.assertEqual(len(results), 2)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 133)         self.assertIn('The Title is...', results[1]['content'])
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 134)         self.assertEqual(results[1]['img_src'], None)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 135) 
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 136)         # title not in first paragraph
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 137)         json = u"""
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 138)         {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 139)             "batchcomplete": "",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 140)             "query": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 141)                 "normalized": [],
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 142)                 "pages": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 143)                     "12345": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 144)                         "pageid": 12345,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 145)                         "ns": 0,
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 146)                         "title": "披頭四樂隊",
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 147)                         "extract": "披头士乐队....................................................................................................................................................................................................\\n披頭四樂隊...", """  # noqa
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 148)         json += """
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 149)                         "thumbnail": {
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 150)                             "source": "img_src.jpg"
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 151)                         },
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 152)                         "pageimage": "img_name.jpg"
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 153)                     }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 154)                 }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 155)             }
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 156)         }"""
+52e615de (Adam Tauber 2016-11-30 18:43:03 +0100 157)         response = mock.Mock(text=json, search_params=dicto)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 158)         results = wikipedia.response(response)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 159)         self.assertEqual(type(results), list)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 160)         self.assertEqual(len(results), 2)
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 161)         self.assertEqual(results[1]['infobox'], u'披頭四樂隊')
+8d335dbd (a01200356   2016-03-14 00:32:36 -0600 162)         self.assertIn(u'披头士乐队...', results[1]['content'])
+af35eee1 (marc        2016-12-15 00:34:43 -0600 163) 
+af35eee1 (marc        2016-12-15 00:34:43 -0600 164)     def test_fetch_supported_languages(self):
+af35eee1 (marc        2016-12-15 00:34:43 -0600 165)         html = u"""<html></html>"""
+af35eee1 (marc        2016-12-15 00:34:43 -0600 166)         response = mock.Mock(text=html)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 167)         languages = wikipedia._fetch_supported_languages(response)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 168)         self.assertEqual(type(languages), dict)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 169)         self.assertEqual(len(languages), 0)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 170) 
+af35eee1 (marc        2016-12-15 00:34:43 -0600 171)         html = u"""
+af35eee1 (marc        2016-12-15 00:34:43 -0600 172)         <html>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 173)             <body>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 174)                 <div>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 175)                     <div>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 176)                         <h3>Table header</h3>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 177)                         <table class="sortable jquery-tablesorter">
+af35eee1 (marc        2016-12-15 00:34:43 -0600 178)                             <thead>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 179)                                 <tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 180)                                     <th>N</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 181)                                     <th>Language</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 182)                                     <th>Language (local)</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 183)                                     <th>Wiki</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 184)                                     <th>Articles</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 185)                                 </tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 186)                             </thead>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 187)                             <tbody>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 188)                                 <tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 189)                                     <td>2</td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 190)                                     <td><a>Swedish</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 191)                                     <td><a>Svenska</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 192)                                     <td><a>sv</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 193)                                     <td><a><b>3000000</b></a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 194)                                 </tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 195)                                 <tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 196)                                     <td>3</td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 197)                                     <td><a>Cebuano</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 198)                                     <td><a>Sinugboanong Binisaya</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 199)                                     <td><a>ceb</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 200)                                     <td><a><b>3000000</b></a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 201)                                 </tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 202)                             </tbody>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 203)                         </table>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 204)                         <h3>Table header</h3>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 205)                         <table class="sortable jquery-tablesorter">
+af35eee1 (marc        2016-12-15 00:34:43 -0600 206)                             <thead>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 207)                                 <tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 208)                                     <th>N</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 209)                                     <th>Language</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 210)                                     <th>Language (local)</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 211)                                     <th>Wiki</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 212)                                     <th>Articles</th>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 213)                                 </tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 214)                             </thead>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 215)                             <tbody>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 216)                                 <tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 217)                                     <td>2</td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 218)                                     <td><a>Norwegian (Bokmål)</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 219)                                     <td><a>Norsk (Bokmål)</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 220)                                     <td><a>no</a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 221)                                     <td><a><b>100000</b></a></td>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 222)                                 </tr>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 223)                             </tbody>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 224)                         </table>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 225)                     </div>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 226)                 </div>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 227)             </body>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 228)         </html>
+af35eee1 (marc        2016-12-15 00:34:43 -0600 229)         """
+af35eee1 (marc        2016-12-15 00:34:43 -0600 230)         response = mock.Mock(text=html)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 231)         languages = wikipedia._fetch_supported_languages(response)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 232)         self.assertEqual(type(languages), dict)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 233)         self.assertEqual(len(languages), 3)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 234) 
+af35eee1 (marc        2016-12-15 00:34:43 -0600 235)         self.assertIn('sv', languages)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 236)         self.assertIn('ceb', languages)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 237)         self.assertIn('no', languages)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 238) 
+af35eee1 (marc        2016-12-15 00:34:43 -0600 239)         self.assertEqual(type(languages['sv']), dict)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 240)         self.assertEqual(type(languages['ceb']), dict)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 241)         self.assertEqual(type(languages['no']), dict)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 242) 
+af35eee1 (marc        2016-12-15 00:34:43 -0600 243)         self.assertIn('name', languages['sv'])
+af35eee1 (marc        2016-12-15 00:34:43 -0600 244)         self.assertIn('english_name', languages['sv'])
+af35eee1 (marc        2016-12-15 00:34:43 -0600 245)         self.assertIn('articles', languages['sv'])
+af35eee1 (marc        2016-12-15 00:34:43 -0600 246) 
+af35eee1 (marc        2016-12-15 00:34:43 -0600 247)         self.assertEqual(languages['sv']['name'], 'Svenska')
+af35eee1 (marc        2016-12-15 00:34:43 -0600 248)         self.assertEqual(languages['sv']['english_name'], 'Swedish')
+af35eee1 (marc        2016-12-15 00:34:43 -0600 249)         self.assertEqual(languages['sv']['articles'], 3000000)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 250)         self.assertEqual(languages['ceb']['name'], 'Sinugboanong Binisaya')
+af35eee1 (marc        2016-12-15 00:34:43 -0600 251)         self.assertEqual(languages['ceb']['english_name'], 'Cebuano')
+af35eee1 (marc        2016-12-15 00:34:43 -0600 252)         self.assertEqual(languages['ceb']['articles'], 3000000)
+af35eee1 (marc        2016-12-15 00:34:43 -0600 253)         self.assertEqual(languages['no']['name'], u'Norsk (Bokmål)')
+af35eee1 (marc        2016-12-15 00:34:43 -0600 254)         self.assertEqual(languages['no']['english_name'], u'Norwegian (Bokmål)')
+af35eee1 (marc        2016-12-15 00:34:43 -0600 255)         self.assertEqual(languages['no']['articles'], 100000)

@@ -1,0 +1,118 @@
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100   1) #!/usr/bin/env python
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100   2) 
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200   3) """
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200   4)   Flickr (Images)
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200   5) 
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200   6)  @website     https://www.flickr.com
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200   7)  @provide-api yes (https://secure.flickr.com/services/api/flickr.photos.search.html)
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200   8) 
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200   9)  @using-api   no
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200  10)  @results     HTML
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200  11)  @stable      no
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200  12)  @parse       url, title, thumbnail, img_src
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200  13) """
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  14) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  15) from json import loads
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  16) from time import time
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  17) import re
+27efdf38 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-27 19:25:03 +0100  18) from searx.engines import logger
+52e615de searx/engines/flickr_noapi.py (Adam Tauber       2016-11-30 18:43:03 +0100  19) from searx.url_utils import urlencode
+27efdf38 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-27 19:25:03 +0100  20) 
+27efdf38 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-27 19:25:03 +0100  21) 
+27efdf38 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-27 19:25:03 +0100  22) logger = logger.getChild('flickr-noapi')
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  23) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  24) categories = ['images']
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  25) 
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200  26) url = 'https://www.flickr.com/'
+4689fe34 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-02 15:45:17 +0200  27) search_url = url + 'search?{query}&page={page}'
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  28) time_range_url = '&min_upload_date={start}&max_upload_date={end}'
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  29) photo_url = 'https://www.flickr.com/photos/{userid}/{photoid}'
+7afd02c9 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  30) regex = re.compile(r"\"search-photos-lite-models\",\"photos\":(.*}),\"totalItems\":", re.DOTALL)
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  31) image_sizes = ('o', 'k', 'h', 'b', 'c', 'z', 'n', 'm', 't', 'q', 's')
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  32) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  33) paging = True
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  34) time_range_support = True
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  35) time_range_dict = {'day': 60 * 60 * 24,
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  36)                    'week': 60 * 60 * 24 * 7,
+c59c76e6 searx/engines/flickr_noapi.py (Noémi Ványi       2016-12-11 16:39:12 +0100  37)                    'month': 60 * 60 * 24 * 7 * 4,
+c59c76e6 searx/engines/flickr_noapi.py (Noémi Ványi       2016-12-11 16:39:12 +0100  38)                    'year': 60 * 60 * 24 * 7 * 52}
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  39) 
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  40) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  41) @little_documented
+def build_flickr_url(user_id, photo_id):
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  42)     return photo_url.format(userid=user_id, photoid=photo_id)
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  43) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  44) 
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  45) def _get_time_range_url(time_range):
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  46)     if time_range in time_range_dict:
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  47)         return time_range_url.format(start=time(), end=str(int(time()) - time_range_dict[time_range]))
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  48)     return ''
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  49) 
+7afd02c9 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  50) 
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  51) def request(query, params):
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  52)     params['url'] = (search_url.format(query=urlencode({'text': query}), page=params['pageno'])
+1490d6bc searx/engines/flickr_noapi.py (Noémi Ványi       2016-10-30 21:20:40 +0100  53)                      + _get_time_range_url(params['time_range']))
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  54)     return params
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  55) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  56) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  57) def response(resp):
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  58)     results = []
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  59) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  60)     matches = regex.search(resp.text)
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  61) 
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  62)     if matches is None:
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  63)         return results
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  64) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  65)     match = matches.group(1)
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  66)     search_results = loads(match)
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  67) 
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  68)     if '_data' not in search_results:
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  69)         return []
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  70) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  71)     photos = search_results['_data']
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  72) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  73)     for photo in photos:
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  74) 
+5d977056 searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-29 21:31:04 +0100  75)         # In paged configuration, the first pages' photos
+5d977056 searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-29 21:31:04 +0100  76)         # are represented by a None object
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  77)         if photo is None:
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  78)             continue
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  79) 
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  80)         img_src = None
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  81)         # From the biggest to the lowest format
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  82)         for image_size in image_sizes:
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  83)             if image_size in photo['sizes']:
+27efdf38 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-27 19:25:03 +0100  84)                 img_src = photo['sizes'][image_size]['url']
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  85)                 break
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  86) 
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  87)         if not img_src:
+27efdf38 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-27 19:25:03 +0100  88)             logger.debug('cannot find valid image size: {0}'.format(repr(photo)))
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  89)             continue
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  90) 
+7afd02c9 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  91)         if 'ownerNsid' not in photo:
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100  92)             continue
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100  93) 
+7afd02c9 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200  94)         # For a bigger thumbnail, keep only the url_z, not the url_n
+cb4a3fe5 searx/engines/flickr-noapi.py (Cqoicebordel      2015-01-17 19:21:09 +0100  95)         if 'n' in photo['sizes']:
+27efdf38 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-27 19:25:03 +0100  96)             thumbnail_src = photo['sizes']['n']['url']
+4238812a searx/engines/flickr-noapi.py (Cqoicebordel      2015-01-17 19:24:35 +0100  97)         elif 'z' in photo['sizes']:
+27efdf38 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-27 19:25:03 +0100  98)             thumbnail_src = photo['sizes']['z']['url']
+cb4a3fe5 searx/engines/flickr-noapi.py (Cqoicebordel      2015-01-17 19:21:09 +0100  99)         else:
+cb4a3fe5 searx/engines/flickr-noapi.py (Cqoicebordel      2015-01-17 19:21:09 +0100 100)             thumbnail_src = img_src
+cb4a3fe5 searx/engines/flickr-noapi.py (Cqoicebordel      2015-01-17 19:21:09 +0100 101) 
+7afd02c9 searx/engines/flickr_noapi.py (Alexandre Flament 2015-05-27 13:49:25 +0200 102)         url = build_flickr_url(photo['ownerNsid'], photo['id'])
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100 103) 
+e1856426 searx/engines/flickr-noapi.py (Adam Tauber       2015-01-11 01:42:55 +0100 104)         title = photo.get('title', '')
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100 105) 
+16bdc0ba searx/engines/flickr_noapi.py (Adam Tauber       2016-12-09 11:44:24 +0100 106)         author = photo['username']
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100 107) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100 108)         # append result
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100 109)         results.append({'url': url,
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100 110)                         'title': title,
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100 111)                         'img_src': img_src,
+cb4a3fe5 searx/engines/flickr-noapi.py (Cqoicebordel      2015-01-17 19:21:09 +0100 112)                         'thumbnail_src': thumbnail_src,
+16bdc0ba searx/engines/flickr_noapi.py (Adam Tauber       2016-12-09 11:44:24 +0100 113)                         'content': '',
+16bdc0ba searx/engines/flickr_noapi.py (Adam Tauber       2016-12-09 11:44:24 +0100 114)                         'author': author,
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100 115)                         'template': 'images.html'})
+b975418e searx/engines/flickr-noapi.py (Adam Tauber       2014-12-22 14:15:59 +0100 116) 
+930f724e searx/engines/flickr-noapi.py (Cqoicebordel      2014-12-16 20:40:03 +0100 117)     return results

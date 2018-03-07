@@ -1,0 +1,57 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Stackoverflow (It)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://stackoverflow.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api not clear (https://api.stackexchange.com/docs/advanced-search)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     HTML
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 12) 
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100 13) from lxml import html
+d20ddf9d (Cqoicebordel      2015-01-31 17:29:22 +0100 14) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 15) from searx.url_utils import urlencode, urljoin
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 16) 
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 17) # engine dependent config
+668040e5 (asciimoo          2013-10-17 21:07:09 +0200 18) categories = ['it']
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 19) paging = True
+668040e5 (asciimoo          2013-10-17 21:07:09 +0200 20) 
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 21) # search-url
+99efd790 (Alexandre Flament 2015-04-26 18:13:09 +0200 22) url = 'https://stackoverflow.com/'
+bd22e9a3 (Adam Tauber       2016-01-18 12:47:31 +0100 23) search_url = url + 'search?{query}&page={pageno}'
+b2492c94 (asciimoo          2014-01-20 02:31:20 +0100 24) 
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 25) # specific xpath variables
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 26) results_xpath = '//div[contains(@class,"question-summary")]'
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 27) link_xpath = './/div[@class="result-link"]//a|.//div[@class="summary"]//h3//a'
+d20ddf9d (Cqoicebordel      2015-01-31 17:29:22 +0100 28) content_xpath = './/div[@class="excerpt"]'
+7de506bb (asciimoo          2014-01-30 01:55:49 +0100 29) 
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 30) 
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 31) # do search-request
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 32) def request(query, params):
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 33)     params['url'] = search_url.format(query=urlencode({'q': query}), pageno=params['pageno'])
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 34) 
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 35)     return params
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 36) 
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 37) 
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 38) # get response from search-request
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 39) def response(resp):
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 40)     results = []
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 41) 
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 42)     dom = html.fromstring(resp.text)
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 43) 
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 44)     # parse results
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 45)     for result in dom.xpath(results_xpath):
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 46)         link = result.xpath(link_xpath)[0]
+74b6be39 (asciimoo          2013-10-23 23:55:37 +0200 47)         href = urljoin(url, link.attrib.get('href'))
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 48)         title = extract_text(link)
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 49)         content = extract_text(result.xpath(content_xpath))
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 50) 
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 51)         # append result
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 52)         results.append({'url': href,
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 53)                         'title': title,
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 54)                         'content': content})
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 55) 
+a46bbb40 (Thomas Pointhuber 2014-09-02 18:49:42 +0200 56)     # return results
+e467a248 (asciimoo          2013-10-17 00:27:25 +0200 57)     return results

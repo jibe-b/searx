@@ -1,0 +1,96 @@
+4689fe34 searx/engines/google_images.py (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 searx/engines/google_images.py (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Google (Images)
+4689fe34 searx/engines/google_images.py (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 searx/engines/google_images.py (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://www.google.com
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100  5)  @provide-api yes (https://developers.google.com/custom-search/)
+4689fe34 searx/engines/google_images.py (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+8b155f78 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:23:05 +0100  7)  @using-api   no
+8b155f78 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:23:05 +0100  8)  @results     HTML chunks with JSON inside
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100  9)  @stable      no
+4689fe34 searx/engines/google_images.py (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, img_src
+4689fe34 searx/engines/google_images.py (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 12) 
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 13) from datetime import date, timedelta
+83af0b62 searx/engines/gimages.py       (asciimoo          2013-10-19 23:12:18 +0200 14) from json import loads
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 15) from lxml import html
+52e615de searx/engines/google_images.py (Adam Tauber       2016-11-30 18:43:03 +0100 16) from searx.url_utils import urlencode
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 17) 
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 18) 
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 19) # engine dependent config
+b305af45 searx/engines/gimages.py       (stef              2013-10-19 22:19:31 +0200 20) categories = ['images']
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 21) paging = True
+10666fd7 searx/engines/google_images.py (Thomas Pointhuber 2015-02-08 22:15:25 +0100 22) safesearch = True
+e9a78f14 searx/engines/google_images.py (Noemi Vanyi       2016-07-18 17:25:40 +0200 23) time_range_support = True
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 24) number_of_results = 100
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 25) 
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 26) search_url = 'https://www.google.com/search'\
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 27)     '?{query}'\
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 28)     '&asearch=ichunk'\
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 29)     '&async=_id:rg_s,_pms:s'\
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 30)     '&tbm=isch'\
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 31)     '&yv=2'\
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 32)     '&{search_options}'
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 33) time_range_attr = "qdr:{range}"
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 34) time_range_custom_attr = "cdr:1,cd_min:{start},cd_max{end}"
+e9a78f14 searx/engines/google_images.py (Noemi Vanyi       2016-07-18 17:25:40 +0200 35) time_range_dict = {'day': 'd',
+e9a78f14 searx/engines/google_images.py (Noemi Vanyi       2016-07-18 17:25:40 +0200 36)                    'week': 'w',
+e9a78f14 searx/engines/google_images.py (Noemi Vanyi       2016-07-18 17:25:40 +0200 37)                    'month': 'm'}
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 38) 
+a7c8d588 searx/engines/google_images.py (Noemi Vanyi       2016-07-19 10:14:11 +0200 39) 
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 40) # do search-request
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 41) @little_documented
+def request(query, params):
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 42)     search_options = {
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 43)         'ijn': params['pageno'] - 1,
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 44)         'start': (params['pageno'] - 1) * number_of_results
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 45)     }
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 46) 
+350a8452 searx/engines/google_images.py (Adam Tauber       2016-07-26 00:22:05 +0200 47)     if params['time_range'] in time_range_dict:
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 48)         search_options['tbs'] = time_range_attr.format(range=time_range_dict[params['time_range']])
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 49)     elif params['time_range'] == 'year':
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 50)         now = date.today()
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 51)         then = now - timedelta(days=365)
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 52)         start = then.strftime('%m/%d/%Y')
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 53)         end = now.strftime('%m/%d/%Y')
+c59c76e6 searx/engines/google_images.py (Noémi Ványi       2016-12-11 16:39:12 +0100 54)         search_options['tbs'] = time_range_custom_attr.format(start=start, end=end)
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 55) 
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 56)     if safesearch and params['safesearch']:
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 57)         search_options['safe'] = 'on'
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 58) 
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 59)     params['url'] = search_url.format(query=urlencode({'q': query}),
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 60)                                       search_options=urlencode(search_options))
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 61) 
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 62)     return params
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 63) 
+b2492c94 searx/engines/google_images.py (asciimoo          2014-01-20 02:31:20 +0100 64) 
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 65) # get response from search-request
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 66) def response(resp):
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 67)     results = []
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 68) 
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 69)     g_result = loads(resp.text)
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 70) 
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 71)     dom = html.fromstring(g_result[1][1])
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 72) 
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 73)     # parse results
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 74)     for result in dom.xpath('//div[@data-ved]'):
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 75) 
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 76)         try:
+c361811c searx/engines/google_images.py (Noémi Ványi       2017-06-13 19:47:56 +0200 77)             metadata = loads(''.join(result.xpath('./div[contains(@class, "rg_meta")]/text()')))
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 78)         except:
+eb574814 searx/engines/google_images.py (Adam Tauber       2016-08-13 00:43:21 +0200 79)             continue
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 80) 
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 81)         thumbnail_src = metadata['tu']
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 82) 
+78edc16e searx/engines/google_images.py (Alexandre Flament 2015-05-02 11:43:12 +0200 83)         # http to https
+78edc16e searx/engines/google_images.py (Alexandre Flament 2015-05-02 11:43:12 +0200 84)         thumbnail_src = thumbnail_src.replace("http://", "https://")
+78edc16e searx/engines/google_images.py (Alexandre Flament 2015-05-02 11:43:12 +0200 85) 
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 86)         # append result
+9331fc28 searx/engines/google_images.py (Adam Tauber       2016-04-07 08:04:36 +0200 87)         results.append({'url': metadata['ru'],
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 88)                         'title': metadata['pt'],
+439cf055 searx/engines/google_images.py (Adam Tauber       2015-12-09 01:20:46 +0100 89)                         'content': metadata['s'],
+9331fc28 searx/engines/google_images.py (Adam Tauber       2016-04-07 08:04:36 +0200 90)                         'thumbnail_src': thumbnail_src,
+9331fc28 searx/engines/google_images.py (Adam Tauber       2016-04-07 08:04:36 +0200 91)                         'img_src': metadata['ou'],
+b2492c94 searx/engines/google_images.py (asciimoo          2014-01-20 02:31:20 +0100 92)                         'template': 'images.html'})
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 93) 
+144f89bf searx/engines/google_images.py (Thomas Pointhuber 2014-09-01 15:10:05 +0200 94)     # return results
+7c11c705 searx/engines/gimages.py       (stef              2013-10-19 22:19:14 +0200 95)     return results

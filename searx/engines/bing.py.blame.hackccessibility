@@ -1,0 +1,100 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Bing (Web)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://www.bing.com
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (http://datamarket.azure.com/dataset/bing/search),
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6)               max. 5000 query/month
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @using-api   no (because of query limit)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @results     HTML (using search portal)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 12) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 13)  @todo        publishedDate
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 14) """
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 15) 
+22fd0746 (Gabor Nagy        2014-02-05 20:24:31 +0100 16) from lxml import html
+525af2a0 (Cqoicebordel      2015-01-25 20:14:37 +0100 17) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 18) from searx.url_utils import urlencode
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 19) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 20) # engine dependent config
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 21) categories = ['general']
+ca271fd8 (asciimoo          2014-01-29 21:14:38 +0100 22) paging = True
+2a788c8f (asciimoo          2014-01-31 04:35:23 +0100 23) language_support = True
+f62ce21f (marc              2016-11-05 20:51:38 -0600 24) supported_languages_url = 'https://www.bing.com/account/general'
+ca271fd8 (asciimoo          2014-01-29 21:14:38 +0100 25) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 26) # search-url
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 27) base_url = 'https://www.bing.com/'
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 28) search_string = 'search?{query}&first={offset}'
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 29) 
+3d61d9b9 (Thomas Pointhuber 2014-09-02 17:13:44 +0200 30) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 31) # do search-request
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 32) @little_documented
+def request(query, params):
+ca271fd8 (asciimoo          2014-01-29 21:14:38 +0100 33)     offset = (params['pageno'] - 1) * 10 + 1
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 34) 
+4d177039 (marc              2017-07-20 15:47:20 -0500 35)     lang = params['language'].split('-')[0].upper()
+6bf9c398 (Adam Tauber       2016-12-30 18:17:14 +0100 36) 
+6bf9c398 (Adam Tauber       2016-12-30 18:17:14 +0100 37)     query = u'language:{} {}'.format(lang, query.decode('utf-8')).encode('utf-8')
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 38) 
+dd466297 (Matej Cotman      2014-01-19 22:59:01 +0100 39)     search_path = search_string.format(
+16f2e346 (Adam Tauber       2016-11-14 15:52:29 +0100 40)         query=urlencode({'q': query}),
+ca271fd8 (asciimoo          2014-01-29 21:14:38 +0100 41)         offset=offset)
+2a788c8f (asciimoo          2014-01-31 04:35:23 +0100 42) 
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 43)     params['url'] = base_url + search_path
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 44)     return params
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 45) 
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 46) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 47) # get response from search-request
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 48) def response(resp):
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 49)     results = []
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 50) 
+604f32f6 (Adam Tauber       2015-08-28 14:51:32 +0200 51)     dom = html.fromstring(resp.text)
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 52) 
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 53)     try:
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 54)         results.append({'number_of_results': int(dom.xpath('//span[@class="sb_count"]/text()')[0]
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 55)                                                  .split()[0].replace(',', ''))})
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 56)     except:
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 57)         pass
+2f7752b4 (Adam Tauber       2016-06-28 00:06:50 +0200 58) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 59)     # parse results
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 60)     for result in dom.xpath('//div[@class="sa_cc"]'):
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 61)         link = result.xpath('.//h3/a')[0]
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 62)         url = link.attrib.get('href')
+525af2a0 (Cqoicebordel      2015-01-25 20:14:37 +0100 63)         title = extract_text(link)
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 64)         content = extract_text(result.xpath('.//p'))
+aa41c2b8 (asciimoo          2013-10-25 01:37:48 +0200 65) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 66)         # append result
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 67)         results.append({'url': url,
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 68)                         'title': title,
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 69)                         'content': content})
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 70) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 71)     # parse results again if nothing is found yet
+aa41c2b8 (asciimoo          2013-10-25 01:37:48 +0200 72)     for result in dom.xpath('//li[@class="b_algo"]'):
+aa41c2b8 (asciimoo          2013-10-25 01:37:48 +0200 73)         link = result.xpath('.//h2/a')[0]
+aa41c2b8 (asciimoo          2013-10-25 01:37:48 +0200 74)         url = link.attrib.get('href')
+525af2a0 (Cqoicebordel      2015-01-25 20:14:37 +0100 75)         title = extract_text(link)
+16bdc0ba (Adam Tauber       2016-12-09 11:44:24 +0100 76)         content = extract_text(result.xpath('.//p'))
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 77) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 78)         # append result
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 79)         results.append({'url': url,
+7c13d630 (dalf              2014-12-07 16:37:56 +0100 80)                         'title': title,
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 81)                         'content': content})
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 82) 
+4b1e0423 (Thomas Pointhuber 2014-09-01 14:38:59 +0200 83)     # return results
+2ca4cf7f (asciimoo          2013-10-24 23:52:57 +0200 84)     return results
+f62ce21f (marc              2016-11-05 20:51:38 -0600 85) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 86) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 87) # get supported languages from their site
+af35eee1 (marc              2016-12-15 00:34:43 -0600 88) @little_documented
+def _fetch_supported_languages(resp):
+f62ce21f (marc              2016-11-05 20:51:38 -0600 89)     supported_languages = []
+af35eee1 (marc              2016-12-15 00:34:43 -0600 90)     dom = html.fromstring(resp.text)
+f62ce21f (marc              2016-11-05 20:51:38 -0600 91)     options = dom.xpath('//div[@id="limit-languages"]//input')
+f62ce21f (marc              2016-11-05 20:51:38 -0600 92)     for option in options:
+f62ce21f (marc              2016-11-05 20:51:38 -0600 93)         code = option.xpath('./@id')[0].replace('_', '-')
+fd65c129 (marc              2017-03-01 17:11:51 -0600 94)         if code == 'nb':
+fd65c129 (marc              2017-03-01 17:11:51 -0600 95)             code = 'no'
+f62ce21f (marc              2016-11-05 20:51:38 -0600 96)         supported_languages.append(code)
+f62ce21f (marc              2016-11-05 20:51:38 -0600 97) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 98)     return supported_languages

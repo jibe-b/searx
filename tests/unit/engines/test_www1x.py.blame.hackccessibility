@@ -1,0 +1,58 @@
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  1) from collections import defaultdict
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  2) import mock
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  3) from searx.engines import www1x
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  4) from searx.testing import SearxTestCase
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  5) 
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  6) 
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  7) class TestWww1xEngine(SearxTestCase):
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  8) 
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100  9)     @little_documented
+def test_request(self):
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 10)         query = 'test_query'
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 11)         params = www1x.request(query, defaultdict(dict))
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 12)         self.assertTrue('url' in params)
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 13)         self.assertTrue(query in params['url'])
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 14)         self.assertTrue('1x.com' in params['url'])
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 15) 
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 16)     def test_response(self):
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 17)         self.assertRaises(AttributeError, www1x.response, None)
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 18)         self.assertRaises(AttributeError, www1x.response, [])
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 19)         self.assertRaises(AttributeError, www1x.response, '')
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 20)         self.assertRaises(AttributeError, www1x.response, '[]')
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 21) 
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 22)         response = mock.Mock(text='<html></html>')
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 23)         self.assertEqual(www1x.response(response), [])
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 24)         html = """
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 25)         <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE characters
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 26)         [
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 27)         <!ELEMENT characters (character*) >
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 28)         <!ELEMENT character  (#PCDATA   ) >
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 29) 
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 30)         <!ENTITY iexcl   "&#161;" >
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 31)         <!ENTITY cent    "&#162;" >
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 32)         <!ENTITY pound   "&#163;" >
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 33)         ]
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 34)         ><root><searchresult><![CDATA[<table border="0" cellpadding="0" cellspacing="0" width="100%">
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 35)         <tr>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 36)             <td style="min-width: 220px;" valign="top">
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 37)                 <div style="font-size: 30px; margin: 0px 0px 20px 0px;">Photos</div>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 38)                 <div>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 39)                     <a href="/photo/123456" class="dynamiclink">
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 40) <img border="0" class="searchresult" src="/images/user/testimage-123456.jpg" style="width: 125px; height: 120px;">
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 41)                     </a>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 42)                     <a title="sjoerd lammers street photography" href="/member/sjoerdlammers" class="dynamiclink">
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 43) <img border="0" class="searchresult" src="/images/profile/60c48b394c677d2fa4d9e7d263aabf44-square.jpg">
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 44)                     </a>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 45)                 </div>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 46)             </td>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 47)         </table>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 48)         ]]></searchresult></root>
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 49)         """
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 50)         response = mock.Mock(text=html)
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 51)         results = www1x.response(response)
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 52)         self.assertEqual(type(results), list)
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 53)         self.assertEqual(len(results), 1)
+9e147d91 searx/tests/engines/test_www1x.py (Dalf              2015-06-06 19:23:07 +0200 54)         self.assertEqual(results[0]['url'], 'https://1x.com/photo/123456')
+9e147d91 searx/tests/engines/test_www1x.py (Dalf              2015-06-06 19:23:07 +0200 55)         self.assertEqual(results[0]['thumbnail_src'], 'https://1x.com/images/user/testimage-123456.jpg')
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 56)         self.assertEqual(results[0]['content'], '')
+a605d0ae searx/tests/engines/test_www1x.py (Thomas Pointhuber 2015-02-01 13:52:43 +0100 57)         self.assertEqual(results[0]['template'], 'images.html')

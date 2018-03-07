@@ -1,0 +1,111 @@
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   1) from collections import defaultdict
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   2) import mock
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   3) from searx.engines import youtube_api
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   4) from searx.testing import SearxTestCase
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   5) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   6) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   7) class TestYoutubeAPIEngine(SearxTestCase):
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   8) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200   9)     def test_request(self):
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  10)         query = 'test_query'
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  11)         dicto = defaultdict(dict)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  12)         dicto['pageno'] = 0
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  13)         dicto['language'] = 'fr_FR'
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  14)         params = youtube_api.request(query, dicto)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  15)         self.assertTrue('url' in params)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  16)         self.assertTrue(query in params['url'])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  17)         self.assertIn('googleapis.com', params['url'])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  18)         self.assertIn('youtube', params['url'])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  19)         self.assertIn('fr', params['url'])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  20) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  21)         dicto['language'] = 'all'
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  22)         params = youtube_api.request(query, dicto)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  23)         self.assertFalse('fr' in params['url'])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  24) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  25)     def test_response(self):
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  26)         self.assertRaises(AttributeError, youtube_api.response, None)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  27)         self.assertRaises(AttributeError, youtube_api.response, [])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  28)         self.assertRaises(AttributeError, youtube_api.response, '')
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  29)         self.assertRaises(AttributeError, youtube_api.response, '[]')
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  30) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  31)         response = mock.Mock(text='{}')
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  32)         self.assertEqual(youtube_api.response(response), [])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  33) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  34)         response = mock.Mock(text='{"data": []}')
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  35)         self.assertEqual(youtube_api.response(response), [])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  36) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  37)         json = """
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  38)         {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  39)          "kind": "youtube#searchListResponse",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  40)          "etag": "xmg9xJZuZD438sF4hb-VcBBREXc/YJQDcTBCDcaBvl-sRZJoXdvy1ME",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  41)          "nextPageToken": "CAUQAA",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  42)          "pageInfo": {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  43)           "totalResults": 1000000,
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  44)           "resultsPerPage": 20
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  45)          },
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  46)          "items": [
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  47)           {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  48)            "kind": "youtube#searchResult",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  49)            "etag": "xmg9xJZuZD438sF4hb-VcBBREXc/IbLO64BMhbHIgWLwLw7MDYe7Hs4",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  50)            "id": {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  51)             "kind": "youtube#video",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  52)             "videoId": "DIVZCPfAOeM"
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  53)            },
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  54)            "snippet": {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  55)             "publishedAt": "2015-05-29T22:41:04.000Z",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  56)             "channelId": "UCNodmx1ERIjKqvcJLtdzH5Q",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  57)             "title": "Title",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  58)             "description": "Description",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  59)             "thumbnails": {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  60)              "default": {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  61)               "url": "https://i.ytimg.com/vi/DIVZCPfAOeM/default.jpg"
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  62)              },
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  63)              "medium": {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  64)               "url": "https://i.ytimg.com/vi/DIVZCPfAOeM/mqdefault.jpg"
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  65)              },
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  66)              "high": {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  67)               "url": "https://i.ytimg.com/vi/DIVZCPfAOeM/hqdefault.jpg"
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  68)              }
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  69)             },
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  70)             "channelTitle": "MinecraftUniverse",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  71)             "liveBroadcastContent": "none"
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  72)            }
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  73)           }
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  74)           ]
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  75)         }
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  76)         """
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  77)         response = mock.Mock(text=json)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  78)         results = youtube_api.response(response)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  79)         self.assertEqual(type(results), list)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  80)         self.assertEqual(len(results), 1)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  81)         self.assertEqual(results[0]['title'], 'Title')
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  82)         self.assertEqual(results[0]['url'], 'https://www.youtube.com/watch?v=DIVZCPfAOeM')
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  83)         self.assertEqual(results[0]['content'], 'Description')
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  84)         self.assertEqual(results[0]['thumbnail'], 'https://i.ytimg.com/vi/DIVZCPfAOeM/hqdefault.jpg')
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  85)         self.assertTrue('DIVZCPfAOeM' in results[0]['embedded'])
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  86) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  87)         json = """
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  88)         {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  89)          "kind": "youtube#searchListResponse",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  90)          "etag": "xmg9xJZuZD438sF4hb-VcBBREXc/YJQDcTBCDcaBvl-sRZJoXdvy1ME",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  91)          "nextPageToken": "CAUQAA",
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  92)          "pageInfo": {
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  93)           "totalResults": 1000000,
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  94)           "resultsPerPage": 20
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  95)          }
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  96)         }
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  97)         """
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  98)         response = mock.Mock(text=json)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200  99)         results = youtube_api.response(response)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 100)         self.assertEqual(type(results), list)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 101)         self.assertEqual(len(results), 0)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 102) 
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 103)         json = """
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 104)         {"toto":{"entry":[]
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 105)         }
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 106)         }
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 107)         """
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 108)         response = mock.Mock(text=json)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 109)         results = youtube_api.response(response)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 110)         self.assertEqual(type(results), list)
+f965c978 searx/tests/engines/test_youtube_api.py (Cqoicebordel 2015-05-31 00:25:59 +0200 111)         self.assertEqual(len(results), 0)

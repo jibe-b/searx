@@ -1,0 +1,96 @@
+a2c94895 tests/unit/engines/test_google_news.py  (Adam Tauber  2016-12-11 01:03:03 +0100  1) # -*- coding: utf-8 -*-
+a2c94895 tests/unit/engines/test_google_news.py  (Adam Tauber  2016-12-11 01:03:03 +0100  2) 
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100  3) from collections import defaultdict
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100  4) import mock
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100  5) from searx.engines import google_news
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100  6) from searx.testing import SearxTestCase
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100  7) 
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100  8) 
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100  9) class TestGoogleNewsEngine(SearxTestCase):
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 10) 
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 11)     @little_documented
+def test_request(self):
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 12)         query = 'test_query'
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 13)         dicto = defaultdict(dict)
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 14)         dicto['pageno'] = 1
+4d177039 tests/unit/engines/test_google_news.py  (marc         2017-07-20 15:47:20 -0500 15)         dicto['language'] = 'fr-FR'
+a2c94895 tests/unit/engines/test_google_news.py  (Adam Tauber  2016-12-11 01:03:03 +0100 16)         dicto['time_range'] = 'w'
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 17)         params = google_news.request(query, dicto)
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 18)         self.assertIn('url', params)
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 19)         self.assertIn(query, params['url'])
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 20)         self.assertIn('fr', params['url'])
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 21) 
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 22)     def test_response(self):
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 23)         self.assertRaises(AttributeError, google_news.response, None)
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 24)         self.assertRaises(AttributeError, google_news.response, [])
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 25)         self.assertRaises(AttributeError, google_news.response, '')
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 26)         self.assertRaises(AttributeError, google_news.response, '[]')
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 27) 
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 28)         response = mock.Mock(text='{}')
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 29)         self.assertEqual(google_news.response(response), [])
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 30) 
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 31)         response = mock.Mock(text='{"data": []}')
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 32)         self.assertEqual(google_news.response(response), [])
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 33) 
+a2c94895 tests/unit/engines/test_google_news.py  (Adam Tauber  2016-12-11 01:03:03 +0100 34)         html = u"""
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 35) <h2 class="hd">Search Results</h2>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 36) <div data-async-context="query:searx" id="ires">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 37)     <div eid="oC2oWcGXCafR6ASkwoCwDA" id="rso">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 38)         <div class="_NId">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 39)             <!--m-->
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 40)             <div class="g _cy">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 41)                 <div class="ts _JGs _JHs _tJs _KGs _jHs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 42)                     <div class="_hJs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 43)                         <h3 class="r _gJs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 44)                             <a class="l _PMs" href="https://example.com/" onmousedown="return rwt(this,'','','','11','AFQjCNEyehpzD5cJK1KUfXBx9RmsbqqG9g','','0ahUKEwjB58OR54HWAhWnKJoKHSQhAMY4ChCpAggiKAAwAA','','',event)">Example title</a>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 45)                         </h3>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 46)                         <div class="slp">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 47)                             <span class="_OHs _PHs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 48)                                 Mac &amp; i</span>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 49)                             <span class="_QGs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 50)                                 -</span>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 51)                             <span class="f nsa _QHs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 52)                                 Mar 21, 2016</span>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 53)                         </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 54)                         <div class="st">Example description</div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 55)                     </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 56)                 </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 57)             </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 58)             <div class="g _cy">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 59)                 <div class="ts _JGs _JHs _oGs _KGs _jHs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 60)                     <a class="top _xGs _SHs" href="https://example2.com/" onmousedown="return rwt(this,'','','','12','AFQjCNHObfH7sYmLWI1SC-YhWXKZFRzRjw','','0ahUKEwjB58OR54HWAhWnKJoKHSQhAMY4ChC8iAEIJDAB','','',event)">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 61)                         <img class="th _RGs" src="https://example2.com/image.jpg" alt="Story image for searx from Golem.de" onload="typeof google==='object'&&google.aft&&google.aft(this)">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 62)                     </a>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 63)                     <div class="_hJs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 64)                         <h3 class="r _gJs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 65)                             <a class="l _PMs" href="https://example2.com/" onmousedown="return rwt(this,'','','','12','AFQjCNHObfH7sYmLWI1SC-YhWXKZFRzRjw','','0ahUKEwjB58OR54HWAhWnKJoKHSQhAMY4ChCpAgglKAAwAQ','','',event)">Example title 2</a>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 66)                         </h3>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 67)                         <div class="slp">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 68)                             <span class="_OHs _PHs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 69)                                 Golem.de</span>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 70)                             <span class="_QGs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 71)                                 -</span>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 72)                             <span class="f nsa _QHs">
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 73)                                 Oct 4, 2016</span>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 74)                         </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 75)                         <div class="st">Example description 2</div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 76)                     </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 77)                 </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 78)             </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 79)         </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 80)     </div>
+a2c94895 tests/unit/engines/test_google_news.py  (Adam Tauber  2016-12-11 01:03:03 +0100 81) </div>
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 82) 
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 83) 
+a2c94895 tests/unit/engines/test_google_news.py  (Adam Tauber  2016-12-11 01:03:03 +0100 84)         """  # noqa
+a2c94895 tests/unit/engines/test_google_news.py  (Adam Tauber  2016-12-11 01:03:03 +0100 85)         response = mock.Mock(text=html)
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 86)         results = google_news.response(response)
+b7dc1fb9 searx/tests/engines/test_google_news.py (Cqoicebordel 2015-01-31 16:38:03 +0100 87)         self.assertEqual(type(results), list)
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 88)         self.assertEqual(len(results), 2)
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 89)         self.assertEqual(results[0]['title'], u'Example title')
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 90)         self.assertEqual(results[0]['url'], 'https://example.com/')
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 91)         self.assertEqual(results[0]['content'], 'Example description')
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 92)         self.assertEqual(results[1]['title'], u'Example title 2')
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 93)         self.assertEqual(results[1]['url'], 'https://example2.com/')
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 94)         self.assertEqual(results[1]['content'], 'Example description 2')
+3182ba70 tests/unit/engines/test_google_news.py  (misnyo       2017-08-31 17:48:07 +0200 95)         self.assertEqual(results[1]['img_src'], 'https://example2.com/image.jpg')

@@ -1,0 +1,38 @@
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  1) # -*- coding: utf-8 -*-
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  2) from collections import defaultdict
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  3) import mock
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  4) from searx.engines import pubmed
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  5) from searx.testing import SearxTestCase
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  6) 
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  7) 
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  8) class TestPubmedEngine(SearxTestCase):
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200  9) 
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 10)     @little_documented
+def test_request(self):
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 11)         query = 'test_query'
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 12)         dicto = defaultdict(dict)
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 13)         dicto['pageno'] = 1
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 14)         params = pubmed.request(query, dicto)
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 15)         self.assertIn('url', params)
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 16)         self.assertIn('eutils.ncbi.nlm.nih.gov/', params['url'])
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 17)         self.assertIn('term', params['url'])
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 18) 
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 19)     def test_response(self):
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 20)         self.assertRaises(AttributeError, pubmed.response, None)
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 21)         self.assertRaises(AttributeError, pubmed.response, [])
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 22)         self.assertRaises(AttributeError, pubmed.response, '')
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 23)         self.assertRaises(AttributeError, pubmed.response, '[]')
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 24) 
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 25)         response = mock.Mock(text='<PubmedArticleSet></PubmedArticleSet>')
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 26)         self.assertEqual(pubmed.response(response), [])
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 27) 
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 28)         xml_mock = """<eSearchResult><Count>1</Count><RetMax>1</RetMax><RetStart>0</RetStart><IdList>
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 29) <Id>1</Id>
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 30) </IdList></eSearchResult>
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 31) """
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 32) 
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 33)         response = mock.Mock(text=xml_mock.encode('utf-8'))
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 34)         results = pubmed.response(response)
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 35)         self.assertEqual(type(results), list)
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 36)         self.assertEqual(len(results), 1)
+df0d9158 (jibe-b 2017-09-22 22:09:33 +0200 37)         self.assertEqual(results[0]['content'], 'No abstract is available for this publication.')

@@ -1,0 +1,237 @@
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   1) # -*- coding: utf-8 -*-
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   2) from collections import defaultdict
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   3) import mock
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   4) import lxml
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   5) from searx.engines import google
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   6) from searx.testing import SearxTestCase
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   7) 
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   8) 
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100   9) class TestGoogleEngine(SearxTestCase):
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  10) 
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200  11)     @little_documented
+def mock_response(self, text):
+5cea4f94 searx/tests/engines/test_google.py (Adam Tauber       2015-12-22 20:05:42 +0100  12)         response = mock.Mock(text=text, url='https://www.google.com/search?q=test&start=0&gbv=1&gws_rd=cr')
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200  13)         response.search_params = mock.Mock()
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200  14)         response.search_params.get = mock.Mock(return_value='www.google.com')
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200  15)         return response
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200  16) 
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  17)     def test_request(self):
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  18)         query = 'test_query'
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  19)         dicto = defaultdict(dict)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  20)         dicto['pageno'] = 1
+a11948c7 tests/unit/engines/test_google.py  (marc              2016-10-29 21:04:01 -0500  21)         dicto['language'] = 'fr-FR'
+350a8452 tests/unit/engines/test_google.py  (Adam Tauber       2016-07-26 00:22:05 +0200  22)         dicto['time_range'] = ''
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  23)         params = google.request(query, dicto)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  24)         self.assertIn('url', params)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  25)         self.assertIn(query, params['url'])
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200  26)         self.assertIn('google.fr', params['url'])
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  27)         self.assertIn('fr', params['headers']['Accept-Language'])
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  28) 
+4d177039 tests/unit/engines/test_google.py  (marc              2017-07-20 15:47:20 -0500  29)         dicto['language'] = 'en-US'
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  30)         params = google.request(query, dicto)
+060c7977 tests/unit/engines/test_google.py  (Adam Tauber       2017-11-22 23:06:24 +0100  31)         self.assertIn('google.co', params['url'])
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  32)         self.assertIn('en', params['headers']['Accept-Language'])
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  33) 
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  34)     def test_response(self):
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  35)         self.assertRaises(AttributeError, google.response, None)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  36)         self.assertRaises(AttributeError, google.response, [])
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  37)         self.assertRaises(AttributeError, google.response, '')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  38)         self.assertRaises(AttributeError, google.response, '[]')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  39) 
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200  40)         response = self.mock_response('<html></html>')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  41)         self.assertEqual(google.response(response), [])
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  42) 
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  43)         html = """
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100  44)         <div class="g">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  45)             <h3 class="r">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  46)                 <a href="http://this.should.be.the.link/">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  47)                     <b>This</b> is <b>the</b> title
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  48)                 </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  49)             </h3>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  50)             <div class="s">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  51)                 <div class="kv" style="margin-bottom:2px">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  52)                     <cite>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  53)                         <b>test</b>.psychologies.com/
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  54)                     </cite>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  55)                     <div class="_nBb">‎
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  56)                         <div style="display:inline" onclick="google.sham(this);" aria-expanded="false"
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  57)                             aria-haspopup="true" tabindex="0" data-ved="0CBUQ7B0wAA">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  58)                             <span class="_O0">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  59)                             </span>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  60)                         </div>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  61)                         <div style="display:none" class="am-dropdown-menu" role="menu" tabindex="-1">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  62)                             <ul>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  63)                                 <li class="_Ykb">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  64)                                     <a class="_Zkb" href="http://www.google.fr/url?url=http://webcache.googleusercontent
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  65)                                         .com/search%3Fcache:R1Z_4pGXjuIJ:http://test.psychologies.com/">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  66)                                         En cache
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  67)                                     </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  68)                                 </li>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  69)                                 <li class="_Ykb">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  70)                                     <a class="_Zkb" href="/search?safe=off&amp;q=related:test.psy.com/">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  71)                                         Pages similaires
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  72)                                     </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  73)                                 </li>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  74)                             </ul>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  75)                         </div>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  76)                     </div>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  77)                 </div>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  78)                 <span class="st">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  79)                     This should be the content.
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  80)                 </span>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  81)                 <br>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  82)                 <div class="osl">‎
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  83)                     <a href="http://www.google.fr/url?url=http://test.psychologies.com/tests/">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  84)                         Test Personnalité
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  85)                     </a> - ‎
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  86)                     <a href="http://www.google.fr/url?url=http://test.psychologies.com/test/">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  87)                         Tests - Moi
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  88)                     </a> - ‎
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  89)                     <a href="http://www.google.fr/url?url=http://test.psychologies.com/test/tests-couple">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  90)                         Test Couple
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  91)                     </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  92)                     - ‎
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  93)                     <a href="http://www.google.fr/url?url=http://test.psychologies.com/tests/tests-amour">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  94)                         Test Amour
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  95)                     </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  96)                 </div>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100  97)             </div>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100  98)         </div>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100  99)         <div class="g">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 100)             <h3 class="r">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 101)                 <a href="http://www.google.com/images?q=toto">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 102)                     <b>This</b>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 103)                 </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 104)             </h3>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100 105)         </div>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100 106)         <div class="g">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 107)             <h3 class="r">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 108)                 <a href="http://www.google.com/search?q=toto">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 109)                     <b>This</b> is
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 110)                 </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 111)             </h3>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100 112)         </div>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100 113)         <div class="g">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 114)             <h3 class="r">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 115)                 <a href="€">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 116)                     <b>This</b> is <b>the</b>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 117)                 </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 118)             </h3>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100 119)         </div>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100 120)         <div class="g">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 121)             <h3 class="r">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 122)                 <a href="/url?q=url">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 123)                     <b>This</b> is <b>the</b>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 124)                 </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 125)             </h3>
+66f48c2b searx/tests/engines/test_google.py (Adam Tauber       2016-01-10 18:49:50 +0100 126)         </div>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 127)         <p class="_Bmc" style="margin:3px 8px">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 128)             <a href="/search?num=20&amp;safe=off&amp;q=t&amp;revid=1754833769&amp;sa=X&amp;ei=-&amp;ved=">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 129)                 suggestion <b>title</b>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 130)             </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 131)         </p>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 132)         """
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 133)         response = self.mock_response(html)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 134)         results = google.response(response)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 135)         self.assertEqual(type(results), list)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 136)         self.assertEqual(len(results), 2)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 137)         self.assertEqual(results[0]['title'], 'This is the title')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 138)         self.assertEqual(results[0]['url'], 'http://this.should.be.the.link/')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 139)         self.assertEqual(results[0]['content'], 'This should be the content.')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 140)         self.assertEqual(results[1]['suggestion'], 'suggestion title')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 141) 
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 142)         html = """
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 143)         <li class="b_algo" u="0|5109|4755453613245655|UAGjXgIrPH5yh-o5oNHRx_3Zta87f_QO">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 144)         </li>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 145)         """
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 146)         response = self.mock_response(html)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 147)         results = google.response(response)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 148)         self.assertEqual(type(results), list)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 149)         self.assertEqual(len(results), 0)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 150) 
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 151)         response = mock.Mock(text='<html></html>', url='https://sorry.google.com')
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 152)         response.search_params = mock.Mock()
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 153)         response.search_params.get = mock.Mock(return_value='www.google.com')
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 154)         self.assertRaises(RuntimeWarning, google.response, response)
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 155) 
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 156)         response = mock.Mock(text='<html></html>', url='https://www.google.com/sorry/IndexRedirect')
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 157)         response.search_params = mock.Mock()
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 158)         response.search_params.get = mock.Mock(return_value='www.google.com')
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 159)         self.assertRaises(RuntimeWarning, google.response, response)
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 160) 
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 161)     def test_parse_images(self):
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 162)         html = """
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 163)         <li>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 164)             <div>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 165)                 <a href="http://www.google.com/url?q=http://this.is.the.url/">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 166)                     <img style="margin:3px 0;margin-right:6px;padding:0" height="90"
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 167)                         src="https://this.is.the.image/image.jpg" width="60" align="middle" alt="" border="0">
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 168)                 </a>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 169)             </div>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 170)         </li>
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 171)         """
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 172)         dom = lxml.html.fromstring(html)
+39ff2123 searx/tests/engines/test_google.py (Alexandre Flament 2015-05-30 17:41:40 +0200 173)         results = google.parse_images(dom, 'www.google.com')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 174)         self.assertEqual(type(results), list)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 175)         self.assertEqual(len(results), 1)
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 176)         self.assertEqual(results[0]['url'], 'http://this.is.the.url/')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 177)         self.assertEqual(results[0]['title'], '')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 178)         self.assertEqual(results[0]['content'], '')
+f96154b7 searx/tests/engines/test_google.py (Cqoicebordel      2015-02-11 17:16:52 +0100 179)         self.assertEqual(results[0]['img_src'], 'https://this.is.the.image/image.jpg')
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 180) 
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 181)     def test_fetch_supported_languages(self):
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 182)         html = """<html></html>"""
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 183)         response = mock.Mock(text=html)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 184)         languages = google._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 185)         self.assertEqual(type(languages), dict)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 186)         self.assertEqual(len(languages), 0)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 187) 
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 188)         html = u"""
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 189)         <html>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 190)             <body>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 191)                 <table>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 192)                     <tbody>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 193)                         <tr>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 194)                             <td>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 195)                                 <font>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 196)                                     <label>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 197)                                         <span id="ten">English</span>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 198)                                     </label>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 199)                                 </font>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 200)                             </td>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 201)                             <td>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 202)                                 <font>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 203)                                     <label>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 204)                                         <span id="tzh-CN">中文 (简体)</span>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 205)                                     </label>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 206)                                     <label>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 207)                                         <span id="tzh-TW">中文 (繁體)</span>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 208)                                     </label>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 209)                                 </font>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 210)                             </td>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 211)                         </tr>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 212)                     </tbody>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 213)                 </table>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 214)             </body>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 215)         </html>
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 216)         """
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 217)         response = mock.Mock(text=html)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 218)         languages = google._fetch_supported_languages(response)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 219)         self.assertEqual(type(languages), dict)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 220)         self.assertEqual(len(languages), 3)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 221) 
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 222)         self.assertIn('en', languages)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 223)         self.assertIn('zh-CN', languages)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 224)         self.assertIn('zh-TW', languages)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 225) 
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 226)         self.assertEquals(type(languages['en']), dict)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 227)         self.assertEquals(type(languages['zh-CN']), dict)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 228)         self.assertEquals(type(languages['zh-TW']), dict)
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 229) 
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 230)         self.assertIn('name', languages['en'])
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 231)         self.assertIn('name', languages['zh-CN'])
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 232)         self.assertIn('name', languages['zh-TW'])
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 233) 
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 234)         self.assertEquals(languages['en']['name'], 'English')
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 235)         self.assertEquals(languages['zh-CN']['name'], u'中文 (简体)')
+af35eee1 tests/unit/engines/test_google.py  (marc              2016-12-15 00:34:43 -0600 236)         self.assertEquals(languages['zh-TW']['name'], u'中文 (繁體)')

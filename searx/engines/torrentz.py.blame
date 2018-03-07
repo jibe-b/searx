@@ -1,0 +1,98 @@
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  1) """
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200  2)  Torrentz2.eu (BitTorrent meta-search engine)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  3) 
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200  4)  @website      https://torrentz2.eu/
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  5)  @provide-api  no
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  6) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  7)  @using-api    no
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  8)  @results      HTML
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600  9)  @stable       no (HTML can change, although unlikely,
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 10)                    see https://torrentz.eu/torrentz.btsearch)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 11)  @parse        url, title, publishedDate, seed, leech, filesize, magnetlink
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 12) """
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 13) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 14) import re
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 15) from lxml import html
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 16) from datetime import datetime
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 17) from searx.engines.xpath import extract_text
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 18) from searx.url_utils import urlencode
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 19) from searx.utils import get_torrent_size
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 20) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 21) # engine dependent config
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 22) categories = ['files', 'videos', 'music']
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 23) paging = True
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 24) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 25) # search-url
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 26) # https://torrentz2.eu/search?f=EXAMPLE&p=6
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 27) base_url = 'https://torrentz2.eu/'
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 28) search_url = base_url + 'search?{query}'
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 29) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 30) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 31) # do search-request
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 32) def request(query, params):
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 33)     page = params['pageno'] - 1
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 34)     query = urlencode({'f': query, 'p': page})
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 35)     params['url'] = search_url.format(query=query)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 36)     return params
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 37) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 38) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 39) # get response from search-request
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 40) def response(resp):
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 41)     results = []
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 42) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 43)     dom = html.fromstring(resp.text)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 44) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 45)     for result in dom.xpath('//div[@class="results"]/dl'):
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 46)         name_cell = result.xpath('./dt')[0]
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 47)         title = extract_text(name_cell)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 48) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 49)         # skip rows that do not contain a link to a torrent
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 50)         links = name_cell.xpath('./a')
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 51)         if len(links) != 1:
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 52)             continue
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 53) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 54)         # extract url and remove a slash in the beginning
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 55)         link = links[0].attrib.get('href').lstrip('/')
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 56) 
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 57)         seed = 0
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 58)         leech = 0
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 59)         try:
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 60)             seed = int(result.xpath('./dd/span[4]/text()')[0].replace(',', ''))
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 61)             leech = int(result.xpath('./dd/span[5]/text()')[0].replace(',', ''))
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 62)         except:
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 63)             pass
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 64) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 65)         params = {
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 66)             'url': base_url + link,
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 67)             'title': title,
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 68)             'seed': seed,
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 69)             'leech': leech,
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 70)             'template': 'torrent.html'
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 71)         }
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 72) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 73)         # let's try to calculate the torrent size
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 74)         try:
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 75)             filesize_info = result.xpath('./dd/span[3]/text()')[0]
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 76)             filesize, filesize_multiplier = filesize_info.split()
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 77)             filesize = get_torrent_size(filesize, filesize_multiplier)
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 78) 
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 79)             params['filesize'] = filesize
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 80)         except:
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 81)             pass
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 82) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 83)         # does our link contain a valid SHA1 sum?
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 84)         if re.compile('[0-9a-fA-F]{40}').match(link):
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 85)             # add a magnet link to the result
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 86)             params['magnetlink'] = 'magnet:?xt=urn:btih:' + link
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 87) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 88)         # extract and convert creation date
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 89)         try:
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 90)             date_ts = result.xpath('./dd/span[2]')[0].attrib.get('title')
+d14e2781 (misnyo        2017-08-25 00:52:35 +0200 91)             date = datetime.fromtimestamp(float(date_ts))
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 92)             params['publishedDate'] = date
+52e615de (Adam Tauber   2016-11-30 18:43:03 +0100 93)         except:
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 94)             pass
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 95) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 96)         results.append(params)
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 97) 
+7fbc12ee (Kirill Isakov 2016-03-26 05:28:58 +0600 98)     return results

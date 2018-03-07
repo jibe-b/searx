@@ -1,0 +1,71 @@
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  1) from collections import defaultdict
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  2) import mock
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  3) from searx.engines import reddit
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  4) from searx.testing import SearxTestCase
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  5) from datetime import datetime
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  6) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  7) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  8) class TestRedditEngine(SearxTestCase):
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600  9) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 10)     def test_request(self):
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 11)         query = 'test_query'
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 12)         dic = defaultdict(dict)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 13)         params = reddit.request(query, dic)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 14)         self.assertTrue('url' in params)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 15)         self.assertTrue(query in params['url'])
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 16)         self.assertTrue('reddit.com' in params['url'])
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 17) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 18)     def test_response(self):
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 19)         resp = mock.Mock(text='{}')
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 20)         self.assertEqual(reddit.response(resp), [])
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 21) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 22)         json = """
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 23)         {
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 24)             "kind": "Listing",
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 25)             "data": {
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 26)                 "children": [{
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 27)                     "data": {
+d98024c2 (Kirill Isakov 2016-04-16 16:45:49 +0600 28)                         "url": "http://google2.com/",
+d98024c2 (Kirill Isakov 2016-04-16 16:45:49 +0600 29)                         "permalink": "http://google.com/",
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 30)                         "title": "Title number one",
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 31)                         "selftext": "Sample",
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 32)                         "created_utc": 1401219957.0,
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 33)                         "thumbnail": "http://image.com/picture.jpg"
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 34)                     }
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 35)                 }, {
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 36)                     "data": {
+d98024c2 (Kirill Isakov 2016-04-16 16:45:49 +0600 37)                         "url": "https://reddit2.com/",
+d98024c2 (Kirill Isakov 2016-04-16 16:45:49 +0600 38)                         "permalink": "https://reddit.com/",
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 39)                         "title": "Title number two",
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 40)                         "selftext": "Dominus vobiscum",
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 41)                         "created_utc": 1438792533.0,
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 42)                         "thumbnail": "self"
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 43)                     }
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 44)                 }]
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 45)             }
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 46)         }
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 47)         """
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 48) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 49)         resp = mock.Mock(text=json)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 50)         results = reddit.response(resp)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 51) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 52)         self.assertEqual(len(results), 2)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 53)         self.assertEqual(type(results), list)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 54) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 55)         # testing first result (picture)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 56)         r = results[0]
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 57)         self.assertEqual(r['url'], 'http://google.com/')
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 58)         self.assertEqual(r['title'], 'Title number one')
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 59)         self.assertEqual(r['template'], 'images.html')
+d98024c2 (Kirill Isakov 2016-04-16 16:45:49 +0600 60)         self.assertEqual(r['img_src'], 'http://google2.com/')
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 61)         self.assertEqual(r['thumbnail_src'], 'http://image.com/picture.jpg')
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 62) 
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 63)         # testing second result (self-post)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 64)         r = results[1]
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 65)         self.assertEqual(r['url'], 'https://reddit.com/')
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 66)         self.assertEqual(r['title'], 'Title number two')
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 67)         self.assertEqual(r['content'], 'Dominus vobiscum')
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 68)         created = datetime.fromtimestamp(1438792533.0)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 69)         self.assertEqual(r['publishedDate'], created)
+d026a97e (Kirill Isakov 2016-03-25 19:30:32 +0600 70)         self.assertTrue('thumbnail_src' not in r)
+d98024c2 (Kirill Isakov 2016-04-16 16:45:49 +0600 71)         self.assertTrue('img_src' not in r)

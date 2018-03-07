@@ -1,0 +1,132 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   2)  DuckDuckGo (Web)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   4)  @website     https://duckduckgo.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   5)  @provide-api yes (https://duckduckgo.com/api),
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   6)               but not all results from search-site
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   7) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   8)  @using-api   no
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200   9)  @results     HTML (using search portal)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  10)  @stable      no (HTML can change)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  11)  @parse       url, title, content
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  12) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  13)  @todo        rewrite to api
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  14) """
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  15) 
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100  16) from lxml.html import fromstring
+f62ce21f (marc              2016-11-05 20:51:38 -0600  17) from json import loads
+efe6dead (Cqoicebordel      2015-02-02 17:55:39 +0100  18) from searx.engines.xpath import extract_text
+077d8efe (Adam Tauber       2017-07-21 16:23:20 +0200  19) from searx.poolrequests import get
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100  20) from searx.url_utils import urlencode
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200  21) 
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  22) # engine dependent config
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  23) categories = ['general']
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  24) paging = True
+64b75e6d (dalf              2014-09-07 22:52:13 +0200  25) language_support = True
+f62ce21f (marc              2016-11-05 20:51:38 -0600  26) supported_languages_url = 'https://duckduckgo.com/d2030.js'
+f13b9fa3 (Noemi Vanyi       2016-07-18 16:15:37 +0200  27) time_range_support = True
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200  28) 
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  29) # search-url
+742e4dfd (Noémi Ványi       2017-02-01 20:43:22 +0100  30) url = 'https://duckduckgo.com/html?{query}&s={offset}&api=/d.js&o=json&dc={dc_param}'
+f13b9fa3 (Noemi Vanyi       2016-07-18 16:15:37 +0200  31) time_range_url = '&df={range}'
+f13b9fa3 (Noemi Vanyi       2016-07-18 16:15:37 +0200  32) 
+f13b9fa3 (Noemi Vanyi       2016-07-18 16:15:37 +0200  33) time_range_dict = {'day': 'd',
+f13b9fa3 (Noemi Vanyi       2016-07-18 16:15:37 +0200  34)                    'week': 'w',
+f13b9fa3 (Noemi Vanyi       2016-07-18 16:15:37 +0200  35)                    'month': 'm'}
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  36) 
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  37) # specific xpath variables
+751c9a34 (a01200356         2016-03-21 20:19:13 -0600  38) result_xpath = '//div[@class="result results_links results_links_deep web-result "]'  # noqa
+751c9a34 (a01200356         2016-03-21 20:19:13 -0600  39) url_xpath = './/a[@class="result__a"]/@href'
+751c9a34 (a01200356         2016-03-21 20:19:13 -0600  40) title_xpath = './/a[@class="result__a"]'
+751c9a34 (a01200356         2016-03-21 20:19:13 -0600  41) content_xpath = './/a[@class="result__snippet"]'
+52a817f5 (Adam Tauber       2014-03-29 16:38:45 +0100  42) 
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  43) 
+c65a409f (marc              2017-05-20 22:33:08 -0500  44) # match query's language to a region code that duckduckgo will accept
+405e5c8f (marc              2017-07-04 22:29:06 -0500  45) @little_documented
+def get_region_code(lang, lang_list=None):
+149802c5 (marc              2016-08-05 23:34:56 -0500  46)     # custom fixes for languages
+4d177039 (marc              2017-07-20 15:47:20 -0500  47)     if lang[:2] == 'ja':
+c65a409f (marc              2017-05-20 22:33:08 -0500  48)         region_code = 'jp-jp'
+c65a409f (marc              2017-05-20 22:33:08 -0500  49)     elif lang[:2] == 'sl':
+c65a409f (marc              2017-05-20 22:33:08 -0500  50)         region_code = 'sl-sl'
+c65a409f (marc              2017-05-20 22:33:08 -0500  51)     elif lang == 'zh-TW':
+c65a409f (marc              2017-05-20 22:33:08 -0500  52)         region_code = 'tw-tzh'
+c65a409f (marc              2017-05-20 22:33:08 -0500  53)     elif lang == 'zh-HK':
+c65a409f (marc              2017-05-20 22:33:08 -0500  54)         region_code = 'hk-tzh'
+c65a409f (marc              2017-05-20 22:33:08 -0500  55)     elif lang[-2:] == 'SA':
+c65a409f (marc              2017-05-20 22:33:08 -0500  56)         region_code = 'xa-' + lang.split('-')[0]
+c65a409f (marc              2017-05-20 22:33:08 -0500  57)     elif lang[-2:] == 'GB':
+c65a409f (marc              2017-05-20 22:33:08 -0500  58)         region_code = 'uk-' + lang.split('-')[0]
+64b75e6d (dalf              2014-09-07 22:52:13 +0200  59)     else:
+c65a409f (marc              2017-05-20 22:33:08 -0500  60)         region_code = lang.split('-')
+c65a409f (marc              2017-05-20 22:33:08 -0500  61)         if len(region_code) == 2:
+8fc4b815 (a01200356         2016-06-03 00:14:23 -0500  62)             # country code goes first
+c65a409f (marc              2017-05-20 22:33:08 -0500  63)             region_code = region_code[1].lower() + '-' + region_code[0].lower()
+8fc4b815 (a01200356         2016-06-03 00:14:23 -0500  64)         else:
+aac4ed69 (marc              2016-07-14 16:36:52 -0500  65)             # tries to get a country code from language
+c65a409f (marc              2017-05-20 22:33:08 -0500  66)             region_code = region_code[0].lower()
+405e5c8f (marc              2017-07-04 22:29:06 -0500  67)             for lc in (lang_list or supported_languages):
+149802c5 (marc              2016-08-05 23:34:56 -0500  68)                 lc = lc.split('-')
+c65a409f (marc              2017-05-20 22:33:08 -0500  69)                 if region_code == lc[0]:
+c65a409f (marc              2017-05-20 22:33:08 -0500  70)                     region_code = lc[1].lower() + '-' + lc[0].lower()
+aac4ed69 (marc              2016-07-14 16:36:52 -0500  71)                     break
+c65a409f (marc              2017-05-20 22:33:08 -0500  72)     return region_code
+c65a409f (marc              2017-05-20 22:33:08 -0500  73) 
+c65a409f (marc              2017-05-20 22:33:08 -0500  74) 
+c65a409f (marc              2017-05-20 22:33:08 -0500  75) # do search-request
+c65a409f (marc              2017-05-20 22:33:08 -0500  76) def request(query, params):
+c65a409f (marc              2017-05-20 22:33:08 -0500  77)     if params['time_range'] and params['time_range'] not in time_range_dict:
+c65a409f (marc              2017-05-20 22:33:08 -0500  78)         return params
+c65a409f (marc              2017-05-20 22:33:08 -0500  79) 
+3b950929 (marc              2017-05-27 20:55:23 -0500  80)     offset = (params['pageno'] - 1) * 30
+8fc4b815 (a01200356         2016-06-03 00:14:23 -0500  81) 
+c65a409f (marc              2017-05-20 22:33:08 -0500  82)     region_code = get_region_code(params['language'])
+4d177039 (marc              2017-07-20 15:47:20 -0500  83)     params['url'] = url.format(
+4d177039 (marc              2017-07-20 15:47:20 -0500  84)         query=urlencode({'q': query, 'kl': region_code}), offset=offset, dc_param=offset)
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  85) 
+350a8452 (Adam Tauber       2016-07-26 00:22:05 +0200  86)     if params['time_range'] in time_range_dict:
+f13b9fa3 (Noemi Vanyi       2016-07-18 16:15:37 +0200  87)         params['url'] += time_range_url.format(range=time_range_dict[params['time_range']])
+f13b9fa3 (Noemi Vanyi       2016-07-18 16:15:37 +0200  88) 
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200  89)     return params
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200  90) 
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200  91) 
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200  92) # get response from search-request
+^ae9fb1d (asciimoo          2013-10-14 23:09:13 +0200  93) def response(resp):
+d793c273 (asciimoo          2013-10-15 19:11:43 +0200  94)     results = []
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100  95) 
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100  96)     doc = fromstring(resp.text)
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100  97) 
+80f98d60 (Thomas Pointhuber 2014-09-02 18:12:42 +0200  98)     # parse results
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100  99)     for r in doc.xpath(result_xpath):
+a8a0de64 (Adam Tauber       2014-03-21 18:17:13 +0100 100)         try:
+a8a0de64 (Adam Tauber       2014-03-21 18:17:13 +0100 101)             res_url = r.xpath(url_xpath)[-1]
+a8a0de64 (Adam Tauber       2014-03-21 18:17:13 +0100 102)         except:
+a8a0de64 (Adam Tauber       2014-03-21 18:17:13 +0100 103)             continue
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200 104) 
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100 105)         if not res_url:
+d793c273 (asciimoo          2013-10-15 19:11:43 +0200 106)             continue
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200 107) 
+efe6dead (Cqoicebordel      2015-02-02 17:55:39 +0100 108)         title = extract_text(r.xpath(title_xpath))
+efe6dead (Cqoicebordel      2015-02-02 17:55:39 +0100 109)         content = extract_text(r.xpath(content_xpath))
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200 110) 
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200 111)         # append result
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100 112)         results.append({'title': title,
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100 113)                         'content': content,
+4184cece (Adam Tauber       2015-09-07 23:13:04 +0200 114)                         'url': res_url})
+3854703d (Adam Tauber       2014-03-21 16:33:17 +0100 115) 
+e6e4de8b (Thomas Pointhuber 2014-09-02 17:14:57 +0200 116)     # return results
+d793c273 (asciimoo          2013-10-15 19:11:43 +0200 117)     return results
+f62ce21f (marc              2016-11-05 20:51:38 -0600 118) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 119) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 120) # get supported languages from their site
+af35eee1 (marc              2016-12-15 00:34:43 -0600 121) def _fetch_supported_languages(resp):
+f62ce21f (marc              2016-11-05 20:51:38 -0600 122) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 123)     # response is a js file with regions as an embedded object
+af35eee1 (marc              2016-12-15 00:34:43 -0600 124)     response_page = resp.text
+f62ce21f (marc              2016-11-05 20:51:38 -0600 125)     response_page = response_page[response_page.find('regions:{') + 8:]
+f62ce21f (marc              2016-11-05 20:51:38 -0600 126)     response_page = response_page[:response_page.find('}') + 1]
+f62ce21f (marc              2016-11-05 20:51:38 -0600 127) 
+f62ce21f (marc              2016-11-05 20:51:38 -0600 128)     regions_json = loads(response_page)
+f62ce21f (marc              2016-11-05 20:51:38 -0600 129)     supported_languages = map((lambda x: x[3:] + '-' + x[:2].upper()), regions_json.keys())
+f62ce21f (marc              2016-11-05 20:51:38 -0600 130) 
+44085e31 (marc              2017-10-10 16:52:41 -0500 131)     return list(supported_languages)

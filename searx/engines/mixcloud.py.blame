@@ -1,0 +1,61 @@
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  1) """
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  2)  Mixcloud (Music)
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  3) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  4)  @website     https://http://www.mixcloud.com/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  5)  @provide-api yes (http://www.mixcloud.com/developers/
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  6) 
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  7)  @using-api   yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  8)  @results     JSON
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200  9)  @stable      yes
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 10)  @parse       url, title, content, embedded, publishedDate
+4689fe34 (Alexandre Flament 2015-05-02 15:45:17 +0200 11) """
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 12) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 13) from json import loads
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 14) from dateutil import parser
+52e615de (Adam Tauber       2016-11-30 18:43:03 +0100 15) from searx.url_utils import urlencode
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 16) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 17) # engine dependent config
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 18) categories = ['music']
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 19) paging = True
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 20) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 21) # search-url
+99efd790 (Alexandre Flament 2015-04-26 18:13:09 +0200 22) url = 'https://api.mixcloud.com/'
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 23) search_url = url + 'search/?{query}&type=cloudcast&limit=10&offset={offset}'
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 24) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 25) embedded_url = '<iframe scrolling="no" frameborder="0" allowTransparency="true" ' +\
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 26)     'data-src="https://www.mixcloud.com/widget/iframe/?feed={url}" width="300" height="300"></iframe>'
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 27) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 28) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 29) # do search-request
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 30) def request(query, params):
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 31)     offset = (params['pageno'] - 1) * 10
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 32) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 33)     params['url'] = search_url.format(query=urlencode({'q': query}),
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 34)                                       offset=offset)
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 35) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 36)     return params
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 37) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 38) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 39) # get response from search-request
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 40) def response(resp):
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 41)     results = []
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 42) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 43)     search_res = loads(resp.text)
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 44) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 45)     # parse results
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 46)     for result in search_res.get('data', []):
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 47)         title = result['name']
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 48)         url = result['url']
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 49)         content = result['user']['name']
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 50)         embedded = embedded_url.format(url=url)
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 51)         publishedDate = parser.parse(result['created_time'])
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 52) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 53)         # append result
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 54)         results.append({'url': url,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 55)                         'title': title,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 56)                         'embedded': embedded,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 57)                         'publishedDate': publishedDate,
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 58)                         'content': content})
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 59) 
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 60)     # return results
+85dcfa2c (Cqoicebordel      2015-01-21 18:02:29 +0100 61)     return results
